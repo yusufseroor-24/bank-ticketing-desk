@@ -23,12 +23,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(ResourceNotFoundException exception, HttpServletRequest request){
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException exception, HttpServletRequest request){
         return buildResponse(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), request);
     }
 
     @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessRule(ResourceNotFoundException exception, HttpServletRequest request){
+    public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException exception, HttpServletRequest request){
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "BUSINESS_RULE_VIOLATION", exception.getMessage(), request);
     }
 
