@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnexpected(ResourceNotFoundException exception, HttpServletRequest request){
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request){
         log.error("Unexpected error on {}", request.getRequestURI(), exception);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "An unexpected error occurred", request);
     }
