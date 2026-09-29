@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ConcurrentModificationException;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -20,6 +22,9 @@ public class AuthService {
     private final UserMapper userMapper;
 
     public UserResponse register(RegisterRequest request){
+        if(userRepository.existsByEmail(request.email())){
+            throw new ConcurrentModificationException("An account with this email already exists.");
+        }
         User user = new User();
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
