@@ -1,5 +1,7 @@
 package com.ga.bankdesk.controller;
 
+import com.ga.bankdesk.dto.LoginRequest;
+import com.ga.bankdesk.dto.LoginResponse;
 import com.ga.bankdesk.dto.RegisterRequest;
 import com.ga.bankdesk.dto.UserResponse;
 import com.ga.bankdesk.service.AuthService;
@@ -22,5 +24,11 @@ public class AuthController {
     public ResponseEntity<UserResponse> register( @Valid @RequestBody RegisterRequest request){
         UserResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request){
+        LoginResponse response = authService.login(request);
+        return  ResponseEntity.ok(response);
     }
 }
