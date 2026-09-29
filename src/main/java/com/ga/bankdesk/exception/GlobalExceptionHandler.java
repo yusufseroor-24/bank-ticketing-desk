@@ -1,8 +1,6 @@
-package com.ga.bankdesk.dto;
+package com.ga.bankdesk.exception;
 
-import com.ga.bankdesk.exception.BusinessRuleException;
-import com.ga.bankdesk.exception.ConflictException;
-import com.ga.bankdesk.exception.ResourceNotFoundException;
+import com.ga.bankdesk.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

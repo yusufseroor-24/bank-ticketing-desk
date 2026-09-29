@@ -1,7 +1,7 @@
 package com.ga.bankdesk.dto;
 
-import com.ga.bankdesk.model.Role;
-import com.ga.bankdesk.model.UserStatus;
+import com.ga.bankdesk.enums.Role;
+import com.ga.bankdesk.enums.UserStatus;
 
 import java.time.LocalDateTime;
 

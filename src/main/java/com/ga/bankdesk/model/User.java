@@ -1,5 +1,7 @@
 package com.ga.bankdesk.model;
 
+import com.ga.bankdesk.enums.Role;
+import com.ga.bankdesk.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
