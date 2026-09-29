@@ -5,10 +5,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.core.AuthenticationException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -42,6 +44,12 @@ public class GlobalExceptionHandler {
             fieldErrors.put(error.getField(), error.getDefaultMessage());
         }
         return buildResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", fieldErrors.toString(), request);
+    }
+
+    //wrong or bad login credentials exception (401, wrong password)
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException exception, HttpServletRequest request){
+        return buildResponse(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_FAILED", "Invalid email or password", request);
     }
 
 
