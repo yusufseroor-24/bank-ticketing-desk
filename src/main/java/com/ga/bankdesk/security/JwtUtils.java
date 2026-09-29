@@ -16,10 +16,10 @@ public class JwtUtils {
 
     private final Logger logger = Logger.getLogger(JwtUtils.class.getName());
 
-    @Value("${jwt-secret")
+    @Value("${jwt-secret}")
     private String jwtSecret;
 
-    @Value("${jwt-expiration-ms")
+    @Value("${jwt-expiration-ms}")
     private long jwtExpirationMs;
 
     //converts secret key text into a key object
