@@ -7,10 +7,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -31,6 +35,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException exception, HttpServletRequest request){
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "BUSINESS_RULE_VIOLATION", exception.getMessage(), request);
     }
+
+    //RegisterRequest fields failing their rules exception, method lists every field that broke a rule.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request){
+        Map<String, String> fieldErrors = new HashMap<>();
+        for (FieldError error : exception.getBindingResult().getFieldErrors()){
+            fieldErrors.put(error.getField(), error.getDefaultMessage());
+        }
+        return buildResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", fieldErrors.toString(), request);
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request){
