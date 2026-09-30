@@ -5,6 +5,7 @@ import com.ga.bankdesk.dto.LoginResponse;
 import com.ga.bankdesk.dto.RegisterRequest;
 import com.ga.bankdesk.dto.UserResponse;
 import com.ga.bankdesk.enums.TokenType;
+import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.model.Token;
@@ -71,6 +72,27 @@ public class AuthService {
         String token = jwtUtils.generateToken(userDetails.getUsername());
 
         return new LoginResponse(token);
+    }
+
+    public void verifyEmail(String tokenString){
+        Token verificationToken = tokenRepository.findByToken(tokenString)
+                .orElseThrow(() -> new BusinessRuleException("Invalid verification link"));
+        if(verificationToken.getTokenType() != TokenType.EMAIL_VERIFICATION){
+            throw new BusinessRuleException("Invalid verification link");
+        }
+        if(verificationToken.isUsed()){
+            throw new BusinessRuleException("This verification link is already being used or has been used");
+        }
+        if(verificationToken.getExpireAt().isBefore(LocalDateTime.now())){
+            throw new BusinessRuleException("This verification link has expired");
+        }
+
+        User user = verificationToken.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        verificationToken.setUsed(true);
+        tokenRepository.save(verificationToken);
     }
 
 }
