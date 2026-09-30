@@ -53,7 +53,7 @@ public class AuthService {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
         String token = jwtUtils.generateToken(userDetails.getUsername());
 
-        return new LoginResponse(token, userDetails.getUsername(), userDetails.getUser().getRole().name());
+        return new LoginResponse(token);
     }
 
 }
