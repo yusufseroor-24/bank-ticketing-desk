@@ -65,7 +65,6 @@ public class AuthService {
             throw new BusinessRuleException("Please verify your email before logging in");
         }
         String token = jwtUtils.generateToken(userDetails.getUsername());
-
         return new LoginResponse(token);
     }
 
@@ -108,5 +107,21 @@ public class AuthService {
         tokenRepository.save(verificationToken);
         emailService.sendVerificationEmail(user.getEmail(), verificationToken.getToken());
     }
+
+    public void forgetPassword(String email){
+        userRepository.findByEmail(email)
+                .ifPresent(user -> {
+                    Token resetToken = new Token();
+                    resetToken.setToken(UUID.randomUUID().toString());
+                    resetToken.setUser(user);
+                    resetToken.setTokenType(TokenType.PASSWORD_RESET);
+                    resetToken.setExpireAt(LocalDateTime.now().plusMinutes(30));
+                    tokenRepository.save(resetToken);
+
+                    emailService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
+        });
+    }
+
+
 
 }

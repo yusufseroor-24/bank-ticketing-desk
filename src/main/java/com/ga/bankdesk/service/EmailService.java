@@ -23,6 +23,17 @@ public class EmailService {
 
         mailSender.send(emailMessage);
         log.info("Verification email sent to {}", toEmail);
+    }
+
+    public void sendPasswordResetEmail(String toEmail, String token){
+        String link = "http://localhost:8080/api/auth/verify-email?token=" + token;
+        SimpleMailMessage emailMessage = new SimpleMailMessage();
+        emailMessage.setTo(toEmail);
+        emailMessage.setSubject("Reset your BankDesk account password");
+        emailMessage.setText("Click the link provided to reset your password: " + link);
+
+        mailSender.send(emailMessage);
+        log.info("Password reset email sent to {}", toEmail);
 
     }
 }

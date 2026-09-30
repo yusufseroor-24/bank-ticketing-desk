@@ -36,6 +36,12 @@ public class AuthController {
     public ResponseEntity<String> resendVerification(@Valid @RequestBody ForgotPasswordRequest request){
         authService.resendVerification(request.email());
         return ResponseEntity.ok("A new email verification link has been sent");
-
     }
+
+    @PostMapping("/forget-password")
+    public ResponseEntity<String> forgetPassword(@Valid @RequestBody ForgotPasswordRequest request){
+        authService.forgetPassword(request.email());
+        return ResponseEntity.ok("A resent link has been sent to the email of this account");
+    }
+
 }
