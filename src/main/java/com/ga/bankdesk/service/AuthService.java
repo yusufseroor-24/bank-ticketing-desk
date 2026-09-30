@@ -4,10 +4,13 @@ import com.ga.bankdesk.dto.LoginRequest;
 import com.ga.bankdesk.dto.LoginResponse;
 import com.ga.bankdesk.dto.RegisterRequest;
 import com.ga.bankdesk.dto.UserResponse;
+import com.ga.bankdesk.enums.TokenType;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.enums.Role;
+import com.ga.bankdesk.model.Token;
 import com.ga.bankdesk.model.User;
 import com.ga.bankdesk.enums.UserStatus;
+import com.ga.bankdesk.repository.TokenRepository;
 import com.ga.bankdesk.repository.UserRepository;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.security.JwtUtils;
@@ -19,7 +22,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ConcurrentModificationException;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,8 @@ public class AuthService {
     private final UserMapper userMapper;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final TokenRepository tokenRepository;
+    private final EmailService emailService;
 
     public UserResponse register(RegisterRequest request){
         if(userRepository.existsByEmail(request.email())){
@@ -43,6 +50,16 @@ public class AuthService {
         user.setStatus(UserStatus.ACTIVE);
 
         User save = userRepository.save(user);
+
+        Token verificationToken = new Token();
+        verificationToken.setToken(UUID.randomUUID().toString());
+        verificationToken.setUser(save);
+        verificationToken.setTokenType(TokenType.EMAIL_VERIFICATION);
+        verificationToken.setExpireAt(LocalDateTime.now().plusHours(24));
+        tokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(save.getEmail(), verificationToken.getToken());
+
         return userMapper.toRespond(save);
     }
 
