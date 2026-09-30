@@ -69,6 +69,9 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
+        if(!userDetails.getUser().isEmailVerified()){
+            throw new BusinessRuleException("Please verify your email before logging in");
+        }
         String token = jwtUtils.generateToken(userDetails.getUsername());
 
         return new LoginResponse(token);
