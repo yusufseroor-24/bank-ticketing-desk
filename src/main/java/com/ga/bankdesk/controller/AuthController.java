@@ -1,9 +1,6 @@
 package com.ga.bankdesk.controller;
 
-import com.ga.bankdesk.dto.LoginRequest;
-import com.ga.bankdesk.dto.LoginResponse;
-import com.ga.bankdesk.dto.RegisterRequest;
-import com.ga.bankdesk.dto.UserResponse;
+import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +33,9 @@ public class AuthController {
     }
 
     @PostMapping("/resend-verification")
-    public ResponseEntity<String> resendVerification(@Valid @RequestBody ){
+    public ResponseEntity<String> resendVerification(@Valid @RequestBody ForgotPasswordRequest request){
+        authService.resendVerification(request.email());
+        return ResponseEntity.ok("A new email verification link has been sent");
 
     }
 }
