@@ -6,6 +6,7 @@ import com.ga.bankdesk.dto.RegisterRequest;
 import com.ga.bankdesk.dto.UserResponse;
 import com.ga.bankdesk.enums.TokenType;
 import com.ga.bankdesk.exception.BusinessRuleException;
+import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.model.Token;
@@ -51,16 +52,7 @@ public class AuthService {
         user.setStatus(UserStatus.ACTIVE);
 
         User save = userRepository.save(user);
-
-        Token verificationToken = new Token();
-        verificationToken.setToken(UUID.randomUUID().toString());
-        verificationToken.setUser(save);
-        verificationToken.setTokenType(TokenType.EMAIL_VERIFICATION);
-        verificationToken.setExpireAt(LocalDateTime.now().plusHours(24));
-        tokenRepository.save(verificationToken);
-
-        emailService.sendVerificationEmail(save.getEmail(), verificationToken.getToken());
-
+        createAndSendVerificationToken(save);
         return userMapper.toRespond(save);
     }
 
@@ -96,6 +88,25 @@ public class AuthService {
 
         verificationToken.setUsed(true);
         tokenRepository.save(verificationToken);
+    }
+
+    public void resendVerification(String email){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No account found with this email"));
+        if(user.isEmailVerified()){
+            throw new BusinessRuleException("This account email is already verified");
+        }
+        createAndSendVerificationToken(user);
+    }
+
+    private void createAndSendVerificationToken(User user){
+        Token verificationToken = new Token();
+        verificationToken.setToken(UUID.randomUUID().toString());
+        verificationToken.setUser(user);
+        verificationToken.setTokenType(TokenType.EMAIL_VERIFICATION);
+        verificationToken.setExpireAt(LocalDateTime.now().plusHours(24));
+        tokenRepository.save(verificationToken);
+        emailService.sendVerificationEmail(user.getEmail(), verificationToken.getToken());
     }
 
 }

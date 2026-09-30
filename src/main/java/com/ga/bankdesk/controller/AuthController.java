@@ -34,4 +34,9 @@ public class AuthController {
         authService.verifyEmail(token);
         return ResponseEntity.ok("Your email has been verified successfully");
     }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerification(@Valid @RequestBody ){
+
+    }
 }
