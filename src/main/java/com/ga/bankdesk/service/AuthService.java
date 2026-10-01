@@ -143,6 +143,15 @@ public class AuthService {
         tokenRepository.save(resetPassToken);
     }
 
+    public void changePassword(User currentUser, String currentPassword, String newPassword){
+        if(!passwordEncoder.matches(currentUser.getPassword(), currentPassword)){
+            throw new BusinessRuleException("Your current password is incorrect");
+        }
+        currentUser.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(currentUser);
+
+    }
+
 
 
 }
