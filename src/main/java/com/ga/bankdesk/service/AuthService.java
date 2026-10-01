@@ -144,7 +144,7 @@ public class AuthService {
     }
 
     public void changePassword(User currentUser, String currentPassword, String newPassword){
-        if(!passwordEncoder.matches(currentUser.getPassword(), currentPassword)){
+        if(!passwordEncoder.matches(currentPassword, currentUser.getPassword())){
             throw new BusinessRuleException("Your current password is incorrect");
         }
         currentUser.setPassword(passwordEncoder.encode(newPassword));
