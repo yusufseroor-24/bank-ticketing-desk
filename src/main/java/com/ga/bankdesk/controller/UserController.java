@@ -42,10 +42,4 @@ public class UserController {
         authService.changePassword(userDetails.getUser(), request.currentPassword(), request.newPassword());
         return ResponseEntity.ok("Your password has been changed successfully");
     }
-
-    @GetMapping("/admin-test")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String adminTest(){
-        return "You are an admin";
-    }
 }
