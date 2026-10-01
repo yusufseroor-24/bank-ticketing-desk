@@ -44,4 +44,10 @@ public class AuthController {
         return ResponseEntity.ok("A resent link has been sent to the email of this account");
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request){
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok("Your password has been reset successfully.");
+    }
+
 }
