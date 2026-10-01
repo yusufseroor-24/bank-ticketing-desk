@@ -122,6 +122,27 @@ public class AuthService {
         });
     }
 
+    public void resetPassword(String tokenString, String newPassword){
+        Token resetPassToken = tokenRepository.findByToken(tokenString)
+                .orElseThrow(() -> new BusinessRuleException("Invalid verification link"));
+        if(resetPassToken.getTokenType() != TokenType.PASSWORD_RESET){
+            throw new BusinessRuleException("Invalid reset password link");
+        }
+        if(resetPassToken.isUsed()){
+            throw new BusinessRuleException("This reset password link is already being used or has been used");
+        }
+        if(resetPassToken.getExpireAt().isBefore(LocalDateTime.now())){
+            throw new BusinessRuleException("This reset password link has expired");
+        }
+
+        User user = resetPassToken.getUser();
+        user.setPassword(newPassword);
+        userRepository.save(user);
+
+        resetPassToken.setUsed(true);
+        tokenRepository.save(resetPassToken);
+    }
+
 
 
 }
