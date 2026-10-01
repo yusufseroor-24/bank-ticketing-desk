@@ -136,7 +136,7 @@ public class AuthService {
         }
 
         User user = resetPassToken.getUser();
-        user.setPassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         resetPassToken.setUsed(true);
