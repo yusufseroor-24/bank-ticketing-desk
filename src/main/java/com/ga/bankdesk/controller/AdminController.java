@@ -27,4 +27,9 @@ public class AdminController {
     public UserResponse changeRole(@PathVariable Long userId, @Valid @RequestBody ChangeRoleRequest request){
         return adminService.changeRole(userId, request.newRole());
     }
+
+    @PutMapping("/{userId}/deactivate")
+    public UserResponse deactivateUser(@PathVariable Long userId){
+        return adminService.deactivateUser(userId);
+    }
 }

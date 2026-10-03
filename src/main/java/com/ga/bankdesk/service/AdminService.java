@@ -2,6 +2,7 @@ package com.ga.bankdesk.service;
 
 import com.ga.bankdesk.dto.UserResponse;
 import com.ga.bankdesk.enums.Role;
+import com.ga.bankdesk.enums.UserStatus;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.model.User;
@@ -29,6 +30,15 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
 
         user.setRole(newRole);
+        User save = userRepository.save(user);
+        return userMapper.toRespond(save);
+    }
+
+    public UserResponse deactivateUser(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
+
+        user.setStatus(UserStatus.INACTIVE);
         User save = userRepository.save(user);
         return userMapper.toRespond(save);
     }
