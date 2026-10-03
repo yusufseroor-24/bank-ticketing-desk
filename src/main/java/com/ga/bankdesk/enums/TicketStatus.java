@@ -1,0 +1,7 @@
+package com.ga.bankdesk.enums;
+
+public enum TicketStatus {
+    OPEN, ASSIGNED, IN_PROGRESS, UNDER_REVIEW,
+    ESCALATED, INVESTIGATING, FALSE_POSITIVE,
+    CONFIRMED, APPROVED, REJECTED, RESOLVED, CLOSED
+}
