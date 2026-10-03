@@ -1,6 +1,7 @@
 package com.ga.bankdesk.model;
 
 
+import com.ga.bankdesk.enums.TicketPriority;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -25,4 +26,8 @@ public class Category {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TicketPriority defaultPriority;
 }

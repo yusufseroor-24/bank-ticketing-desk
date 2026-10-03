@@ -46,12 +46,12 @@ public class AdminController {
 
     @PostMapping("/categories")
     public Category createCategory(@Valid @RequestBody CategoryRequest request){
-        return categoryService.create(request.name(), request.slaHours(), request.visibilityToCustomers());
+        return categoryService.create(request.name(), request.slaHours(), request.defaultPriority(), request.visibilityToCustomers());
     }
 
     @PutMapping("/categories/{categoryId}")
     public Category updateCategory(@PathVariable Long categoryId, @Valid @RequestBody CategoryRequest request) {
-        return categoryService.update(categoryId, request.slaHours(), request.visibilityToCustomers(), true);
+        return categoryService.update(categoryId, request.slaHours(), request.defaultPriority(), request.visibilityToCustomers(), true);
     }
 
     @PostMapping("/users/{agentId}/categories")

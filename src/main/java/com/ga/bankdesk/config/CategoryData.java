@@ -1,6 +1,7 @@
 package com.ga.bankdesk.config;
 
 
+import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +16,11 @@ import static org.hibernate.engine.internal.Versioning.seed;
 public class CategoryData implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
 
-    private void seed(String name, int slaHours, boolean visibilityToCustomers){
+    private void seed(String name, int slaHours, TicketPriority defaultPriority, boolean visibilityToCustomers){
         Category category = new Category();
         category.setName(name);
         category.setSlaHours(slaHours);
+        category.setDefaultPriority(defaultPriority);
         category.setVisibilityToCustomers(visibilityToCustomers);
         category.setActive(true);
         categoryRepository.save(category);
@@ -30,12 +32,12 @@ public class CategoryData implements CommandLineRunner {
         if(categoryRepository.count() > 0){
             return;
         }
-        seed("AML", 48, false);
-        seed("FRAUD", 4, false);
-        seed("IT_SECURITY", 8, false);
-        seed("KYC_REVIEW", 72, true);
-        seed("CARD_DISPUTE", 72, true);
-        seed("LOAN_ACCOUNT", 72, true);
-        seed("COMPLAINT", 96, true);
+        seed("AML", 48, TicketPriority.HIGH, false);
+        seed("FRAUD", 4, TicketPriority.CRITICAL, false);
+        seed("IT_SECURITY", 8, TicketPriority.HIGH, false);
+        seed("KYC_REVIEW", 72, TicketPriority.MEDIUM, true);
+        seed("CARD_DISPUTE", 72, TicketPriority.MEDIUM, true);
+        seed("LOAN_ACCOUNT", 72, TicketPriority.MEDIUM, true);
+        seed("COMPLAINT", 96, TicketPriority.LOW, true);
     }
 }
