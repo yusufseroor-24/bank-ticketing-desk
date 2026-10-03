@@ -42,4 +42,13 @@ public class AdminService {
         User save = userRepository.save(user);
         return userMapper.toRespond(save);
     }
+
+    public UserResponse reactivateUser(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
+
+        user.setStatus(UserStatus.ACTIVE);
+        User save = userRepository.save(user);
+        return userMapper.toRespond(save);
+    }
 }

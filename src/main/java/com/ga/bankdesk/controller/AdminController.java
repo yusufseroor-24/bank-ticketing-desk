@@ -32,4 +32,9 @@ public class AdminController {
     public UserResponse deactivateUser(@PathVariable Long userId){
         return adminService.deactivateUser(userId);
     }
+
+    @PutMapping("/{userId}/reactivate")
+    public UserResponse reactivateUser(@PathVariable Long userId){
+        return adminService.reactivateUser(userId);
+    }
 }
