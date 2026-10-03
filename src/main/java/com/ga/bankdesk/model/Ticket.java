@@ -23,7 +23,7 @@ public class Ticket {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT") //unlimited text length
     private String description;
 
     @Enumerated(EnumType.STRING)
