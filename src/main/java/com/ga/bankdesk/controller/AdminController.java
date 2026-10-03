@@ -1,5 +1,6 @@
 package com.ga.bankdesk.controller;
 
+import com.ga.bankdesk.dto.AssignCategoriesRequest;
 import com.ga.bankdesk.dto.CategoryRequest;
 import com.ga.bankdesk.dto.ChangeRoleRequest;
 import com.ga.bankdesk.dto.UserResponse;
@@ -8,6 +9,7 @@ import com.ga.bankdesk.service.AdminService;
 import com.ga.bankdesk.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,5 +52,11 @@ public class AdminController {
     @PutMapping("/categories/{categoryId}")
     public Category updateCategory(@PathVariable Long categoryId, @Valid @RequestBody CategoryRequest request) {
         return categoryService.update(categoryId, request.slaHours(), request.visibilityToCustomers(), true);
+    }
+
+    @PostMapping("/users/{agentId}/categories")
+    public ResponseEntity<Void> assignCategory(@PathVariable Long agentId, @Valid @RequestBody AssignCategoriesRequest request){
+        adminService.assignCategoryToAgent(agentId, request.categoryIds());
+        return ResponseEntity.noContent().build(); //updates but nothing to hand back (204, No content)
     }
 }
