@@ -107,4 +107,25 @@ public class CategoryTicketWorkflow {
                     EnumSet.of(TicketStatus.CLOSED)
             )
     );
+
+    //is the transition allowed?
+    public boolean isValidTransition(String category, TicketStatus from, TicketStatus to){
+        Map<TicketStatus, Set<TicketStatus>> transitions = transitionByCategory.get(category);
+        if(transitions == null){
+            return false; //unknown category
+        }
+        Set<TicketStatus> allowedNextStatus = transitions.get(from);
+        return allowedNextStatus != null && allowedNextStatus.contains(to);
+    }
+
+    //what transition is allowed?
+    public Set<TicketStatus> getAllowedNextStatus(String category, TicketStatus from){
+        Map<TicketStatus, Set<TicketStatus>> transitions = transitionByCategory.get(category);
+        if(transitions == null){
+            return Set.of();
+        }
+        return transitions.getOrDefault(from, Set.of());
+
+    }
+
 }
