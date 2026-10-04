@@ -13,6 +13,7 @@ public record TicketCreationResponse(
         String categoryName,
         SourceOfTicket source,
         String customerEmail,
+        String createdByEmail,
         String assignedToEmail,
         TicketPriority priority,
         TicketStatus status,
