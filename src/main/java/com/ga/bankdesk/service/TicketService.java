@@ -112,6 +112,10 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
 
+        if(ticket.getStatus() == TicketStatus.CLOSED){
+            throw new BusinessRuleException("This ticket is closed and can't be modified");
+        }
+
         String categoryName = ticket.getCategory().getName();
         TicketStatus currentTicketStatus = ticket.getStatus();
 
