@@ -132,4 +132,18 @@ public class TicketService {
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
     }
+
+    public TicketCreationResponse reopenTicket(Long ticketId, String reason){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+        if(ticket.getStatus() != TicketStatus.CLOSED){
+            throw new BusinessRuleException("Only closed tickets can be reopened");
+        }
+        if(reason == null || reason.isBlank()){
+            throw new BusinessRuleException("A reason is required to reopen a ticket");
+        }
+        ticket.setStatus(TicketStatus.OPEN);
+        Ticket save = ticketRepository.save(ticket);
+        return ticketMapper.toResponse(save);
+    }
 }

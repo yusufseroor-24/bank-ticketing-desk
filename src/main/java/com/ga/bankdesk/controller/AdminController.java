@@ -1,12 +1,10 @@
 package com.ga.bankdesk.controller;
 
-import com.ga.bankdesk.dto.AssignCategoriesRequest;
-import com.ga.bankdesk.dto.CategoryRequest;
-import com.ga.bankdesk.dto.ChangeRoleRequest;
-import com.ga.bankdesk.dto.UserResponse;
+import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.service.AdminService;
 import com.ga.bankdesk.service.CategoryService;
+import com.ga.bankdesk.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +21,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final CategoryService categoryService;
+    private final TicketService ticketService;
 
     @GetMapping("/users")
     public List<UserResponse> listAllUsers(){
@@ -59,4 +58,10 @@ public class AdminController {
         adminService.assignCategoryToAgent(agentId, request.categoryIds());
         return ResponseEntity.noContent().build(); //updates but nothing to hand back (204, No content)
     }
+
+    @PutMapping("/tickets/{ticketId}/reopen")
+    public TicketCreationResponse reopenTicket(@PathVariable Long ticketId, @Valid @RequestBody ReopenTicketRequest request){
+        return ticketService.reopenTicket(ticketId, request.reason());
+    }
+
 }
