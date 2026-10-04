@@ -2,6 +2,7 @@ package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
+import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.TicketService;
 import jakarta.validation.Valid;
@@ -11,10 +12,9 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -28,5 +28,16 @@ public class TicketController {
                                                                @Valid @RequestBody CreateTicketRequest request){
         TicketCreationResponse response = ticketService.createTicket(userDetails.getUser(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{ticketId}")
+    public TicketCreationResponse getTicketById(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                                @PathVariable Long ticketId){
+        return ticketService.getTicketById(userDetails.getUser(), ticketId);
+    }
+
+    @GetMapping("/my-tickets")
+    public List<TicketCreationResponse> myTickets(@AuthenticationPrincipal AppUserDetails userDetails){
+        return ticketService.myTickets(userDetails.getUser());
     }
 }
