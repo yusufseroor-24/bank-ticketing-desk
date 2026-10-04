@@ -2,6 +2,7 @@ package com.ga.bankdesk.service;
 
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
+import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.enums.SourceOfTicket;
 import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.enums.TicketStatus;
@@ -26,8 +27,8 @@ public class TicketService {
     private final TicketMapper ticketMapper;
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
-        Category category = categoryRepository.findById(request.CategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.CategoryId() + " is not found"));
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.categoryId() + " is not found"));
         Ticket ticket = new Ticket();
         ticket.setTitle(request.title());
         ticket.setDescription(request.description());
@@ -50,5 +51,18 @@ public class TicketService {
             case MEDIUM -> 72;
             case LOW -> 120;
         };
+    }
+
+    public TicketCreationResponse getTicketById(User user, Long ticketId){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+        if(user.getRole() == Role.CUSTOMER){
+            boolean isOwner = ticket.getCustomer() !=null && ticket.getCustomer().getId().equals(user.getId());
+            if(!isOwner){
+                //to avoid revealing that it exists
+                throw new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found");
+            }
+        }
+        return ticketMapper.toResponse(ticket);
     }
 }
