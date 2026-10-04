@@ -53,8 +53,8 @@ public class TicketController {
     }
 
     @PutMapping("/{ticketId}/status")
-    @PreAuthorize(("hasAnyRole('AGENT', 'ADMIN'"))
+    @PreAuthorize(("hasAnyRole('AGENT', 'ADMIN')"))
     public TicketCreationResponse changeStatus(@PathVariable Long ticketId, @Valid @RequestBody ChangeTicketStatusRequest request){
-        return ticketService.changeStatus(ticketId, request.newStatus());
+        return ticketService.changeStatus(ticketId, request.newStatus(), request.note());
     }
 }

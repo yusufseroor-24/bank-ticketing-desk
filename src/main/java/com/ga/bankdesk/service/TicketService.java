@@ -106,7 +106,9 @@ public class TicketService {
         return ticketMapper.toResponse(save);
     }
 
-    public TicketCreationResponse changeStatus(Long ticketId, TicketStatus newStatus){
+    private static final Set<TicketStatus> REQUIRED_NOTE = Set.of(TicketStatus.ESCALATED, TicketStatus.RESOLVED);
+
+    public TicketCreationResponse changeStatus(Long ticketId, TicketStatus newStatus, String note){
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
 
@@ -117,6 +119,10 @@ public class TicketService {
             Set<TicketStatus> allowed = categoryTicketWorkflow.getAllowedNextStatus(categoryName, currentTicketStatus);
             throw new BusinessRuleException("Cannot change status from " + currentTicketStatus + " to " + newStatus + ". " +
                     "Allowed next Statuses: " + allowed);
+        }
+
+        if(REQUIRED_NOTE.contains(newStatus) && (note == null || note.isBlank())){ //check empty string too
+            throw new BusinessRuleException("A note is required to move this ticket to " + newStatus);
         }
         ticket.setStatus(newStatus);
         Ticket save = ticketRepository.save(ticket);
