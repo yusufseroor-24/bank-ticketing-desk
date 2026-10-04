@@ -19,15 +19,9 @@ public class Category {
     private String name;
 
     @Column(nullable = false)
-    private int slaHours;
-
-    @Column(nullable = false)
     private boolean visibilityToCustomers;
 
     @Column(nullable = false)
     private boolean active = true;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TicketPriority defaultPriority;
 }

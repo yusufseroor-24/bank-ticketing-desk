@@ -16,11 +16,9 @@ import static org.hibernate.engine.internal.Versioning.seed;
 public class CategoryData implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
 
-    private void seed(String name, int slaHours, TicketPriority defaultPriority, boolean visibilityToCustomers){
+    private void seed(String name , boolean visibilityToCustomers){
         Category category = new Category();
         category.setName(name);
-        category.setSlaHours(slaHours);
-        category.setDefaultPriority(defaultPriority);
         category.setVisibilityToCustomers(visibilityToCustomers);
         category.setActive(true);
         categoryRepository.save(category);
@@ -32,12 +30,12 @@ public class CategoryData implements CommandLineRunner {
         if(categoryRepository.count() > 0){
             return;
         }
-        seed("AML", 48, TicketPriority.HIGH, false);
-        seed("FRAUD", 4, TicketPriority.CRITICAL, false);
-        seed("IT_SECURITY", 8, TicketPriority.HIGH, false);
-        seed("KYC_REVIEW", 72, TicketPriority.MEDIUM, true);
-        seed("CARD_DISPUTE", 72, TicketPriority.MEDIUM, true);
-        seed("LOAN_ACCOUNT", 72, TicketPriority.MEDIUM, true);
-        seed("COMPLAINT", 96, TicketPriority.LOW, true);
+        seed("AML", false);
+        seed("FRAUD", false);
+        seed("IT_SECURITY", false);
+        seed("KYC_REVIEW" , true);
+        seed("CARD_DISPUTE" , true);
+        seed("LOAN_ACCOUNT" , true);
+        seed("COMPLAINT", true);
     }
 }

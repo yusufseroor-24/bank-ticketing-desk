@@ -14,7 +14,7 @@ public class TicketMapper {
                 ticket.getDescription(),
                 ticket.getCategory().getName(),
                 ticket.getSource(),
-                ticket.getCustomer() !=null ? ticket.getCustomer().getEmail() : null,
+                ticket.getCustomer() !=null ? ticket.getCustomer().getEmail() : null, //system tickets dont have customer
                 ticket.getAssignedTo() !=null ? ticket.getAssignedTo().getEmail() : null,
                 ticket.getPriority(),
                 ticket.getStatus(),
