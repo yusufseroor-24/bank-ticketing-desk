@@ -82,7 +82,7 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.categoryId() + " is not found"));
 
         User customer = null; //optional
-        if(request.categoryId() != null){
+        if(request.customerId() != null){
             customer = userRepository.findById(request.customerId())
                     .orElseThrow(() -> new ResourceNotFoundException("Customer with ID " + request.customerId() + " is not found"));
         }
