@@ -7,6 +7,7 @@ import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.enums.SourceOfTicket;
 import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.enums.TicketStatus;
+import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.TicketMapper;
 import com.ga.bankdesk.model.Category;
@@ -15,11 +16,13 @@ import com.ga.bankdesk.model.User;
 import com.ga.bankdesk.repository.CategoryRepository;
 import com.ga.bankdesk.repository.TicketRepository;
 import com.ga.bankdesk.repository.UserRepository;
+import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -29,6 +32,7 @@ public class TicketService {
     private final CategoryRepository categoryRepository;
     private final TicketMapper ticketMapper;
     private final UserRepository userRepository;
+    private final CategoryTicketWorkflow categoryTicketWorkflow;
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
@@ -98,6 +102,23 @@ public class TicketService {
         ticket.setPriority(request.priority());
         ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(request.priority())));
 
+        Ticket save = ticketRepository.save(ticket);
+        return ticketMapper.toResponse(save);
+    }
+
+    public TicketCreationResponse changeStatus(Long ticketId, TicketStatus newStatus){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+
+        String categoryName = ticket.getCategory().getName();
+        TicketStatus currentTicketStatus = ticket.getStatus();
+
+        if(!categoryTicketWorkflow.isValidTransition(categoryName, currentTicketStatus, newStatus)){
+            Set<TicketStatus> allowed = categoryTicketWorkflow.getAllowedNextStatus(categoryName, currentTicketStatus);
+            throw new BusinessRuleException("Cannot change status from " + currentTicketStatus + " to " + newStatus + ". " +
+                    "Allowed next Statuses: " + allowed);
+        }
+        ticket.setStatus(newStatus);
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
     }
