@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -64,5 +65,12 @@ public class TicketService {
             }
         }
         return ticketMapper.toResponse(ticket);
+    }
+
+    public List<TicketCreationResponse> myTickets(User user){
+        List<Ticket> tickets = ticketRepository.findByCustomerId(user.getId());
+        return tickets.stream()
+                .map(ticketMapper::toResponse)
+                .toList();
     }
 }
