@@ -1,5 +1,6 @@
 package com.ga.bankdesk.controller;
 
+import com.ga.bankdesk.dto.CreateInternalTicketRequest;
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
 import com.ga.bankdesk.model.Ticket;
@@ -39,5 +40,12 @@ public class TicketController {
     @GetMapping("/my-tickets")
     public List<TicketCreationResponse> myTickets(@AuthenticationPrincipal AppUserDetails userDetails){
         return ticketService.myTickets(userDetails.getUser());
+    }
+
+    @PostMapping("/create/internal")
+    public ResponseEntity<TicketCreationResponse> createInternalTicket(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                                       @Valid @RequestBody CreateInternalTicketRequest request){
+        TicketCreationResponse response = ticketService.internalTicketCreation(userDetails.getUser(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

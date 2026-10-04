@@ -1,5 +1,6 @@
 package com.ga.bankdesk.service;
 
+import com.ga.bankdesk.dto.CreateInternalTicketRequest;
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
 import com.ga.bankdesk.enums.Role;
@@ -13,6 +14,7 @@ import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.model.User;
 import com.ga.bankdesk.repository.CategoryRepository;
 import com.ga.bankdesk.repository.TicketRepository;
+import com.ga.bankdesk.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final CategoryRepository categoryRepository;
     private final TicketMapper ticketMapper;
+    private final UserRepository userRepository;
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
@@ -72,5 +75,30 @@ public class TicketService {
         return tickets.stream()
                 .map(ticketMapper::toResponse)
                 .toList();
+    }
+
+    public TicketCreationResponse internalTicketCreation(User agent, CreateInternalTicketRequest request){
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.categoryId() + " is not found"));
+
+        User customer = null; //optional
+        if(request.categoryId() != null){
+            customer = userRepository.findById(request.customerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Customer with ID " + request.customerId() + " is not found"));
+        }
+
+        Ticket ticket = new Ticket();
+        ticket.setTitle(request.title());
+        ticket.setDescription(request.description());
+        ticket.setCategory(category);
+        ticket.setCustomer(customer);
+        ticket.setCreatedBy(agent);
+        ticket.setSource(SourceOfTicket.INTERNAL);
+        ticket.setStatus(TicketStatus.OPEN);
+        ticket.setPriority(request.priority());
+        ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(request.priority())));
+
+        Ticket save = ticketRepository.save(ticket);
+        return ticketMapper.toResponse(save);
     }
 }
