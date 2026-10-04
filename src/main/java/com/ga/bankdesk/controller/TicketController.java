@@ -1,5 +1,6 @@
 package com.ga.bankdesk.controller;
 
+import com.ga.bankdesk.dto.ChangeTicketStatusRequest;
 import com.ga.bankdesk.dto.CreateInternalTicketRequest;
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
@@ -49,5 +50,11 @@ public class TicketController {
                                                                        @Valid @RequestBody CreateInternalTicketRequest request){
         TicketCreationResponse response = ticketService.internalTicketCreation(userDetails.getUser(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{ticketId}/status")
+    @PreAuthorize(("hasAnyRole('AGENT', 'ADMIN'"))
+    public TicketCreationResponse changeStatus(@PathVariable Long ticketId, @Valid @RequestBody ChangeTicketStatusRequest request){
+        return ticketService.changeStatus(ticketId, request.newStatus());
     }
 }
