@@ -60,4 +60,10 @@ public class TicketController {
     public TicketCreationResponse claimTicket(@PathVariable Long ticketId, @AuthenticationPrincipal AppUserDetails userDetails){
         return ticketService.claimTicket(userDetails.getUser(), ticketId);
     }
+
+    @PutMapping("/{ticketId}/escalate")
+    @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
+    public TicketCreationResponse escalateTicket(@PathVariable Long ticketId, @Valid @RequestBody EscalateTicketRequest request){
+        return  ticketService.escalateTicket(ticketId, request.note());
+    }
 }
