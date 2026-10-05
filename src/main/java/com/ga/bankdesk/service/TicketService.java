@@ -10,14 +10,12 @@ import com.ga.bankdesk.exception.ConflictException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.CommentMapper;
 import com.ga.bankdesk.mapper.TicketMapper;
-import com.ga.bankdesk.model.Category;
-import com.ga.bankdesk.model.Ticket;
-import com.ga.bankdesk.model.TicketComments;
-import com.ga.bankdesk.model.User;
+import com.ga.bankdesk.model.*;
 import com.ga.bankdesk.repository.*;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +33,8 @@ public class TicketService {
     private final AgentCategoryRepository agentCategoryRepository;
     private final TicketCommentsRepository ticketCommentsRepository;
     private final CommentMapper commentMapper;
+    private final FileStorageService fileStorageService;
+    private final TicketAttachmentRepository ticketAttachmentRepository;
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
@@ -251,7 +251,26 @@ public class TicketService {
                 throw  new ResourceNotFoundException("Ticket with ID " + ticket.getId() + " was not found");
             }
         }
+    }
 
+    public List<String> addAttachments(User currentUser, Long ticketId, List<MultipartFile> files){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+
+        checkCanUerAccessTicket(currentUser, ticket);
+
+        List<String> saved = fileStorageService.storeAll(files);
+
+        for(int i=0; i < files.size(); i++){
+            TicketAttachments attachment = new TicketAttachments();
+            attachment.setTicket(ticket);
+            attachment.setUploadedBy(currentUser);
+            attachment.setFileName(saved.get(i));
+            attachment.setFilePath(saved.get(i));
+            attachment.setContentType(files.get(i).getContentType());
+            ticketAttachmentRepository.save(attachment);
+        }
+        return saved;
     }
 
 
