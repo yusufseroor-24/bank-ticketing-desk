@@ -8,11 +8,13 @@ import com.ga.bankdesk.enums.SourceOfTicket;
 import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.enums.TicketStatus;
 import com.ga.bankdesk.exception.BusinessRuleException;
+import com.ga.bankdesk.exception.ConflictException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.TicketMapper;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.model.User;
+import com.ga.bankdesk.repository.AgentCategoryRepository;
 import com.ga.bankdesk.repository.CategoryRepository;
 import com.ga.bankdesk.repository.TicketRepository;
 import com.ga.bankdesk.repository.UserRepository;
@@ -33,6 +35,7 @@ public class TicketService {
     private final TicketMapper ticketMapper;
     private final UserRepository userRepository;
     private final CategoryTicketWorkflow categoryTicketWorkflow;
+    private final AgentCategoryRepository agentCategoryRepository;
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
@@ -143,6 +146,29 @@ public class TicketService {
             throw new BusinessRuleException("A reason is required to reopen a ticket");
         }
         ticket.setStatus(TicketStatus.OPEN);
+        Ticket save = ticketRepository.save(ticket);
+        return ticketMapper.toResponse(save);
+    }
+
+    public TicketCreationResponse claimTicket(User agent, Long ticketId){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+
+        //checks if the agent is authorized to view the category tickets / claim
+        boolean allowedCategory = agentCategoryRepository.existsByAgentIdAndCategoryId(agent.getId(), ticket.getCategory().getId());
+        if(!allowedCategory){
+            throw new BusinessRuleException("You cannot view this category tickets, out of scope category");
+        }
+        //check if it's already assigned by another agent (and prevent double claim)
+        if(ticket.getAssignedTo() != null){
+            throw new ConflictException("This ticket has already been assigned to an agent");
+        }
+        //check if its already assigned and not opened
+        if(!categoryTicketWorkflow.isValidTransition(ticket.getCategory().getName(), ticket.getStatus(), TicketStatus.ASSIGNED)){
+            throw new BusinessRuleException("This ticket can't be claimed from its current status");
+        }
+        ticket.setAssignedTo(agent);
+        ticket.setStatus(TicketStatus.ASSIGNED);
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
     }
