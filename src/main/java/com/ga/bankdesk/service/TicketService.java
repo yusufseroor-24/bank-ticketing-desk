@@ -12,8 +12,12 @@ import com.ga.bankdesk.mapper.CommentMapper;
 import com.ga.bankdesk.mapper.TicketMapper;
 import com.ga.bankdesk.model.*;
 import com.ga.bankdesk.repository.*;
+import com.ga.bankdesk.specification.TicketSpecifications;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -287,6 +291,18 @@ public class TicketService {
 
         checkCanUerAccessTicket(currentUser, attachment.getTicket());
         ticketAttachmentRepository.delete(attachment);
+    }
+
+    public Page<TicketCreationResponse> searchTickets(TicketStatus status, Long categoryId, TicketPriority priority,
+                                                      Long assignedToId, Pageable pageable){
+        Specification<Ticket> spec = Specification
+                .where(TicketSpecifications.hasStatus(status))
+                .and(TicketSpecifications.hasCategory(categoryId))
+                .and(TicketSpecifications.hasPriority(priority))
+                .and(TicketSpecifications.isAssignedTo(assignedToId));
+
+        return ticketRepository.findAll(spec, pageable).map(ticketMapper::toResponse);
+
     }
 
 
