@@ -1,5 +1,6 @@
 package com.ga.bankdesk.service;
 
+import com.ga.bankdesk.dto.CommentResponse;
 import com.ga.bankdesk.dto.CreateInternalTicketRequest;
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
@@ -7,14 +8,13 @@ import com.ga.bankdesk.enums.*;
 import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.exception.ConflictException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
+import com.ga.bankdesk.mapper.CommentMapper;
 import com.ga.bankdesk.mapper.TicketMapper;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.model.Ticket;
+import com.ga.bankdesk.model.TicketComments;
 import com.ga.bankdesk.model.User;
-import com.ga.bankdesk.repository.AgentCategoryRepository;
-import com.ga.bankdesk.repository.CategoryRepository;
-import com.ga.bankdesk.repository.TicketRepository;
-import com.ga.bankdesk.repository.UserRepository;
+import com.ga.bankdesk.repository.*;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +33,8 @@ public class TicketService {
     private final UserRepository userRepository;
     private final CategoryTicketWorkflow categoryTicketWorkflow;
     private final AgentCategoryRepository agentCategoryRepository;
+    private final TicketCommentsRepository ticketCommentsRepository;
+    private final CommentMapper commentMapper;
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
@@ -213,6 +215,43 @@ public class TicketService {
         ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(TicketPriority.HIGH)));
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
+    }
+
+    public CommentResponse addComment(User currentUser, Long ticketId, String commentContent){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+        checkCanUerAccessTicket(currentUser, ticket);
+        if(ticket.getStatus() == TicketStatus.CLOSED){
+            throw new BusinessRuleException("Cannot comment on a closed ticket");
+        }
+        TicketComments comment = new TicketComments();
+        comment.setTicket(ticket);
+        comment.setAuthor(currentUser);
+        comment.setCommentContent(commentContent);
+
+        TicketComments save = ticketCommentsRepository.save(comment);
+        return commentMapper.toResponse(save);
+    }
+
+    public List<CommentResponse> listComments(User currentUser, Long ticketId){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+
+        checkCanUerAccessTicket(currentUser, ticket);
+        return ticketCommentsRepository.findByTicketIdOrderByCreatedAtAsc(ticketId).stream()
+                .map(commentMapper::toResponse)
+                .toList();
+    }
+
+    //permission check: customers can only edit their own ticket but staff can touch any
+    private void checkCanUerAccessTicket(User currentUser, Ticket ticket){
+        if(currentUser.getRole() == Role.CUSTOMER){
+            boolean isOwner = ticket.getCustomer() != null && ticket.getCustomer().getId().equals(currentUser.getId());
+            if(!isOwner){
+                throw  new ResourceNotFoundException("Ticket with ID " + ticket.getId() + " was not found");
+            }
+        }
+
     }
 
 
