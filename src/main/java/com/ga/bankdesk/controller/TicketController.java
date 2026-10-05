@@ -1,20 +1,24 @@
 package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.dto.*;
-import com.ga.bankdesk.model.Ticket;
+import com.ga.bankdesk.model.TicketAttachments;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -86,5 +90,24 @@ public class TicketController {
                                           @PathVariable Long ticketId,
                                           @RequestParam("file") List<MultipartFile> file){
         return ticketService.addAttachments(userDetails.getUser(), ticketId, file);
+    }
+
+    @GetMapping("/attachments/{attachmentsId}")
+    public ResponseEntity<Resource> downloadAttachment(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                       @PathVariable Long attachmentId) throws IOException {
+        TicketAttachments attachment = ticketService.getAttachment(userDetails.getUser(), attachmentId);
+        Path path = Paths.get("uploads").resolve(attachment.getFilePath());
+        Resource resource = new UrlResource(path.toUri());
+
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(attachment.getContentType()))
+                .body(resource);
+
+    }
+
+    @DeleteMapping("/attachments/{attachmentsId}")
+    public ResponseEntity<Void> deleteAttachment(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                 @PathVariable Long attachmentId){
+        ticketService.deleteAttachment(userDetails.getUser(), attachmentId);
+        return ResponseEntity.noContent().build();
     }
 }
