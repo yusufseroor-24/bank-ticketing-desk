@@ -3,10 +3,7 @@ package com.ga.bankdesk.service;
 import com.ga.bankdesk.dto.CreateInternalTicketRequest;
 import com.ga.bankdesk.dto.CreateTicketRequest;
 import com.ga.bankdesk.dto.TicketCreationResponse;
-import com.ga.bankdesk.enums.Role;
-import com.ga.bankdesk.enums.SourceOfTicket;
-import com.ga.bankdesk.enums.TicketPriority;
-import com.ga.bankdesk.enums.TicketStatus;
+import com.ga.bankdesk.enums.*;
 import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.exception.ConflictException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
@@ -169,6 +166,33 @@ public class TicketService {
         }
         ticket.setAssignedTo(agent);
         ticket.setStatus(TicketStatus.ASSIGNED);
+        Ticket save = ticketRepository.save(ticket);
+        return ticketMapper.toResponse(save);
+    }
+
+    public TicketCreationResponse reassignTicket(Long ticketId, Long newAgentId){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+
+        User agent = userRepository.findById(newAgentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent with ID " + newAgentId + " is not found"));
+
+        if(agent.getRole() !=Role.AGENT){
+            throw new BusinessRuleException("The ticket can only be assigned to a user agent role");
+        }
+        if(agent.getStatus() != UserStatus.ACTIVE){
+            throw new BusinessRuleException("The ticket cannot be assigned to an inactive agent");
+        }
+        //checks if the agent is authorized to view the category tickets / claim
+        boolean allowedCategory = agentCategoryRepository.existsByAgentIdAndCategoryId(agent.getId(), ticket.getCategory().getId());
+        if(!allowedCategory){
+            throw new BusinessRuleException("The agent cannot view this category tickets, out of scope category");
+        }
+
+        ticket.setAssignedTo(agent);
+        if(ticket.getStatus() == TicketStatus.OPEN){
+            ticket.setStatus(TicketStatus.ASSIGNED);
+        }
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
     }
