@@ -35,6 +35,9 @@ public class User {
     @Column(nullable = false)
     private boolean emailVerified = false;
 
+    @Column
+    private String profilePicPath;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

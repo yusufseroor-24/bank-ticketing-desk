@@ -10,6 +10,7 @@ public record UserResponse(
         Long id,
         String email,
         String fullName,
+        String profilePicPath,
         Role role,
         UserStatus status,
         boolean emailVerified,
