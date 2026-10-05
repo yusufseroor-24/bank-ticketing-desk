@@ -92,7 +92,7 @@ public class TicketController {
         return ticketService.addAttachments(userDetails.getUser(), ticketId, file);
     }
 
-    @GetMapping("/attachments/{attachmentsId}")
+    @GetMapping("/attachments/{attachmentId}")
     public ResponseEntity<Resource> downloadAttachment(@AuthenticationPrincipal AppUserDetails userDetails,
                                                        @PathVariable Long attachmentId) throws IOException {
         TicketAttachments attachment = ticketService.getAttachment(userDetails.getUser(), attachmentId);
@@ -104,7 +104,7 @@ public class TicketController {
 
     }
 
-    @DeleteMapping("/attachments/{attachmentsId}")
+    @DeleteMapping("/attachments/{attachmentId}")
     public ResponseEntity<Void> deleteAttachment(@AuthenticationPrincipal AppUserDetails userDetails,
                                                  @PathVariable Long attachmentId){
         ticketService.deleteAttachment(userDetails.getUser(), attachmentId);
