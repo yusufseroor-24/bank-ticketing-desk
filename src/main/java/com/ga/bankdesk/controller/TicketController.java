@@ -60,10 +60,4 @@ public class TicketController {
     public TicketCreationResponse claimTicket(@PathVariable Long ticketId, @AuthenticationPrincipal AppUserDetails userDetails){
         return ticketService.claimTicket(userDetails.getUser(), ticketId);
     }
-
-    @PutMapping("/{tickerId}/reassign")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public TicketCreationResponse reassignTicket(@PathVariable Long ticketId, @Valid @RequestBody ReassignTicketRequest request){
-        return ticketService.reassignTicket(ticketId, request.agentId());
-    }
 }

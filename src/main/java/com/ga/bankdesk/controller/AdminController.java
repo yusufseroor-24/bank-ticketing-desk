@@ -64,4 +64,9 @@ public class AdminController {
         return ticketService.reopenTicket(ticketId, request.reason());
     }
 
+    @PutMapping("/{tickerId}/reassign")
+    public TicketCreationResponse reassignTicket(@PathVariable Long ticketId, @Valid @RequestBody ReassignTicketRequest request){
+        return ticketService.reassignTicket(ticketId, request.agentId());
+    }
+
 }
