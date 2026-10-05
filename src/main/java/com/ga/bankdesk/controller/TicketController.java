@@ -1,9 +1,6 @@
 package com.ga.bankdesk.controller;
 
-import com.ga.bankdesk.dto.ChangeTicketStatusRequest;
-import com.ga.bankdesk.dto.CreateInternalTicketRequest;
-import com.ga.bankdesk.dto.CreateTicketRequest;
-import com.ga.bankdesk.dto.TicketCreationResponse;
+import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.TicketService;
@@ -62,5 +59,11 @@ public class TicketController {
     @PreAuthorize("hasAnyRole('AGENT')")
     public TicketCreationResponse claimTicket(@PathVariable Long ticketId, @AuthenticationPrincipal AppUserDetails userDetails){
         return ticketService.claimTicket(userDetails.getUser(), ticketId);
+    }
+
+    @PutMapping("/{tickerId}/reassign")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public TicketCreationResponse reassignTicket(@PathVariable Long ticketId, @Valid @RequestBody ReassignTicketRequest request){
+        return ticketService.reassignTicket(ticketId, request.agentId());
     }
 }
