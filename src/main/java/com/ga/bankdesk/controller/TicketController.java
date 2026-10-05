@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -78,5 +79,12 @@ public class TicketController {
     public List<CommentResponse> listComments(@AuthenticationPrincipal AppUserDetails userDetails,
                                               @PathVariable Long ticketId){
         return ticketService.listComments(userDetails.getUser(), ticketId);
+    }
+
+    @PostMapping("/{ticketId}/attachments")
+    public List<String> uploadAttachments(@AuthenticationPrincipal AppUserDetails userDetails,
+                                          @PathVariable Long ticketId,
+                                          @RequestParam("file") List<MultipartFile> file){
+        return ticketService.addAttachments(userDetails.getUser(), ticketId, file);
     }
 }

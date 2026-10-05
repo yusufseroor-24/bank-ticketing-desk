@@ -273,5 +273,21 @@ public class TicketService {
         return saved;
     }
 
+    public TicketAttachments getAttachment(User currentUser, Long attachmentId){
+        TicketAttachments attachment = ticketAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment with ID " + attachmentId + " is not found"));
+
+        checkCanUerAccessTicket(currentUser, attachment.getTicket());
+        return attachment;
+    }
+
+    public void deleteAttachment(User currentUser, Long attachmentId){
+        TicketAttachments attachment = ticketAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment with ID " + attachmentId + " is not found"));
+
+        checkCanUerAccessTicket(currentUser, attachment.getTicket());
+        ticketAttachmentRepository.delete(attachment);
+    }
+
 
 }
