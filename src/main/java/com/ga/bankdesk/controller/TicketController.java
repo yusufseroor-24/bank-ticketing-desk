@@ -66,4 +66,17 @@ public class TicketController {
     public TicketCreationResponse escalateTicket(@PathVariable Long ticketId, @Valid @RequestBody EscalateTicketRequest request){
         return  ticketService.escalateTicket(ticketId, request.note());
     }
+
+    @PostMapping("/{ticketId}/comments")
+    public CommentResponse addComment(@AuthenticationPrincipal AppUserDetails userDetails,
+                                      @PathVariable Long ticketId,
+                                      @Valid @RequestBody AddCommentRequest request){
+        return ticketService.addComment(userDetails.getUser(), ticketId, request.commentContent());
+    }
+
+    @GetMapping("/{ticketId}/comments")
+    public List<CommentResponse> listComments(@AuthenticationPrincipal AppUserDetails userDetails,
+                                              @PathVariable Long ticketId){
+        return ticketService.listComments(userDetails.getUser(), ticketId);
+    }
 }
