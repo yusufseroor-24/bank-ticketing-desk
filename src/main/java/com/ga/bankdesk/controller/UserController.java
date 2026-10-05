@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @RequestMapping("/api/users")
@@ -41,5 +42,11 @@ public class UserController {
                                                  @Valid @RequestBody ChangePassword request){
         authService.changePassword(userDetails.getUser(), request.currentPassword(), request.newPassword());
         return ResponseEntity.ok("Your password has been changed successfully");
+    }
+
+    @PostMapping("/me/profile-pic")
+    public UserResponse uploadProfilePic(@AuthenticationPrincipal AppUserDetails userDetails,
+                                         @RequestParam("file") MultipartFile file){
+        return userService.uploadProfilePic(userDetails.getUser(), file);
     }
 }
