@@ -57,4 +57,10 @@ public class TicketController {
     public TicketCreationResponse changeStatus(@PathVariable Long ticketId, @Valid @RequestBody ChangeTicketStatusRequest request){
         return ticketService.changeStatus(ticketId, request.newStatus(), request.note());
     }
+
+    @PutMapping("/{ticketId}/claim")
+    @PreAuthorize("hasAnyRole('AGENT')")
+    public TicketCreationResponse claimTicket(@PathVariable Long ticketId, @AuthenticationPrincipal AppUserDetails userDetails){
+        return ticketService.claimTicket(userDetails.getUser(), ticketId);
+    }
 }
