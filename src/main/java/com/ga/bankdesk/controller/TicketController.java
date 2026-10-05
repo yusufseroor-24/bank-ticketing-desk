@@ -1,6 +1,8 @@
 package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.dto.*;
+import com.ga.bankdesk.enums.TicketPriority;
+import com.ga.bankdesk.enums.TicketStatus;
 import com.ga.bankdesk.model.TicketAttachments;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.TicketService;
@@ -8,6 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -109,5 +113,15 @@ public class TicketController {
                                                  @PathVariable Long attachmentId){
         ticketService.deleteAttachment(userDetails.getUser(), attachmentId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public Page<TicketCreationResponse> searchTickets(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) TicketPriority priority,
+            @RequestParam(required = false) Long assignedToId,
+            Pageable pageable){
+        return ticketService.searchTickets(status, categoryId, priority, assignedToId, pageable);
     }
 }

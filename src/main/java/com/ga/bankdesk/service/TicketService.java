@@ -301,6 +301,7 @@ public class TicketService {
                 .and(TicketSpecifications.hasPriority(priority))
                 .and(TicketSpecifications.isAssignedTo(assignedToId));
 
+        //sends to repo to find and return all satisfied in spec and return with pagination info
         return ticketRepository.findAll(spec, pageable).map(ticketMapper::toResponse);
 
     }
