@@ -196,4 +196,24 @@ public class TicketService {
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
     }
+
+    //same workflow but changes priority to high and updated due time according to SLA priority
+    public TicketCreationResponse escalateTicket(Long ticketId, String note){
+        if(note == null || note.isBlank()){
+            throw new BusinessRuleException("A note is required to escalate a ticket");
+        }
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+        if (!categoryTicketWorkflow.isValidTransition(ticket.getCategory().getName(), ticket.getStatus(), TicketStatus.ESCALATED)){
+            throw new BusinessRuleException("This ticket cannot be escalated from its current status");
+        }
+
+        ticket.setStatus(TicketStatus.ESCALATED);
+        ticket.setPriority(TicketPriority.HIGH);
+        ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(TicketPriority.HIGH)));
+        Ticket save = ticketRepository.save(ticket);
+        return ticketMapper.toResponse(save);
+    }
+
+
 }
