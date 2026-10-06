@@ -310,13 +310,13 @@ public class TicketService {
 
     }
 
-    private void notifyTicketEvent(Ticket ticket, String eventType, String messgae){
+    private void notifyTicketEvent(Ticket ticket, String eventType, String message){
         if(ticket.getCustomer() == null){
             //internal tickets have no customer
             return;
         }
         TicketNotification notification = new TicketNotification(ticket.getId(), ticket.getTitle(), eventType,
-                messgae, LocalDateTime.now());
+                message, LocalDateTime.now());
         emitterRegistry.sendToUser(ticket.getCustomer().getId(), "ticket-update", notification);
     }
 
