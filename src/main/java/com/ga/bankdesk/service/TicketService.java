@@ -342,5 +342,20 @@ public class TicketService {
         ticketHistoryRepository.save(history);
     }
 
+    public List<HistoryResponse> getTicketHistory(User currentUser, Long ticketId){
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+        checkCanUerAccessTicket(currentUser, ticket);
+
+        return ticketHistoryRepository.findByTicketIdOrderByCreatedAtDesc(ticketId).stream()
+                .map(TH -> new HistoryResponse(
+                        TH.getAction(),
+                        TH.getChangedBy() !=null ? TH.getChangedBy().getEmail() : "SYSTEM",
+                        TH.getOldValue(),
+                        TH.getNewValue(),
+                        TH.getCreatedAt()))
+                .toList();
+    }
+
 
 }

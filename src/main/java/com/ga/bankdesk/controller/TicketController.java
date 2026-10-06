@@ -126,4 +126,10 @@ public class TicketController {
             Pageable pageable){
         return ticketService.searchTickets(status, categoryId, priority, assignedToId, pageable);
     }
+
+    @GetMapping("/{ticketId}/history")
+    public List<HistoryResponse> getHistory(@AuthenticationPrincipal AppUserDetails userDetails,
+                                            @PathVariable Long ticketId){
+        return ticketService.getTicketHistory(userDetails.getUser(), ticketId);
+    }
 }
