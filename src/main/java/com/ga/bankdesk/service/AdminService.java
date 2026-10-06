@@ -15,12 +15,14 @@ import com.ga.bankdesk.repository.AuditLogRepository;
 import com.ga.bankdesk.repository.CategoryRepository;
 import com.ga.bankdesk.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AdminService {
@@ -57,6 +59,7 @@ public class AdminService {
         User save = userRepository.save(user);
 
         auditLogService.log(admin, "USER_DEACTIVATED: " + user.getEmail(), "User", user.getId());
+        log.info("User {} deactivated by admin {}", user.getEmail(), admin.getEmail());
         return userMapper.toRespond(save);
     }
 
@@ -68,6 +71,7 @@ public class AdminService {
         User save = userRepository.save(user);
 
         auditLogService.log(admin, "USER_REACTIVATED: " + user.getEmail(), "User", user.getId());
+        log.info("User {} reactivated by admin {}", user.getEmail(), admin.getEmail());
         return userMapper.toRespond(save);
     }
 

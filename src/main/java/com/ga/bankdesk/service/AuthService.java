@@ -17,6 +17,7 @@ import com.ga.bankdesk.repository.UserRepository;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ConcurrentModificationException;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -53,6 +55,8 @@ public class AuthService {
 
         User save = userRepository.save(user);
         createAndSendVerificationToken(save);
+
+        log.info("New user registered: {}", save.getEmail());
         return userMapper.toRespond(save);
     }
 
@@ -64,6 +68,9 @@ public class AuthService {
         if(!userDetails.getUser().isEmailVerified()){
             throw new BusinessRuleException("Please verify your email before logging in");
         }
+
+        log.info("User logged in: {}", userDetails.getUsername());
+
         String token = jwtUtils.generateToken(userDetails.getUsername());
         return new LoginResponse(token);
     }

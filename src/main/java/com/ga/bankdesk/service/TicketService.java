@@ -13,6 +13,7 @@ import com.ga.bankdesk.repository.*;
 import com.ga.bankdesk.specification.TicketSpecifications;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TicketService {
@@ -58,6 +60,7 @@ public class TicketService {
         Ticket save = ticketRepository.save(ticket);
 
         recordHistory(save, customer, "CREATED", null, save.getStatus().toString());
+        log.info("Ticket created: id={}, category={}, customer={}", save.getId(), category.getName(), customer.getEmail());
         return ticketMapper.toResponse(save);
     }
 
@@ -145,6 +148,7 @@ public class TicketService {
 
         recordHistory(save, currentUser, "STATUS_CHANGED", oldStatus.toString(), newStatus.toString());
         notifyTicketEvent(save,"STATUS_CHANGED", "Your ticket status changed to " + newStatus);
+        log.info("Ticket {} status changed: {} -> {} by {}", save.getId(), oldStatus, newStatus, currentUser.getEmail());
         return ticketMapper.toResponse(save);
     }
 
@@ -187,6 +191,7 @@ public class TicketService {
 
         recordHistory(save, agent, "ASSIGNED", "UNASSIGNED", agent.getEmail());
         notifyTicketEvent(save, "ASSIGNED", "Your ticker has been assigned to an agent");
+        log.info("Ticket {} claimed by agent {}", save.getId(), agent.getEmail());
         return ticketMapper.toResponse(save);
     }
 
