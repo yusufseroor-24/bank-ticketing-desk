@@ -21,7 +21,7 @@ public class AuditLog {
 
     private String entityType;
 
-    private String entityId;
+    private Long entityId;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
