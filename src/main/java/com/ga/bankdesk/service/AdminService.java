@@ -25,6 +25,7 @@ public class AdminService {
     private final UserMapper userMapper;
     private final AgentCategoryRepository agentCategoryRepository;
     private final CategoryRepository categoryRepository;
+    private final AuditLogService auditLogService;
 
     public List<UserResponse> listAllUsers(){
         return userRepository.findAll().stream()
@@ -32,34 +33,40 @@ public class AdminService {
                 .toList();
     }
 
-    public UserResponse changeRole(Long userId, Role newRole){
+    public UserResponse changeRole(User admin, Long userId, Role newRole){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
 
         user.setRole(newRole);
         User save = userRepository.save(user);
+
+        auditLogService.log(admin, "ROLE_CHANGED: " + user.getEmail() + " -> " + newRole, "User", user.getId());
         return userMapper.toRespond(save);
     }
 
-    public UserResponse deactivateUser(Long userId){
+    public UserResponse deactivateUser(User admin, Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
 
         user.setStatus(UserStatus.INACTIVE);
         User save = userRepository.save(user);
+
+        auditLogService.log(admin, "USER_DEACTIVATED: " + user.getEmail(), "User", user.getId());
         return userMapper.toRespond(save);
     }
 
-    public UserResponse reactivateUser(Long userId){
+    public UserResponse reactivateUser(User admin, Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
 
         user.setStatus(UserStatus.ACTIVE);
         User save = userRepository.save(user);
+
+        auditLogService.log(admin, "USER_REACTIVATED: " + user.getEmail(), "User", user.getId());
         return userMapper.toRespond(save);
     }
 
-    public void assignCategoryToAgent(Long agentId, List<Long> categoryIds){
+    public void assignCategoryToAgent(User admin, Long agentId, List<Long> categoryIds){
         User agent = userRepository.findById(agentId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + agentId + " is not found"));
         if(agent.getRole() != Role.AGENT){
@@ -77,6 +84,9 @@ public class AdminService {
             assign.setAgent(agent);
             assign.setCategory(category);
             agentCategoryRepository.save(assign);
+
+            auditLogService.log(admin, "CATEGORY_ASSIGNED: " + agent.getEmail() + " -> " + category.getName(),
+                    "AgentCategory", category.getId());
         }
     }
 }

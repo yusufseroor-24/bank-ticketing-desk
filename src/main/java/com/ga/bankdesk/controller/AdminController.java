@@ -31,18 +31,21 @@ public class AdminController {
     }
 
     @PutMapping("/{userId}/role")
-    public UserResponse changeRole(@PathVariable Long userId, @Valid @RequestBody ChangeRoleRequest request){
-        return adminService.changeRole(userId, request.newRole());
+    public UserResponse changeRole(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long userId, @Valid @RequestBody ChangeRoleRequest request){
+        return adminService.changeRole(userDetails.getUser(), userId, request.newRole());
     }
 
     @PutMapping("/{userId}/deactivate")
-    public UserResponse deactivateUser(@PathVariable Long userId){
-        return adminService.deactivateUser(userId);
+    public UserResponse deactivateUser(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long userId){
+        return adminService.deactivateUser(userDetails.getUser(), userId);
     }
 
     @PutMapping("/{userId}/reactivate")
-    public UserResponse reactivateUser(@PathVariable Long userId){
-        return adminService.reactivateUser(userId);
+    public UserResponse reactivateUser(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long userId){
+        return adminService.reactivateUser(userDetails.getUser(), userId);
     }
 
     @PostMapping("/categories")
@@ -56,8 +59,9 @@ public class AdminController {
     }
 
     @PostMapping("/users/{agentId}/categories")
-    public ResponseEntity<Void> assignCategory(@PathVariable Long agentId, @Valid @RequestBody AssignCategoriesRequest request){
-        adminService.assignCategoryToAgent(agentId, request.categoryIds());
+    public ResponseEntity<Void> assignCategory(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long agentId, @Valid @RequestBody AssignCategoriesRequest request){
+        adminService.assignCategoryToAgent(userDetails.getUser(), agentId, request.categoryIds());
         return ResponseEntity.noContent().build(); //updates but nothing to hand back (204, No content)
     }
 
