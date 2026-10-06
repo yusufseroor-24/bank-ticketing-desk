@@ -1,4 +1,4 @@
-package com.ga.bankdesk.config;
+package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.notifications.SseEmitterRegistry;
 import com.ga.bankdesk.security.AppUserDetails;
