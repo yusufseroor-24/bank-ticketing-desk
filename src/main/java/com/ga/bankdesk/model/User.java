@@ -1,5 +1,6 @@
 package com.ga.bankdesk.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.enums.UserStatus;
 import jakarta.persistence.*;
@@ -27,6 +28,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(nullable = false)

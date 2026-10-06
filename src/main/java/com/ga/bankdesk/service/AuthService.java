@@ -6,6 +6,7 @@ import com.ga.bankdesk.dto.RegisterRequest;
 import com.ga.bankdesk.dto.UserResponse;
 import com.ga.bankdesk.enums.TokenType;
 import com.ga.bankdesk.exception.BusinessRuleException;
+import com.ga.bankdesk.exception.ConflictException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.enums.Role;
@@ -21,12 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ConcurrentModificationException;
 import java.util.UUID;
 
 @Slf4j
@@ -44,7 +43,7 @@ public class AuthService {
 
     public UserResponse register(RegisterRequest request){
         if(userRepository.existsByEmail(request.email())){
-            throw new ConcurrentModificationException("An account with this email already exists.");
+            throw new ConflictException("An account with this email already exists.");
         }
         User user = new User();
         user.setEmail(request.email());
