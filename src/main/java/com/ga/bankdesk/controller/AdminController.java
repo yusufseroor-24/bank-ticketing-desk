@@ -2,6 +2,7 @@ package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.model.Category;
+import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.AdminService;
 import com.ga.bankdesk.service.CategoryService;
 import com.ga.bankdesk.service.TicketService;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -60,8 +62,9 @@ public class AdminController {
     }
 
     @PutMapping("/tickets/{ticketId}/reopen")
-    public TicketCreationResponse reopenTicket(@PathVariable Long ticketId, @Valid @RequestBody ReopenTicketRequest request){
-        return ticketService.reopenTicket(ticketId, request.reason());
+    public TicketCreationResponse reopenTicket(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long ticketId, @Valid @RequestBody ReopenTicketRequest request){
+        return ticketService.reopenTicket(userDetails.getUser(), ticketId, request.reason());
     }
 
     @PutMapping("/tickets/{ticketId}/reassign")

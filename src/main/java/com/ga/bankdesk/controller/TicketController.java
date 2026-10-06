@@ -60,8 +60,9 @@ public class TicketController {
 
     @PutMapping("/{ticketId}/status")
     @PreAuthorize(("hasAnyRole('AGENT', 'ADMIN')"))
-    public TicketCreationResponse changeStatus(@PathVariable Long ticketId, @Valid @RequestBody ChangeTicketStatusRequest request){
-        return ticketService.changeStatus(ticketId, request.newStatus(), request.note());
+    public TicketCreationResponse changeStatus(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long ticketId, @Valid @RequestBody ChangeTicketStatusRequest request){
+        return ticketService.changeStatus(userDetails.getUser(), ticketId, request.newStatus(), request.note());
     }
 
     @PutMapping("/{ticketId}/claim")
@@ -72,8 +73,9 @@ public class TicketController {
 
     @PutMapping("/{ticketId}/escalate")
     @PreAuthorize("hasAnyRole('AGENT', 'ADMIN')")
-    public TicketCreationResponse escalateTicket(@PathVariable Long ticketId, @Valid @RequestBody EscalateTicketRequest request){
-        return  ticketService.escalateTicket(ticketId, request.note());
+    public TicketCreationResponse escalateTicket(@AuthenticationPrincipal AppUserDetails userDetails,
+            @PathVariable Long ticketId, @Valid @RequestBody EscalateTicketRequest request){
+        return  ticketService.escalateTicket(userDetails.getUser(), ticketId, request.note());
     }
 
     @PostMapping("/{ticketId}/comments")
