@@ -7,12 +7,16 @@ import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.model.AgentCategory;
+import com.ga.bankdesk.model.AuditLog;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.model.User;
 import com.ga.bankdesk.repository.AgentCategoryRepository;
+import com.ga.bankdesk.repository.AuditLogRepository;
 import com.ga.bankdesk.repository.CategoryRepository;
 import com.ga.bankdesk.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +30,7 @@ public class AdminService {
     private final AgentCategoryRepository agentCategoryRepository;
     private final CategoryRepository categoryRepository;
     private final AuditLogService auditLogService;
+    private final AuditLogRepository auditLogRepository;
 
     public List<UserResponse> listAllUsers(){
         return userRepository.findAll().stream()
@@ -88,5 +93,9 @@ public class AdminService {
             auditLogService.log(admin, "CATEGORY_ASSIGNED: " + agent.getEmail() + " -> " + category.getName(),
                     "AgentCategory", category.getId());
         }
+    }
+
+    public Page<AuditLog> listAuditLogs(Pageable pageable){
+        return auditLogRepository.findAll(pageable);
     }
 }

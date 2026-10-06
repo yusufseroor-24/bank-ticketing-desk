@@ -1,6 +1,7 @@
 package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.dto.*;
+import com.ga.bankdesk.model.AuditLog;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.AdminService;
@@ -8,6 +9,8 @@ import com.ga.bankdesk.service.CategoryService;
 import com.ga.bankdesk.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -74,6 +77,11 @@ public class AdminController {
     @PutMapping("/tickets/{ticketId}/reassign")
     public TicketCreationResponse reassignTicket(@PathVariable Long ticketId, @Valid @RequestBody ReassignTicketRequest request){
         return ticketService.reassignTicket(ticketId, request.agentId());
+    }
+
+    @GetMapping("/audit-logs")
+    public Page<AuditLog> listAuditLogs(Pageable pageable){
+        return adminService.listAuditLogs(pageable);
     }
 
 }
