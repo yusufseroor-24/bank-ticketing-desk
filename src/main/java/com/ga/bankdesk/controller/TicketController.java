@@ -118,6 +118,7 @@ public class TicketController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     public Page<TicketCreationResponse> searchTickets(
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) Long categoryId,
