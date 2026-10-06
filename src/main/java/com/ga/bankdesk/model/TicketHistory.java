@@ -19,7 +19,7 @@ public class TicketHistory {
     @Column(nullable = false)
     private String action;
 
-    private String OldValue;
+    private String oldValue;
     private String newValue;
 
     @ManyToOne
