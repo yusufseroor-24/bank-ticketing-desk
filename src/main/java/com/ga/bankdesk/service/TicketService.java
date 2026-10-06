@@ -1,9 +1,6 @@
 package com.ga.bankdesk.service;
 
-import com.ga.bankdesk.dto.CommentResponse;
-import com.ga.bankdesk.dto.CreateInternalTicketRequest;
-import com.ga.bankdesk.dto.CreateTicketRequest;
-import com.ga.bankdesk.dto.TicketCreationResponse;
+import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.enums.*;
 import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.exception.ConflictException;
@@ -11,6 +8,7 @@ import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.CommentMapper;
 import com.ga.bankdesk.mapper.TicketMapper;
 import com.ga.bankdesk.model.*;
+import com.ga.bankdesk.notifications.SseEmitterRegistry;
 import com.ga.bankdesk.repository.*;
 import com.ga.bankdesk.specification.TicketSpecifications;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
@@ -39,6 +37,8 @@ public class TicketService {
     private final CommentMapper commentMapper;
     private final FileStorageService fileStorageService;
     private final TicketAttachmentRepository ticketAttachmentRepository;
+    private final SseEmitterRegistry emitterRegistry;
+
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
@@ -136,6 +136,8 @@ public class TicketService {
         }
         ticket.setStatus(newStatus);
         Ticket save = ticketRepository.save(ticket);
+
+        notifyTicketEvent(save,"STATUS_CHANGED", "Your ticket status changed to " + newStatus);
         return ticketMapper.toResponse(save);
     }
 
@@ -173,6 +175,8 @@ public class TicketService {
         ticket.setAssignedTo(agent);
         ticket.setStatus(TicketStatus.ASSIGNED);
         Ticket save = ticketRepository.save(ticket);
+
+        notifyTicketEvent(save, "ASSIGNED", "Your ticker has been assigned to an agent");
         return ticketMapper.toResponse(save);
     }
 
@@ -304,6 +308,16 @@ public class TicketService {
         //sends to repo to find and return all satisfied in spec and return with pagination info
         return ticketRepository.findAll(spec, pageable).map(ticketMapper::toResponse);
 
+    }
+
+    private void notifyTicketEvent(Ticket ticket, String eventType, String messgae){
+        if(ticket.getCustomer() == null){
+            //internal tickets have no customer
+            return;
+        }
+        TicketNotification notification = new TicketNotification(ticket.getId(), ticket.getTitle(), eventType,
+                messgae, LocalDateTime.now());
+        emitterRegistry.sendToUser(ticket.getCustomer().getId(), "ticket-update", notification);
     }
 
 
