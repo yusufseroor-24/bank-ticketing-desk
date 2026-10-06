@@ -18,5 +18,6 @@ public class AuditLogService {
         log.setAction(action);
         log.setEntityType(entityType);
         log.setEntityId(entityId);
+        auditLogRepository.save(log);
     }
 }
