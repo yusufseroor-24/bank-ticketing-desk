@@ -34,6 +34,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/", "/index.html").permitAll()
                         .anyRequest().authenticated());
 
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
