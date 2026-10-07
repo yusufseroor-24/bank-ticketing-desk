@@ -56,6 +56,11 @@
   button.secondary:hover{background:#eee9db;}
   button.danger{background:var(--danger);border-color:var(--danger);}
   button.ok{background:var(--ok);border-color:var(--ok);}
+  button.link-btn{
+    background:none;border:none;color:var(--brass);padding:0;
+    font-size:12.5px;text-decoration:underline;
+  }
+  button.link-btn:hover{background:none;color:var(--ink);}
   button:disabled{opacity:.45;cursor:not-allowed;}
   input,select,textarea{
     font-family:inherit;
@@ -67,6 +72,7 @@
     color:var(--ink);
     width:100%;
   }
+  input[type="file"]{padding:.4em 0;border:none;background:none;}
   label{font-size:12.5px;color:var(--ink-soft);display:block;margin-bottom:.25em;}
   .field{margin-bottom:.9em;}
   .hidden{display:none !important;}
@@ -101,6 +107,7 @@
   .msg.ok{background:#E6EFE9;color:var(--ok);border:1px solid #b9d6c6;}
   .seed-hint{margin-top:1.6em;padding-top:1.2em;border-top:1px dashed var(--line);font-size:12px;color:var(--ink-soft);}
   .seed-hint code{background:#EEE9DB;padding:1px 5px;border-radius:2px;}
+  .auth-links{display:flex;justify-content:space-between;margin-top:.6em;}
 
   /* ---------- App shell ---------- */
   #app-screen{display:flex;min-height:100vh;}
@@ -111,8 +118,11 @@
     display:flex;flex-direction:column;
   }
   nav .brand{font-family:"Source Serif 4",serif;font-size:20px;font-weight:700;margin-bottom:4px;}
-  nav .who{font-size:12px;color:#B9C3D4;margin-bottom:26px;}
+  nav .who{font-size:12px;color:#B9C3D4;margin-bottom:10px;}
   nav .who b{color:var(--brass-dim);}
+  nav .conn{font-size:11px;color:#7E8FA8;margin-bottom:22px;display:flex;align-items:center;gap:6px;}
+  nav .conn .dot{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;}
+  nav .conn.live .dot{background:#4CAF6D;}
   nav button.nav-link{
     display:block;width:100%;text-align:left;
     background:none;border:none;color:#CDD6E4;
@@ -156,6 +166,7 @@
   .comment .who{font-size:12px;color:var(--brass);font-weight:600;}
   .comment .when{font-size:11px;color:var(--ink-soft);margin-left:8px;}
   .history-row{font-size:12.5px;color:var(--ink-soft);padding:6px 0;border-bottom:1px dotted var(--line);}
+  .attachment-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dotted var(--line);font-size:13.5px;}
   .empty{color:var(--ink-soft);font-size:13.5px;padding:18px 0;}
   .back-link{background:none;border:none;color:var(--brass);padding:0;margin-bottom:14px;font-size:13px;}
   .back-link:hover{background:none;text-decoration:underline;}
@@ -167,6 +178,8 @@
   .toast.error{border-left-color:var(--danger);}
   .checkbox-row{display:flex;align-items:center;gap:8px;}
   .checkbox-row input{width:auto;}
+  .avatar-box{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+  .avatar-box img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:1px solid var(--line);background:#eee9db;}
 </style>
 </head>
 <body>
@@ -188,6 +201,10 @@
       <div class="field"><label>Email</label><input type="email" id="login-email" required></div>
       <div class="field"><label>Password</label><input type="password" id="login-password" required></div>
       <button type="submit" style="width:100%">Log in</button>
+      <div class="auth-links">
+        <button type="button" class="link-btn" onclick="showAuthTab('resend')">Resend verification</button>
+        <button type="button" class="link-btn" onclick="showAuthTab('forgot')">Forgot password?</button>
+      </div>
     </form>
 
     <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
@@ -195,6 +212,20 @@
       <div class="field"><label>Email</label><input type="email" id="reg-email" required></div>
       <div class="field"><label>Password (min 8 characters)</label><input type="password" id="reg-password" minlength="8" required></div>
       <button type="submit" style="width:100%">Create account</button>
+    </form>
+
+    <form id="resend-form" class="hidden" onsubmit="handleResendVerification(event)">
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:0">Didn't get the verification email? We'll send a new one.</p>
+      <div class="field"><label>Email</label><input type="email" id="resend-email" required></div>
+      <button type="submit" style="width:100%">Resend verification email</button>
+      <div class="auth-links"><button type="button" class="link-btn" onclick="showAuthTab('login')">&larr; Back to login</button></div>
+    </form>
+
+    <form id="forgot-form" class="hidden" onsubmit="handleForgotPassword(event)">
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:0">We'll email you a password reset link.</p>
+      <div class="field"><label>Email</label><input type="email" id="forgot-email" required></div>
+      <button type="submit" style="width:100%">Send reset link</button>
+      <div class="auth-links"><button type="button" class="link-btn" onclick="showAuthTab('login')">&larr; Back to login</button></div>
     </form>
 
     <div class="seed-hint">
@@ -209,6 +240,7 @@
   <nav>
     <div class="brand">BankDesk</div>
     <div class="who">Signed in as<br><b id="nav-email"></b> &middot; <span id="nav-role"></span></div>
+    <div class="conn" id="conn-status"><span class="dot"></span><span id="conn-label">Connecting…</span></div>
 
     <div id="nav-links"></div>
 
@@ -229,6 +261,7 @@ let token = localStorage.getItem('bankdesk_token') || null;
 let currentUser = null;
 let categories = [];
 let currentView = null;
+let sseAbortController = null;
 
 /* ============================================================
    API HELPER
@@ -253,6 +286,21 @@ async function api(path, opts = {}) {
   return data;
 }
 
+// Downloads a protected file (needs the Authorization header, so a plain <a href> won't work)
+async function downloadFile(path, suggestedName) {
+  const res = await fetch(path, { headers: { Authorization: 'Bearer ' + token } });
+  if (!res.ok) { toast('Could not download file', true); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = suggestedName || 'download';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function toast(message, isError) {
   const host = document.getElementById('toast-host');
   const el = document.createElement('div');
@@ -270,6 +318,8 @@ function showAuthTab(which) {
   document.getElementById('tab-register').classList.toggle('active', which === 'register');
   document.getElementById('login-form').classList.toggle('hidden', which !== 'login');
   document.getElementById('register-form').classList.toggle('hidden', which !== 'register');
+  document.getElementById('resend-form').classList.toggle('hidden', which !== 'resend');
+  document.getElementById('forgot-form').classList.toggle('hidden', which !== 'forgot');
   document.getElementById('auth-msg').innerHTML = '';
 }
 
@@ -302,7 +352,33 @@ async function handleRegister(e) {
   }
 }
 
+async function handleResendVerification(e) {
+  e.preventDefault();
+  const email = document.getElementById('resend-email').value;
+  try {
+    const res = await api('/api/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) });
+    document.getElementById('auth-msg').innerHTML = `<div class="msg ok">${typeof res === 'string' ? res : 'A new verification email has been sent.'}</div>`;
+    showAuthTab('login');
+  } catch (err) {
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+  }
+}
+
+async function handleForgotPassword(e) {
+  e.preventDefault();
+  const email = document.getElementById('forgot-email').value;
+  try {
+    const res = await api('/api/auth/forget-password', { method: 'POST', body: JSON.stringify({ email }) });
+    document.getElementById('auth-msg').innerHTML = `<div class="msg ok">${typeof res === 'string' ? res : 'If an account exists, a reset link has been sent.'}</div>`;
+    showAuthTab('login');
+  } catch (err) {
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+  }
+}
+
 function logout() {
+  if (sseAbortController) sseAbortController.abort();
+  if (sseReconnectTimer) { clearTimeout(sseReconnectTimer); sseReconnectTimer = null; }
   token = null;
   currentUser = null;
   localStorage.removeItem('bankdesk_token');
@@ -328,6 +404,7 @@ async function bootApp() {
   try { categories = await api('/api/categories'); } catch (e) { categories = []; }
 
   buildNav();
+  connectNotifications();
   const defaultView = currentUser.role === 'CUSTOMER' ? 'my-tickets' : 'queue';
   renderView(defaultView);
 }
@@ -340,6 +417,7 @@ function buildNav() {
   }
   if (currentUser.role === 'AGENT' || currentUser.role === 'ADMIN') {
     links.push(['queue', 'Ticket queue']);
+    links.push(['new-internal-ticket', 'New internal ticket']);
   }
   if (currentUser.role === 'ADMIN') {
     links.push(['admin-users', 'Users']);
@@ -368,6 +446,7 @@ function renderView(view, param) {
   const routes = {
     'my-tickets': renderMyTickets,
     'new-ticket': renderNewTicket,
+    'new-internal-ticket': renderNewInternalTicket,
     'queue': renderQueue,
     'ticket-detail': () => renderTicketDetail(param),
     'admin-users': renderAdminUsers,
@@ -385,11 +464,31 @@ function priorityPill(p) { return `<span class="pill priority-${p}">${p}</span>`
 function statusPill(s) { return `<span class="pill ${s}">${s.replaceAll('_',' ')}</span>`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
 
-function ticketsTable(tickets, opts = {}) {
+// SLA indicator — there's no separate SLA field in the backend; the due date (dueAt) IS
+// the SLA, already computed server-side from the ticket's priority. This just compares it
+// to "now" so staff get an at-a-glance badge instead of having to read a raw timestamp.
+function slaInfo(dueAt, status) {
+  if (!dueAt) return { label: 'No SLA', cls: 'OPEN' };
+  if (status === 'CLOSED' || status === 'RESOLVED' || status === 'APPROVED' || status === 'REJECTED' || status === 'FALSE_POSITIVE') {
+    return { label: 'Closed', cls: 'OPEN' };
+  }
+  const now = new Date();
+  const due = new Date(dueAt);
+  const hoursLeft = (due - now) / 36e5;
+  if (hoursLeft < 0) return { label: 'Overdue', cls: 'ESCALATED' };
+  if (hoursLeft <= 4) return { label: 'Due soon', cls: 'ASSIGNED' };
+  return { label: 'On time', cls: 'RESOLVED' };
+}
+function slaBadge(dueAt, status) {
+  const info = slaInfo(dueAt, status);
+  return `<span class="pill ${info.cls}">${info.label}</span>`;
+}
+
+function ticketsTable(tickets) {
   if (!tickets.length) return '<p class="empty">No tickets to show.</p>';
   return `
     <table>
-      <thead><tr><th>Title</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Due</th></tr></thead>
+      <thead><tr><th>Title</th><th>Category</th><th>Priority</th><th>Status</th><th>SLA</th><th>Assigned to</th><th>Due</th></tr></thead>
       <tbody>
         ${tickets.map(t => `
           <tr class="row-click" onclick="renderView('ticket-detail', ${t.id})">
@@ -397,11 +496,18 @@ function ticketsTable(tickets, opts = {}) {
             <td>${t.categoryName}</td>
             <td>${priorityPill(t.priority)}</td>
             <td>${statusPill(t.status)}</td>
+            <td>${slaBadge(t.dueAt, t.status)}</td>
             <td>${t.assignedToEmail || '—'}</td>
             <td>${fmtDate(t.dueAt)}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;
+}
+
+// Handles both known Page<T> JSON shapes: flat (older Spring) and nested under "page" (newer Spring Boot)
+function extractPage(pageResponse) {
+  if (!pageResponse) return [];
+  return pageResponse.content || [];
 }
 
 /* ============================================================
@@ -418,7 +524,7 @@ async function renderMyTickets() {
 }
 
 function renderNewTicket() {
-  const visible = categories; // backend already filters to customer-visible ones
+  const visible = categories;
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <div class="section-head"><div><h2>New ticket</h2><p>Tell us what's going on and we'll route it to the right team.</p></div></div>
@@ -459,12 +565,64 @@ async function submitNewTicket() {
 }
 
 /* ============================================================
+   AGENT/ADMIN: NEW INTERNAL TICKET
+   ============================================================ */
+function renderNewInternalTicket() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="section-head"><div><h2>New internal ticket</h2><p>Log an issue yourself — optionally link it to a customer.</p></div></div>
+    <div class="card" style="max-width:560px">
+      <div id="int-ticket-msg"></div>
+      <div class="field"><label>Title</label><input id="it-title" required></div>
+      <div class="field"><label>Description</label><textarea id="it-desc" rows="4" required></textarea></div>
+      <div class="two-col">
+        <div class="field"><label>Category</label>
+          <select id="it-category">${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Priority</label>
+          <select id="it-priority">
+            <option>LOW</option><option selected>MEDIUM</option><option>HIGH</option><option>CRITICAL</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Customer user ID (optional — leave blank if not about a specific customer)</label>
+        <input id="it-customer-id" type="number"></div>
+      <button onclick="submitInternalTicket()">Create internal ticket</button>
+    </div>`;
+}
+
+async function submitInternalTicket() {
+  const title = document.getElementById('it-title').value;
+  const description = document.getElementById('it-desc').value;
+  const categoryId = Number(document.getElementById('it-category').value);
+  const priority = document.getElementById('it-priority').value;
+  const customerIdRaw = document.getElementById('it-customer-id').value;
+  const customerId = customerIdRaw ? Number(customerIdRaw) : null;
+  const msg = document.getElementById('int-ticket-msg');
+  try {
+    const ticket = await api('/api/tickets/create/internal', {
+      method: 'POST',
+      body: JSON.stringify({ title, description, categoryId, priority, customerId })
+    });
+    toast('Internal ticket #' + ticket.id + ' created.');
+    renderView('ticket-detail', ticket.id);
+  } catch (err) {
+    msg.innerHTML = `<div class="msg error">${err.message}</div>`;
+  }
+}
+
+/* ============================================================
    AGENT/ADMIN: QUEUE
    ============================================================ */
 async function renderQueue() {
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <div class="section-head"><div><h2>Ticket queue</h2><p>Search, filter, and claim work.</p></div></div>
+    <p class="empty" style="margin-top:-10px;padding-top:0">
+      Note: staff can see and search every category here on purpose — the category restriction only kicks in when an agent tries to
+      <b>claim</b> a ticket. Claiming outside your assigned categories is blocked with "out of scope category" — ask an admin which
+      categories you're assigned if you're not sure.
+    </p>
     <div class="card">
       <div class="grid-form">
         <div><label>Status</label><select id="q-status"><option value="">Any</option>
@@ -474,6 +632,7 @@ async function renderQueue() {
           ${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select></div>
         <div><label>Priority</label><select id="q-priority"><option value="">Any</option>
           <option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select></div>
+        <div class="checkbox-row"><input type="checkbox" id="q-assigned-me"><label style="margin:0">Assigned to me</label></div>
         <div><button onclick="runQueueSearch()">Search</button></div>
       </div>
     </div>
@@ -485,15 +644,17 @@ async function runQueueSearch() {
   const status = document.getElementById('q-status').value;
   const categoryId = document.getElementById('q-category').value;
   const priority = document.getElementById('q-priority').value;
-  const params = new URLSearchParams({ page: 0, size: 20 });
+  const assignedToMe = document.getElementById('q-assigned-me').checked;
+  const params = new URLSearchParams({ page: 0, size: 50 });
   if (status) params.set('status', status);
   if (categoryId) params.set('categoryId', categoryId);
   if (priority) params.set('priority', priority);
+  if (assignedToMe) params.set('assignedToId', currentUser.id);
 
   const results = document.getElementById('queue-results');
   try {
     const page = await api('/api/tickets?' + params.toString());
-    results.innerHTML = ticketsTable(page.content || []);
+    results.innerHTML = ticketsTable(extractPage(page));
   } catch (err) { results.innerHTML = `<p class="msg error">${err.message}</p>`; }
 }
 
@@ -503,10 +664,15 @@ async function runQueueSearch() {
 async function renderTicketDetail(ticketId) {
   const main = document.getElementById('main-content');
   try {
-    const [ticket, comments, history] = await Promise.all([
+    // The backend has no endpoint to list a ticket's attachments after upload (only
+    // upload/download-by-id/delete-by-id), so we can't show previously-uploaded files
+    // here — we only know about ones uploaded earlier in THIS browser session.
+    let attachmentsEndpointMissing = false;
+    const [ticket, comments, history, attachments] = await Promise.all([
       api(`/api/tickets/${ticketId}`),
       api(`/api/tickets/${ticketId}/comments`),
       api(`/api/tickets/${ticketId}/history`),
+      api(`/api/tickets/${ticketId}/attachments`).catch(() => { attachmentsEndpointMissing = true; return getSessionAttachments(ticketId); }),
     ]);
 
     const isStaff = currentUser.role === 'AGENT' || currentUser.role === 'ADMIN';
@@ -527,6 +693,7 @@ async function renderTicketDetail(ticketId) {
             <span>${priorityPill(ticket.priority)}</span>
             <span>Category: <b>${ticket.categoryName}</b></span>
             <span>Source: ${ticket.source}</span>
+            <span>SLA: ${slaBadge(ticket.dueAt, ticket.status)}</span>
             <span>Due: ${fmtDate(ticket.dueAt)}</span>
           </div>
         </div>
@@ -578,6 +745,34 @@ async function renderTicketDetail(ticketId) {
           </div>` : ''}
         ` : ''}
       </div>` : ''}
+
+      <div class="card">
+        <h3>Attachments</h3>
+        ${attachmentsEndpointMissing ? `
+          <p class="empty" style="color:var(--danger)">
+            This server doesn't expose a way to list a ticket's attachments after upload (only upload / download-by-id / delete-by-id exist),
+            so files uploaded in an earlier visit can't be shown or downloaded here. Below are only the file names you've uploaded
+            <b>during this browser session</b> — uploading still works.
+          </p>` : ''}
+        <div id="attachments-list">
+          ${attachments.length ? attachments.map(a => `
+            <div class="attachment-row">
+              <span>${a.fileName}</span>
+              <span>
+                ${a.id ? `
+                  <button class="link-btn" onclick="downloadFile('/api/tickets/attachments/${a.id}', '${a.fileName}')">Download</button>
+                  &nbsp;&middot;&nbsp;
+                  <button class="link-btn" onclick="doDeleteAttachment(${ticket.id}, ${a.id})">Delete</button>
+                ` : `<span style="color:var(--ink-soft)">Uploaded — no ID returned to download by</span>`}
+              </span>
+            </div>`).join('') : '<p class="empty">No attachments yet.</p>'}
+        </div>
+        ${!isClosed ? `
+          <hr class="divider">
+          <input type="file" id="attachment-files" multiple>
+          <div class="btn-row"><button onclick="doUploadAttachments(${ticket.id})">Upload file(s)</button></div>
+        ` : ''}
+      </div>
 
       <div class="card">
         <h3>Comments</h3>
@@ -649,6 +844,39 @@ async function doAddComment(id) {
     renderView('ticket-detail', id);
   } catch (err) { toast(err.message, true); }
 }
+// Session-only memory of what's been uploaded per ticket, since the backend has no
+// "list attachments" endpoint to re-fetch this after a page reload (see note above).
+function getSessionAttachments(ticketId) {
+  try { return JSON.parse(sessionStorage.getItem('bd_attachments_' + ticketId) || '[]'); }
+  catch (e) { return []; }
+}
+function addSessionAttachments(ticketId, fileNames) {
+  const existing = getSessionAttachments(ticketId);
+  const updated = existing.concat(fileNames.map(fileName => ({ fileName })));
+  sessionStorage.setItem('bd_attachments_' + ticketId, JSON.stringify(updated));
+}
+
+async function doUploadAttachments(id) {
+  const input = document.getElementById('attachment-files');
+  if (!input.files.length) return;
+  const formData = new FormData();
+  // The real backend method is @RequestParam("file") List<MultipartFile> file —
+  // every part must be named "file" (singular), not "files".
+  for (const file of input.files) formData.append('file', file);
+  try {
+    const savedFileNames = await api(`/api/tickets/${id}/attachments`, { method: 'POST', body: formData });
+    addSessionAttachments(id, Array.isArray(savedFileNames) ? savedFileNames : []);
+    toast('File(s) uploaded.');
+    renderView('ticket-detail', id);
+  } catch (err) { toast(err.message, true); }
+}
+async function doDeleteAttachment(ticketId, attachmentId) {
+  try {
+    await api(`/api/tickets/attachments/${attachmentId}`, { method: 'DELETE' });
+    toast('Attachment deleted.');
+    renderView('ticket-detail', ticketId);
+  } catch (err) { toast(err.message, true); }
+}
 
 /* ============================================================
    ADMIN: USERS
@@ -660,11 +888,11 @@ async function renderAdminUsers() {
     main.innerHTML = `
       <div class="section-head"><div><h2>Users</h2><p>Manage roles and account status.</p></div></div>
       <table>
-        <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Verified</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Verified</th><th>Actions</th></tr></thead>
         <tbody>
           ${users.map(u => `
             <tr>
-              <td>${u.email}</td><td>${u.fullName}</td>
+              <td>${u.id}</td><td>${u.email}</td><td>${u.fullName}</td>
               <td>
                 <select onchange="doChangeRole(${u.id}, this.value)">
                   ${['CUSTOMER','AGENT','ADMIN'].map(r => `<option ${r===u.role?'selected':''}>${r}</option>`).join('')}
@@ -682,6 +910,7 @@ async function renderAdminUsers() {
       </table>
       <div class="card" style="margin-top:22px;max-width:500px">
         <h3>Assign categories to an agent</h3>
+        <p style="font-size:12.5px;color:var(--ink-soft)">Use the ID column above to find an agent's user ID.</p>
         <div class="field"><label>Agent user ID</label><input id="assign-agent-id" type="number"></div>
         <div class="field"><label>Categories</label>
           <select id="assign-category-ids" multiple size="7">
@@ -768,7 +997,7 @@ async function renderAdminAudit() {
   const main = document.getElementById('main-content');
   try {
     const page = await api('/api/admin/audit-logs?page=0&size=25&sort=createdAt,desc');
-    const rows = page.content || [];
+    const rows = extractPage(page);
     main.innerHTML = `
       <div class="section-head"><div><h2>Audit log</h2><p>System-wide record of administrative actions.</p></div></div>
       <table>
@@ -792,12 +1021,36 @@ async function renderAdminAudit() {
    ============================================================ */
 function renderProfile() {
   const main = document.getElementById('main-content');
+  // The real field from UserResponse is "profilePicPath" (the frontend was reading the
+  // wrong name, "profilePicturePath", which is always undefined — that alone hid the picture).
+  // Even with the right field, the backend has no endpoint that serves this file back to the
+  // browser (no static mapping for the "uploads" folder, no GET-by-path controller method),
+  // so there's currently no URL this <img> can actually load. We still wire it up correctly
+  // and show a clear message instead of a silently-broken image, so this starts working the
+  // moment a serving route is added backend-side.
+  const picPath = currentUser.profilePicPath || null;
+  const guessedUrl = picPath ? `/uploads/${picPath}` : null;
   main.innerHTML = `
     <div class="section-head"><div><h2>My profile</h2></div></div>
     <div class="two-col">
       <div class="card">
         <h3>Details</h3>
         <div id="profile-msg"></div>
+        <div class="avatar-box">
+          <img id="avatar-preview" src="${guessedUrl || ''}" alt="Profile picture"
+               style="${guessedUrl ? '' : 'display:none'}"
+               onerror="this.style.display='none'; document.getElementById('avatar-placeholder').style.display='flex'; document.getElementById('avatar-missing-note').style.display='block';">
+          <div style="width:56px;height:56px;border-radius:50%;background:#eee9db;border:1px solid var(--line);display:${guessedUrl ? 'none' : 'flex'};align-items:center;justify-content:center;font-size:11px;color:var(--ink-soft)" id="avatar-placeholder">${picPath ? '' : 'No photo'}</div>
+          <div>
+            <label>Profile picture</label>
+            <input type="file" id="profile-pic-file" accept="image/*">
+          </div>
+        </div>
+        ${picPath ? `<p class="empty" id="avatar-missing-note" style="display:none;color:var(--danger);margin-top:-8px">
+          A picture was uploaded (file: ${picPath}) but this server doesn't expose a route to serve it back, so it can't display here yet.
+        </p>` : ''}
+        <div class="btn-row"><button onclick="doUploadProfilePic()">Upload picture</button></div>
+        <hr class="divider">
         <div class="field"><label>Full name</label><input id="profile-name" value="${currentUser.fullName}"></div>
         <button onclick="doUpdateProfile()">Save name</button>
       </div>
@@ -817,6 +1070,17 @@ async function doUpdateProfile() {
     document.getElementById('profile-msg').innerHTML = '<div class="msg ok">Saved.</div>';
   } catch (err) { document.getElementById('profile-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
 }
+async function doUploadProfilePic() {
+  const input = document.getElementById('profile-pic-file');
+  if (!input.files.length) { toast('Choose an image first', true); return; }
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  try {
+    currentUser = await api('/api/users/me/profile-pic', { method: 'POST', body: formData });
+    renderProfile();
+    document.getElementById('profile-msg').innerHTML = '<div class="msg ok">Profile picture uploaded.</div>';
+  } catch (err) { document.getElementById('profile-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
 async function doChangePassword() {
   const currentPassword = document.getElementById('current-password').value;
   const newPassword = document.getElementById('new-password').value;
@@ -824,6 +1088,82 @@ async function doChangePassword() {
     await api('/api/users/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) });
     document.getElementById('password-msg').innerHTML = '<div class="msg ok">Password changed.</div>';
   } catch (err) { document.getElementById('password-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+
+/* ============================================================
+   NOTIFICATIONS (SSE via fetch — native EventSource can't send
+   our Authorization header, so we read the stream manually)
+   ============================================================ */
+function setConnLabel(connected) {
+  const wrap = document.getElementById('conn-status');
+  const label = document.getElementById('conn-label');
+  if (!wrap) return;
+  wrap.classList.toggle('live', connected);
+  label.textContent = connected ? 'Live updates on' : 'Reconnecting…';
+}
+
+let sseReconnectDelay = 2000; // resets to 2s on a clean connect; backs off up to 30s on repeated failures
+let sseReconnectTimer = null;
+
+async function connectNotifications() {
+  if (sseAbortController) sseAbortController.abort();
+  if (sseReconnectTimer) { clearTimeout(sseReconnectTimer); sseReconnectTimer = null; }
+  sseAbortController = new AbortController();
+  const myController = sseAbortController;
+
+  try {
+    const res = await fetch('/api/notifications/subscribe', {
+      headers: { Authorization: 'Bearer ' + token },
+      signal: myController.signal,
+    });
+    if (!res.ok || !res.body) { setConnLabel(false); scheduleReconnect(); return; }
+    setConnLabel(true);
+    sseReconnectDelay = 2000; // connected fine, so reset the backoff for next time
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE messages are separated by a blank line; each may have "event:" and "data:" lines.
+      // Note: the backend only ever notifies the TICKET'S CUSTOMER (see
+      // TicketService.notifyTicketEvent -> emitterRegistry.sendToUser(ticket.getCustomer()...)),
+      // not the agent/admin who made the change — so to see this fire, change a ticket's status
+      // while logged in as a DIFFERENT browser session as that ticket's customer.
+      const chunks = buffer.split('\n\n');
+      buffer = chunks.pop(); // keep any incomplete trailing chunk for next read
+
+      for (const chunk of chunks) {
+        const dataLine = chunk.split('\n').find(l => l.startsWith('data:'));
+        if (!dataLine) continue;
+        try {
+          const payload = JSON.parse(dataLine.slice(5).trim());
+          toast(payload.message || 'Ticket updated');
+          if (currentView === 'ticket-detail') renderView('ticket-detail', payload.ticketId);
+        } catch (e) { /* ignore malformed event */ }
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return; // we intentionally tore this connection down (logout / re-login)
+  }
+  // Stream ended (server closed it, network blip, etc). If this is still the live attempt
+  // (not one we superseded by calling connectNotifications again), reconnect with backoff.
+  if (myController === sseAbortController) {
+    setConnLabel(false);
+    scheduleReconnect();
+  }
+}
+
+function scheduleReconnect() {
+  if (sseReconnectTimer) clearTimeout(sseReconnectTimer);
+  sseReconnectTimer = setTimeout(() => {
+    if (token) connectNotifications();
+  }, sseReconnectDelay);
+  sseReconnectDelay = Math.min(sseReconnectDelay * 2, 30000);
 }
 
 /* ============================================================
