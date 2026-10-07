@@ -69,6 +69,7 @@ API Documentation
 - 
 When the app is running, interactive Swagger can be used to test endpoints.
 - **Swagger link:** http://localhost:8080/swagger-ui/index.html#/
+  
 | Method | URL | Functionality | Access |
 | ------ | --- | ------------- | ------ |
 | POST | `/api/auth/register` | Register a new account | Public |
