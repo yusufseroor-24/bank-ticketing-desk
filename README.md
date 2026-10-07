@@ -54,7 +54,7 @@ BnakDesk was built incrementally, creating branches on git and merging into deve
 User Stories
 - 
 The user stories of the project are provided in the Trello board linked below. 
-**Trello Board link:** https://trello.com/b/ZsWVql0g/bankticketingsystem
+- **Trello Board link:** https://trello.com/b/ZsWVql0g/bankticketingsystem
 
 Project ERD
 -
@@ -68,7 +68,7 @@ The project is planned using a Trello Board.
 API Documentation
 - 
 When the app is running, interactive Swagger can be used to test endpoints.
-**Swagger link:** http://localhost:8080/swagger-ui/index.html#/
+- **Swagger link:** http://localhost:8080/swagger-ui/index.html#/
 | Method | URL | Functionality | Access |
 | ------ | --- | ------------- | ------ |
 | POST | `/api/auth/register` | Register a new account | Public |
