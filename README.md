@@ -96,7 +96,7 @@ Future Improvements
 
 Resources
 - 
-Bucket4j: https://www.baeldung.com/spring-bucket4j - Rate limiting implementation
-Mailtrap: https://mailtrap.io - Development email sandbox for verification/reset emails
-dbdiagram.io: https://dbdiagram.io - ERD creation
-Server-Sent Events (SSE): https://www.baeldung.com/spring-server-sent-events - Notification implementation
+- Bucket4j: https://www.baeldung.com/spring-bucket4j - Rate limiting implementation
+- Mailtrap: https://mailtrap.io - Development email sandbox for verification/reset emails
+- dbdiagram.io: https://dbdiagram.io - ERD creation
+- Server-Sent Events (SSE): https://www.baeldung.com/spring-server-sent-events - Notification implementation
