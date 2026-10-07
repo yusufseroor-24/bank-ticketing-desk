@@ -37,7 +37,7 @@ Project Technologies
 - Trello
 
 Project Architecture
-- 
+-
 The project follows the standard layered architecture:
 
 **Controller —> Service —> Repository —> Database**
