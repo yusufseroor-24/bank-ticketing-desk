@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BankDesk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10243E;
+    --ink-soft:#2C4568;
+    --paper:#F6F4EE;
+    --paper-raised:#FFFFFF;
+    --line:#D9D3C4;
+    --brass:#9C6B2A;
+    --brass-dim:#C79A54;
+    --ok:#2F6B4F;
+    --danger:#A3372B;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Inter,system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:"Source Serif 4",Georgia,serif;
+    font-weight:600;
+    margin:0 0 .4em;
+    color:var(--ink);
+  }
+  a{color:var(--brass);}
+  button{
+    font-family:inherit;
+    font-size:14px;
+    cursor:pointer;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    padding:.55em 1.1em;
+    border-radius:var(--radius);
+    transition:background .15s, color .15s;
+  }
+  button:hover{background:var(--ink-soft);}
+  button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border-color:var(--line);
+  }
+  button.secondary:hover{background:#eee9db;}
+  button.danger{background:var(--danger);border-color:var(--danger);}
+  button.ok{background:var(--ok);border-color:var(--ok);}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  input,select,textarea{
+    font-family:inherit;
+    font-size:14px;
+    padding:.6em .7em;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--paper-raised);
+    color:var(--ink);
+    width:100%;
+  }
+  label{font-size:12.5px;color:var(--ink-soft);display:block;margin-bottom:.25em;}
+  .field{margin-bottom:.9em;}
+  .hidden{display:none !important;}
+
+  /* ---------- Auth screen ---------- */
+  #auth-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .ledger-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-top:4px solid var(--brass);
+    padding:36px 34px;
+    width:100%;
+    max-width:380px;
+  }
+  .ledger-card h1{font-size:28px;}
+  .ledger-card p.tag{color:var(--ink-soft);font-size:13px;margin-top:-6px;margin-bottom:1.6em;}
+  .auth-toggle{display:flex;gap:18px;margin-bottom:1.4em;border-bottom:1px solid var(--line);}
+  .auth-toggle button{
+    background:none;border:none;color:var(--ink-soft);
+    padding:0 0 10px;border-radius:0;border-bottom:2px solid transparent;
+  }
+  .auth-toggle button.active{color:var(--ink);border-bottom-color:var(--brass);font-weight:600;}
+  .auth-toggle button:hover{background:none;color:var(--ink);}
+  .msg{font-size:13px;padding:.6em .8em;border-radius:var(--radius);margin:.8em 0;}
+  .msg.error{background:#F6E4E1;color:var(--danger);border:1px solid #e3b9b1;}
+  .msg.ok{background:#E6EFE9;color:var(--ok);border:1px solid #b9d6c6;}
+  .seed-hint{margin-top:1.6em;padding-top:1.2em;border-top:1px dashed var(--line);font-size:12px;color:var(--ink-soft);}
+  .seed-hint code{background:#EEE9DB;padding:1px 5px;border-radius:2px;}
+
+  /* ---------- App shell ---------- */
+  #app-screen{display:flex;min-height:100vh;}
+  nav{
+    width:220px;flex-shrink:0;
+    background:var(--ink);color:var(--paper);
+    padding:26px 18px;
+    display:flex;flex-direction:column;
+  }
+  nav .brand{font-family:"Source Serif 4",serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+  nav .who{font-size:12px;color:#B9C3D4;margin-bottom:26px;}
+  nav .who b{color:var(--brass-dim);}
+  nav button.nav-link{
+    display:block;width:100%;text-align:left;
+    background:none;border:none;color:#CDD6E4;
+    padding:.6em .3em;margin-bottom:2px;border-radius:var(--radius);
+    font-size:14px;
+  }
+  nav button.nav-link:hover{background:#1C3657;color:#fff;}
+  nav button.nav-link.active{background:var(--brass);color:#1A1203;font-weight:600;}
+  nav .spacer{flex:1;}
+  nav .logout{color:#9FB0C6;border:1px solid #2C4568;background:none;font-size:13px;}
+  nav .logout:hover{background:#1C3657;color:#fff;}
+
+  main{flex:1;padding:34px 42px;max-width:980px;}
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+  .section-head p{color:var(--ink-soft);font-size:13px;margin:2px 0 0;}
+
+  table{width:100%;border-collapse:collapse;background:var(--paper-raised);}
+  th,td{text-align:left;padding:10px 12px;font-size:13.5px;border-bottom:1px solid var(--line);}
+  th{color:var(--ink-soft);font-weight:600;font-size:12px;text-transform:none;border-bottom:2px solid var(--ink);}
+  tr.row-click{cursor:pointer;}
+  tr.row-click:hover td{background:#F0ECDF;}
+  .pill{display:inline-block;padding:.2em .6em;border-radius:20px;font-size:11.5px;font-weight:600;letter-spacing:.2px;}
+  .pill.OPEN{background:#E6EBF3;color:var(--ink-soft);}
+  .pill.ASSIGNED,.pill.IN_PROGRESS,.pill.UNDER_REVIEW,.pill.INVESTIGATING{background:#FBF0DD;color:var(--brass);}
+  .pill.ESCALATED{background:#F6E4E1;color:var(--danger);}
+  .pill.RESOLVED,.pill.APPROVED,.pill.CONFIRMED,.pill.CLOSED,.pill.FALSE_POSITIVE,.pill.REJECTED{background:#E6EFE9;color:var(--ok);}
+  .pill.priority-CRITICAL{background:#A3372B;color:#fff;}
+  .pill.priority-HIGH{background:#F6E4E1;color:var(--danger);}
+  .pill.priority-MEDIUM{background:#FBF0DD;color:var(--brass);}
+  .pill.priority-LOW{background:#E6EBF3;color:var(--ink-soft);}
+
+  .card{background:var(--paper-raised);border:1px solid var(--line);padding:22px;margin-bottom:18px;}
+  .card h3{font-size:16px;margin-bottom:12px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .divider{border:none;border-top:1px solid var(--line);margin:20px 0;}
+  .ticket-meta{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 18px;}
+  .ticket-meta span{font-size:12.5px;color:var(--ink-soft);}
+  .comment{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin-bottom:10px;}
+  .comment .who{font-size:12px;color:var(--brass);font-weight:600;}
+  .comment .when{font-size:11px;color:var(--ink-soft);margin-left:8px;}
+  .history-row{font-size:12.5px;color:var(--ink-soft);padding:6px 0;border-bottom:1px dotted var(--line);}
+  .empty{color:var(--ink-soft);font-size:13.5px;padding:18px 0;}
+  .back-link{background:none;border:none;color:var(--brass);padding:0;margin-bottom:14px;font-size:13px;}
+  .back-link:hover{background:none;text-decoration:underline;}
+  .toast{
+    position:fixed;bottom:22px;right:22px;z-index:50;
+    background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--radius);
+    font-size:13.5px;max-width:360px;border-left:4px solid var(--brass);
+  }
+  .toast.error{border-left-color:var(--danger);}
+  .checkbox-row{display:flex;align-items:center;gap:8px;}
+  .checkbox-row input{width:auto;}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="auth-screen">
+  <div class="ledger-card">
+    <h1>BankDesk</h1>
+    <p class="tag">Case &amp; ticket management for banking operations</p>
+
+    <div class="auth-toggle">
+      <button id="tab-login" class="active" onclick="showAuthTab('login')">Log in</button>
+      <button id="tab-register" onclick="showAuthTab('register')">Register</button>
+    </div>
+
+    <div id="auth-msg"></div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="field"><label>Email</label><input type="email" id="login-email" required></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" required></div>
+      <button type="submit" style="width:100%">Log in</button>
+    </form>
+
+    <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+      <div class="field"><label>Full name</label><input type="text" id="reg-name" required></div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" required></div>
+      <div class="field"><label>Password (min 8 characters)</label><input type="password" id="reg-password" minlength="8" required></div>
+      <button type="submit" style="width:100%">Create account</button>
+    </form>
+
+    <div class="seed-hint">
+      Seeded accounts (password <code>Password123!</code>):<br>
+      <code>admin@bankdesk.com</code> &middot; <code>agent.general@bankdesk.com</code> &middot; <code>customer1@bankdesk.com</code>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app-screen" class="hidden">
+  <nav>
+    <div class="brand">BankDesk</div>
+    <div class="who">Signed in as<br><b id="nav-email"></b> &middot; <span id="nav-role"></span></div>
+
+    <div id="nav-links"></div>
+
+    <div class="spacer"></div>
+    <button class="logout" onclick="logout()">Log out</button>
+  </nav>
+
+  <main id="main-content"></main>
+</div>
+
+<div id="toast-host"></div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let token = localStorage.getItem('bankdesk_token') || null;
+let currentUser = null;
+let categories = [];
+let currentView = null;
+
+/* ============================================================
+   API HELPER
+   ============================================================ */
+async function api(path, opts = {}) {
+  const headers = { ...(opts.headers || {}) };
+  const isForm = opts.body instanceof FormData;
+  if (!isForm) headers['Content-Type'] = 'application/json';
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  const res = await fetch(path, { ...opts, headers });
+  const raw = await res.text();
+  let data = raw;
+  try { data = raw ? JSON.parse(raw) : null; } catch (e) { /* plain text response */ }
+
+  if (!res.ok) {
+    const msg = (data && typeof data === 'object' && data.message)
+      ? data.message
+      : (typeof data === 'string' ? data : res.statusText);
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function toast(message, isError) {
+  const host = document.getElementById('toast-host');
+  const el = document.createElement('div');
+  el.className = 'toast' + (isError ? ' error' : '');
+  el.textContent = message;
+  host.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+/* ============================================================
+   AUTH SCREEN
+   ============================================================ */
+function showAuthTab(which) {
+  document.getElementById('tab-login').classList.toggle('active', which === 'login');
+  document.getElementById('tab-register').classList.toggle('active', which === 'register');
+  document.getElementById('login-form').classList.toggle('hidden', which !== 'login');
+  document.getElementById('register-form').classList.toggle('hidden', which !== 'register');
+  document.getElementById('auth-msg').innerHTML = '';
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  try {
+    const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    token = res.token;
+    localStorage.setItem('bankdesk_token', token);
+    await bootApp();
+  } catch (err) {
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const fullName = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  try {
+    await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ fullName, email, password }) });
+    document.getElementById('auth-msg').innerHTML =
+      `<div class="msg ok">Account created. Check your inbox (Mailtrap) for a verification link, then log in.</div>`;
+    showAuthTab('login');
+  } catch (err) {
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+  }
+}
+
+function logout() {
+  token = null;
+  currentUser = null;
+  localStorage.removeItem('bankdesk_token');
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+async function bootApp() {
+  try {
+    currentUser = await api('/api/users/me');
+  } catch (err) {
+    logout();
+    return;
+  }
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+  document.getElementById('nav-email').textContent = currentUser.email;
+  document.getElementById('nav-role').textContent = currentUser.role;
+
+  try { categories = await api('/api/categories'); } catch (e) { categories = []; }
+
+  buildNav();
+  const defaultView = currentUser.role === 'CUSTOMER' ? 'my-tickets' : 'queue';
+  renderView(defaultView);
+}
+
+function buildNav() {
+  const links = [];
+  if (currentUser.role === 'CUSTOMER') {
+    links.push(['my-tickets', 'My tickets']);
+    links.push(['new-ticket', 'New ticket']);
+  }
+  if (currentUser.role === 'AGENT' || currentUser.role === 'ADMIN') {
+    links.push(['queue', 'Ticket queue']);
+  }
+  if (currentUser.role === 'ADMIN') {
+    links.push(['admin-users', 'Users']);
+    links.push(['admin-categories', 'Categories']);
+    links.push(['admin-audit', 'Audit log']);
+  }
+  links.push(['profile', 'My profile']);
+
+  const nav = document.getElementById('nav-links');
+  nav.innerHTML = links.map(([key, label]) =>
+    `<button class="nav-link" data-view="${key}" onclick="renderView('${key}')">${label}</button>`
+  ).join('');
+}
+
+function markActiveNav(view) {
+  document.querySelectorAll('.nav-link').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === view));
+}
+
+function renderView(view, param) {
+  currentView = view;
+  markActiveNav(view.split(':')[0]);
+  const main = document.getElementById('main-content');
+  main.innerHTML = '<p class="empty">Loading…</p>';
+
+  const routes = {
+    'my-tickets': renderMyTickets,
+    'new-ticket': renderNewTicket,
+    'queue': renderQueue,
+    'ticket-detail': () => renderTicketDetail(param),
+    'admin-users': renderAdminUsers,
+    'admin-categories': renderAdminCategories,
+    'admin-audit': renderAdminAudit,
+    'profile': renderProfile,
+  };
+  (routes[view] || renderMyTickets)();
+}
+
+/* ============================================================
+   SHARED BITS
+   ============================================================ */
+function priorityPill(p) { return `<span class="pill priority-${p}">${p}</span>`; }
+function statusPill(s) { return `<span class="pill ${s}">${s.replaceAll('_',' ')}</span>`; }
+function fmtDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
+
+function ticketsTable(tickets, opts = {}) {
+  if (!tickets.length) return '<p class="empty">No tickets to show.</p>';
+  return `
+    <table>
+      <thead><tr><th>Title</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Due</th></tr></thead>
+      <tbody>
+        ${tickets.map(t => `
+          <tr class="row-click" onclick="renderView('ticket-detail', ${t.id})">
+            <td>${t.title}</td>
+            <td>${t.categoryName}</td>
+            <td>${priorityPill(t.priority)}</td>
+            <td>${statusPill(t.status)}</td>
+            <td>${t.assignedToEmail || '—'}</td>
+            <td>${fmtDate(t.dueAt)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ============================================================
+   CUSTOMER: MY TICKETS / NEW TICKET
+   ============================================================ */
+async function renderMyTickets() {
+  const main = document.getElementById('main-content');
+  try {
+    const tickets = await api('/api/tickets/my-tickets');
+    main.innerHTML = `
+      <div class="section-head"><div><h2>My tickets</h2><p>Everything you've raised, newest activity first.</p></div></div>
+      ${ticketsTable(tickets)}`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+}
+
+function renderNewTicket() {
+  const visible = categories; // backend already filters to customer-visible ones
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="section-head"><div><h2>New ticket</h2><p>Tell us what's going on and we'll route it to the right team.</p></div></div>
+    <div class="card" style="max-width:560px">
+      <div id="new-ticket-msg"></div>
+      <div class="field"><label>Title</label><input id="nt-title" required></div>
+      <div class="field"><label>Description</label><textarea id="nt-desc" rows="4" required></textarea></div>
+      <div class="two-col">
+        <div class="field"><label>Category</label>
+          <select id="nt-category">${visible.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Priority</label>
+          <select id="nt-priority">
+            <option>LOW</option><option selected>MEDIUM</option><option>HIGH</option><option>CRITICAL</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="submitNewTicket()">Submit ticket</button>
+    </div>`;
+}
+
+async function submitNewTicket() {
+  const title = document.getElementById('nt-title').value;
+  const description = document.getElementById('nt-desc').value;
+  const categoryId = Number(document.getElementById('nt-category').value);
+  const priority = document.getElementById('nt-priority').value;
+  const msg = document.getElementById('new-ticket-msg');
+  try {
+    const ticket = await api('/api/tickets/create', {
+      method: 'POST',
+      body: JSON.stringify({ title, description, categoryId, priority })
+    });
+    toast('Ticket #' + ticket.id + ' created.');
+    renderView('ticket-detail', ticket.id);
+  } catch (err) {
+    msg.innerHTML = `<div class="msg error">${err.message}</div>`;
+  }
+}
+
+/* ============================================================
+   AGENT/ADMIN: QUEUE
+   ============================================================ */
+async function renderQueue() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="section-head"><div><h2>Ticket queue</h2><p>Search, filter, and claim work.</p></div></div>
+    <div class="card">
+      <div class="grid-form">
+        <div><label>Status</label><select id="q-status"><option value="">Any</option>
+          ${['OPEN','ASSIGNED','IN_PROGRESS','UNDER_REVIEW','ESCALATED','INVESTIGATING','CONFIRMED','FALSE_POSITIVE','APPROVED','REJECTED','RESOLVED','CLOSED']
+            .map(s => `<option>${s}</option>`).join('')}</select></div>
+        <div><label>Category</label><select id="q-category"><option value="">Any</option>
+          ${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select></div>
+        <div><label>Priority</label><select id="q-priority"><option value="">Any</option>
+          <option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select></div>
+        <div><button onclick="runQueueSearch()">Search</button></div>
+      </div>
+    </div>
+    <div id="queue-results"><p class="empty">Loading…</p></div>`;
+  runQueueSearch();
+}
+
+async function runQueueSearch() {
+  const status = document.getElementById('q-status').value;
+  const categoryId = document.getElementById('q-category').value;
+  const priority = document.getElementById('q-priority').value;
+  const params = new URLSearchParams({ page: 0, size: 20 });
+  if (status) params.set('status', status);
+  if (categoryId) params.set('categoryId', categoryId);
+  if (priority) params.set('priority', priority);
+
+  const results = document.getElementById('queue-results');
+  try {
+    const page = await api('/api/tickets?' + params.toString());
+    results.innerHTML = ticketsTable(page.content || []);
+  } catch (err) { results.innerHTML = `<p class="msg error">${err.message}</p>`; }
+}
+
+/* ============================================================
+   TICKET DETAIL (shared by customer + staff)
+   ============================================================ */
+async function renderTicketDetail(ticketId) {
+  const main = document.getElementById('main-content');
+  try {
+    const [ticket, comments, history] = await Promise.all([
+      api(`/api/tickets/${ticketId}`),
+      api(`/api/tickets/${ticketId}/comments`),
+      api(`/api/tickets/${ticketId}/history`),
+    ]);
+
+    const isStaff = currentUser.role === 'AGENT' || currentUser.role === 'ADMIN';
+    const isAdmin = currentUser.role === 'ADMIN';
+    const canClaim = currentUser.role === 'AGENT' && !ticket.assignedToEmail && ticket.status === 'OPEN';
+    const isClosed = ticket.status === 'CLOSED';
+
+    const statusOptions = ['OPEN','ASSIGNED','IN_PROGRESS','UNDER_REVIEW','ESCALATED','INVESTIGATING',
+      'CONFIRMED','FALSE_POSITIVE','APPROVED','REJECTED','RESOLVED','CLOSED'];
+
+    main.innerHTML = `
+      <button class="back-link" onclick="renderView(currentUser.role==='CUSTOMER' ? 'my-tickets' : 'queue')">&larr; Back</button>
+      <div class="section-head">
+        <div>
+          <h2>#${ticket.id} &middot; ${ticket.title}</h2>
+          <div class="ticket-meta">
+            <span>${statusPill(ticket.status)}</span>
+            <span>${priorityPill(ticket.priority)}</span>
+            <span>Category: <b>${ticket.categoryName}</b></span>
+            <span>Source: ${ticket.source}</span>
+            <span>Due: ${fmtDate(ticket.dueAt)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Description</h3>
+        <p>${ticket.description}</p>
+        <hr class="divider">
+        <div class="two-col" style="font-size:13px;color:var(--ink-soft)">
+          <div>Customer: ${ticket.customerEmail || '—'}</div>
+          <div>Created by: ${ticket.createdByEmail || 'SYSTEM'}</div>
+          <div>Assigned to: ${ticket.assignedToEmail || 'Unassigned'}</div>
+          <div>Created: ${fmtDate(ticket.createdAt)}</div>
+        </div>
+      </div>
+
+      ${isStaff ? `
+      <div class="card">
+        <h3>Actions</h3>
+        <div id="action-msg"></div>
+        <div class="btn-row">
+          ${canClaim ? `<button class="ok" onclick="doClaim(${ticket.id})">Claim ticket</button>` : ''}
+        </div>
+        ${!isClosed ? `
+          <hr class="divider">
+          <div class="grid-form">
+            <div><label>Change status to</label>
+              <select id="status-select">${statusOptions.map(s => `<option ${s===ticket.status?'selected':''}>${s}</option>`).join('')}</select>
+            </div>
+            <div><label>Note (required for Escalated / Resolved)</label><input id="status-note"></div>
+            <div><button onclick="doChangeStatus(${ticket.id})">Update status</button></div>
+          </div>
+          <div class="grid-form" style="margin-top:12px">
+            <div><label>Escalation note</label><input id="escalate-note"></div>
+            <div><button class="secondary" onclick="doEscalate(${ticket.id})">Escalate</button></div>
+          </div>
+        ` : ''}
+        ${isAdmin ? `
+          <hr class="divider">
+          <div class="grid-form">
+            <div><label>Reassign to agent (user ID)</label><input id="reassign-agent" type="number"></div>
+            <div><button class="secondary" onclick="doReassign(${ticket.id})">Reassign</button></div>
+          </div>
+          ${isClosed ? `
+          <div class="grid-form" style="margin-top:12px">
+            <div><label>Reopen reason</label><input id="reopen-reason"></div>
+            <div><button class="secondary" onclick="doReopen(${ticket.id})">Reopen ticket</button></div>
+          </div>` : ''}
+        ` : ''}
+      </div>` : ''}
+
+      <div class="card">
+        <h3>Comments</h3>
+        <div id="comments-list">
+          ${comments.length ? comments.map(c => `
+            <div class="comment">
+              <span class="who">${c.authorEmail}</span><span class="when">${fmtDate(c.createdAt)}</span>
+              <div>${c.content ?? c.commentContent ?? ''}</div>
+            </div>`).join('') : '<p class="empty">No comments yet.</p>'}
+        </div>
+        ${!isClosed ? `
+          <hr class="divider">
+          <textarea id="new-comment" rows="2" placeholder="Add a comment…"></textarea>
+          <div class="btn-row"><button onclick="doAddComment(${ticket.id})">Post comment</button></div>
+        ` : ''}
+      </div>
+
+      <div class="card">
+        <h3>History</h3>
+        ${history.length ? history.map(h => `
+          <div class="history-row"><b>${h.action}</b> by ${h.changedByEmail} — ${fmtDate(h.createdAt)}
+            ${h.oldValue || h.newValue ? `(${h.oldValue || '—'} → ${h.newValue || '—'})` : ''}</div>
+        `).join('') : '<p class="empty">No history yet.</p>'}
+      </div>
+    `;
+  } catch (err) {
+    main.innerHTML = `<p class="msg error">${err.message}</p>`;
+  }
+}
+
+async function doClaim(id) {
+  try { await api(`/api/tickets/${id}/claim`, { method: 'PUT' }); toast('Ticket claimed.'); renderView('ticket-detail', id); }
+  catch (err) { toast(err.message, true); }
+}
+async function doChangeStatus(id) {
+  const newStatus = document.getElementById('status-select').value;
+  const note = document.getElementById('status-note').value;
+  try {
+    await api(`/api/tickets/${id}/status`, { method: 'PUT', body: JSON.stringify({ newStatus, note }) });
+    toast('Status updated.'); renderView('ticket-detail', id);
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+async function doEscalate(id) {
+  const note = document.getElementById('escalate-note').value;
+  try {
+    await api(`/api/tickets/${id}/escalate`, { method: 'PUT', body: JSON.stringify({ note }) });
+    toast('Ticket escalated.'); renderView('ticket-detail', id);
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+async function doReassign(id) {
+  const agentId = Number(document.getElementById('reassign-agent').value);
+  try {
+    await api(`/api/admin/tickets/${id}/reassign`, { method: 'PUT', body: JSON.stringify({ agentId }) });
+    toast('Ticket reassigned.'); renderView('ticket-detail', id);
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+async function doReopen(id) {
+  const reason = document.getElementById('reopen-reason').value;
+  try {
+    await api(`/api/admin/tickets/${id}/reopen`, { method: 'PUT', body: JSON.stringify({ reason }) });
+    toast('Ticket reopened.'); renderView('ticket-detail', id);
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+async function doAddComment(id) {
+  const commentContent = document.getElementById('new-comment').value;
+  if (!commentContent.trim()) return;
+  try {
+    await api(`/api/tickets/${id}/comments`, { method: 'POST', body: JSON.stringify({ commentContent }) });
+    renderView('ticket-detail', id);
+  } catch (err) { toast(err.message, true); }
+}
+
+/* ============================================================
+   ADMIN: USERS
+   ============================================================ */
+async function renderAdminUsers() {
+  const main = document.getElementById('main-content');
+  try {
+    const users = await api('/api/admin/users');
+    main.innerHTML = `
+      <div class="section-head"><div><h2>Users</h2><p>Manage roles and account status.</p></div></div>
+      <table>
+        <thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Verified</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td>${u.email}</td><td>${u.fullName}</td>
+              <td>
+                <select onchange="doChangeRole(${u.id}, this.value)">
+                  ${['CUSTOMER','AGENT','ADMIN'].map(r => `<option ${r===u.role?'selected':''}>${r}</option>`).join('')}
+                </select>
+              </td>
+              <td>${u.status}</td>
+              <td>${u.emailVerified ? 'Yes' : 'No'}</td>
+              <td>
+                ${u.status === 'ACTIVE'
+                  ? `<button class="danger" onclick="doDeactivate(${u.id})">Deactivate</button>`
+                  : `<button class="ok" onclick="doReactivate(${u.id})">Reactivate</button>`}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:22px;max-width:500px">
+        <h3>Assign categories to an agent</h3>
+        <div class="field"><label>Agent user ID</label><input id="assign-agent-id" type="number"></div>
+        <div class="field"><label>Categories</label>
+          <select id="assign-category-ids" multiple size="7">
+            ${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}
+          </select>
+        </div>
+        <button onclick="doAssignCategories()">Assign</button>
+      </div>`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+}
+async function doChangeRole(userId, newRole) {
+  try { await api(`/api/admin/${userId}/role`, { method: 'PUT', body: JSON.stringify({ newRole }) }); toast('Role updated.'); }
+  catch (err) { toast(err.message, true); renderAdminUsers(); }
+}
+async function doDeactivate(userId) {
+  try { await api(`/api/admin/${userId}/deactivate`, { method: 'PUT' }); toast('User deactivated.'); renderAdminUsers(); }
+  catch (err) { toast(err.message, true); }
+}
+async function doReactivate(userId) {
+  try { await api(`/api/admin/${userId}/reactivate`, { method: 'PUT' }); toast('User reactivated.'); renderAdminUsers(); }
+  catch (err) { toast(err.message, true); }
+}
+async function doAssignCategories() {
+  const agentId = Number(document.getElementById('assign-agent-id').value);
+  const categoryIds = Array.from(document.getElementById('assign-category-ids').selectedOptions).map(o => Number(o.value));
+  try {
+    await api(`/api/admin/users/${agentId}/categories`, { method: 'POST', body: JSON.stringify({ categoryIds }) });
+    toast('Categories assigned.');
+  } catch (err) { toast(err.message, true); }
+}
+
+/* ============================================================
+   ADMIN: CATEGORIES
+   ============================================================ */
+async function renderAdminCategories() {
+  const main = document.getElementById('main-content');
+  try {
+    const all = await api('/api/categories');
+    main.innerHTML = `
+      <div class="section-head"><div><h2>Categories</h2><p>Control visibility to customers.</p></div></div>
+      <table>
+        <thead><tr><th>Name</th><th>Visible to customers</th><th>Active</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${all.map(c => `
+            <tr>
+              <td>${c.name}</td>
+              <td>${c.visibilityToCustomers ? 'Yes' : 'No'}</td>
+              <td>${c.active ? 'Yes' : 'No'}</td>
+              <td><button class="secondary" onclick="doToggleCategoryVisibility(${c.id}, ${!c.visibilityToCustomers}, '${c.name}')">
+                ${c.visibilityToCustomers ? 'Hide from customers' : 'Show to customers'}
+              </button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:22px;max-width:460px">
+        <h3>New category</h3>
+        <div class="field"><label>Name</label><input id="new-cat-name"></div>
+        <div class="checkbox-row field"><input type="checkbox" id="new-cat-visible"><label style="margin:0">Visible to customers</label></div>
+        <button onclick="doCreateCategory()">Create</button>
+      </div>`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+}
+async function doToggleCategoryVisibility(id, newValue, name) {
+  try {
+    await api(`/api/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify({ name, visibilityToCustomers: newValue }) });
+    toast('Category updated.'); renderAdminCategories();
+  } catch (err) { toast(err.message, true); }
+}
+async function doCreateCategory() {
+  const name = document.getElementById('new-cat-name').value;
+  const visibilityToCustomers = document.getElementById('new-cat-visible').checked;
+  try {
+    await api('/api/admin/categories', { method: 'POST', body: JSON.stringify({ name, visibilityToCustomers }) });
+    toast('Category created.');
+    categories = await api('/api/categories');
+    renderAdminCategories();
+  } catch (err) { toast(err.message, true); }
+}
+
+/* ============================================================
+   ADMIN: AUDIT LOG
+   ============================================================ */
+async function renderAdminAudit() {
+  const main = document.getElementById('main-content');
+  try {
+    const page = await api('/api/admin/audit-logs?page=0&size=25&sort=createdAt,desc');
+    const rows = page.content || [];
+    main.innerHTML = `
+      <div class="section-head"><div><h2>Audit log</h2><p>System-wide record of administrative actions.</p></div></div>
+      <table>
+        <thead><tr><th>When</th><th>Action</th><th>Entity</th><th>By</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${fmtDate(r.createdAt)}</td>
+              <td>${r.action}</td>
+              <td>${r.entityType || '—'} ${r.entityId ?? ''}</td>
+              <td>${r.user ? r.user.email : 'SYSTEM'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${!rows.length ? '<p class="empty">No audit entries yet.</p>' : ''}`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+function renderProfile() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="section-head"><div><h2>My profile</h2></div></div>
+    <div class="two-col">
+      <div class="card">
+        <h3>Details</h3>
+        <div id="profile-msg"></div>
+        <div class="field"><label>Full name</label><input id="profile-name" value="${currentUser.fullName}"></div>
+        <button onclick="doUpdateProfile()">Save name</button>
+      </div>
+      <div class="card">
+        <h3>Change password</h3>
+        <div id="password-msg"></div>
+        <div class="field"><label>Current password</label><input type="password" id="current-password"></div>
+        <div class="field"><label>New password</label><input type="password" id="new-password" minlength="8"></div>
+        <button onclick="doChangePassword()">Change password</button>
+      </div>
+    </div>`;
+}
+async function doUpdateProfile() {
+  const fullName = document.getElementById('profile-name').value;
+  try {
+    currentUser = await api('/api/users/me', { method: 'PUT', body: JSON.stringify({ fullName }) });
+    document.getElementById('profile-msg').innerHTML = '<div class="msg ok">Saved.</div>';
+  } catch (err) { document.getElementById('profile-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+async function doChangePassword() {
+  const currentPassword = document.getElementById('current-password').value;
+  const newPassword = document.getElementById('new-password').value;
+  try {
+    await api('/api/users/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) });
+    document.getElementById('password-msg').innerHTML = '<div class="msg ok">Password changed.</div>';
+  } catch (err) { document.getElementById('password-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+}
+
+/* ============================================================
+   STARTUP
+   ============================================================ */
+if (token) { bootApp(); }
+</script>
+</body>
+</html>
