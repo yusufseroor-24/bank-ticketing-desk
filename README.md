@@ -68,7 +68,44 @@ API Documentation
 - 
 When the app is running, interactive Swagger can be used to test endpoints.
 Swagger link: http://localhost:8080/swagger-ui/index.html#/
-
+| Method | URL | Functionality | Access |
+| ------ | --- | ------------- | ------ |
+| POST | `/api/auth/register` | Register a new account | Public |
+| POST | `/api/auth/login` | Log in, returns JWT | Public |
+| GET | `/api/auth/verify-email` | Verify email via token | Public |
+| POST | `/api/auth/resend-verification` | Resend verification email | Public |
+| POST | `/api/auth/forget-password` | Request password reset link | Public |
+| POST | `/api/auth/reset-password` | Reset password via token | Public |
+| GET | `/api/users/me` | Get own profile | Private |
+| PUT | `/api/users/me` | Update own full name | Private |
+| POST | `/api/users/change-password` | Change own password | Private |
+| POST | `/api/users/me/profile-pic` | Upload profile picture | Private |
+| GET | `/api/categories` | List categories (filtered by role) | Private |
+| POST | `/api/tickets/create` | Create a ticket | Customer |
+| POST | `/api/tickets/create/internal` | Create an internal/staff ticket | Agent, Admin |
+| GET | `/api/tickets/{id}` | Get a ticket by ID | Private (owner/staff) |
+| GET | `/api/tickets/my-tickets` | List own tickets | Customer |
+| GET | `/api/tickets` | Search/filter/paginate tickets | Private |
+| PUT | `/api/tickets/{id}/claim` | Claim an unassigned ticket | Agent |
+| PUT | `/api/tickets/{id}/status` | Change ticket status | Agent, Admin |
+| PUT | `/api/tickets/{id}/escalate` | Escalate a ticket | Agent, Admin |
+| POST | `/api/tickets/{id}/comments` | Add a comment | Private (owner/staff) |
+| GET | `/api/tickets/{id}/comments` | List comments | Private (owner/staff) |
+| POST | `/api/tickets/{id}/attachments` | Upload file(s) to a ticket | Private (owner/staff) |
+| GET | `/api/tickets/attachments/{id}` | Download an attachment | Private (owner/staff) |
+| DELETE | `/api/tickets/attachments/{id}` | Delete an attachment | Private (owner/staff) |
+| GET | `/api/tickets/{id}/history` | View ticket history | Private (owner/staff) |
+| GET | `/api/notifications/subscribe` | Subscribe to live updates (SSE) | Private |
+| GET | `/api/admin/users` | List all users | Admin |
+| PUT | `/api/admin/{userId}/role` | Change a user's role | Admin |
+| PUT | `/api/admin/{userId}/deactivate` | Soft-delete a user | Admin |
+| PUT | `/api/admin/{userId}/reactivate` | Restore a user | Admin |
+| POST | `/api/admin/categories` | Create a category | Admin |
+| PUT | `/api/admin/categories/{id}` | Update a category | Admin |
+| POST | `/api/admin/users/{agentId}/categories` | Assign categories to an agent | Admin |
+| PUT | `/api/admin/tickets/{id}/reopen` | Reopen a closed ticket | Admin |
+| PUT | `/api/admin/tickets/{id}/reassign` | Reassign a ticket to another agent | Admin |
+| GET | `/api/admin/audit-logs` | View the audit log | Admin |
 
 Project Installation
 - 
@@ -96,7 +133,9 @@ Future Improvements
 
 Resources
 - 
-- Bucket4j: https://www.baeldung.com/spring-bucket4j - Rate limiting implementation
-- Mailtrap: https://mailtrap.io - Development email sandbox for verification/reset emails
-- dbdiagram.io: https://dbdiagram.io - ERD creation
-- Server-Sent Events (SSE): https://www.baeldung.com/spring-server-sent-events - Notification implementation
+| Resource | URL | Used for |
+| -------- | --- | -------- |
+| Bucket4j | https://www.baeldung.com/spring-bucket4j | Rate limiting implementation |
+| Mailtrap | https://mailtrap.io | Development email sandbox for verification/reset emails |
+| dbdiagram.io | https://dbdiagram.io | ERD creation |
+| SSE (Server-Sent Events) | https://www.baeldung.com/spring-server-sent-events | Notification implementation |
