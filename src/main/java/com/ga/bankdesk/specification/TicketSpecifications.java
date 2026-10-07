@@ -9,7 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 public class TicketSpecifications {
 
     public static Specification<Ticket> hasStatus(TicketStatus status){
-        //root = The entity (Ticket)
+        //root = The entity (Ticket) //cb SQL query/operation
         return (root, query, cb) -> status == null ? null : cb.equal(root.get("status"), status);
     }
 

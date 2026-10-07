@@ -29,82 +29,50 @@ public class CategoryTicketWorkflow {
     //one category workflow: Map<TicketStatus, Set<TicketStatus>> : current status --> allowed next statuses
     private final Map<String, Map<TicketStatus, Set<TicketStatus>>> transitionByCategory = Map.of(
             "AML", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.UNDER_REVIEW),
-                    TicketStatus.UNDER_REVIEW,
-                    EnumSet.of(TicketStatus.ESCALATED, TicketStatus.RESOLVED),
-                    TicketStatus.ESCALATED,
-                    EnumSet.of(TicketStatus.RESOLVED),
-                    TicketStatus.RESOLVED,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.UNDER_REVIEW),
+                    TicketStatus.UNDER_REVIEW, EnumSet.of(TicketStatus.ESCALATED, TicketStatus.RESOLVED),
+                    TicketStatus.ESCALATED, EnumSet.of(TicketStatus.RESOLVED),
+                    TicketStatus.RESOLVED, EnumSet.of(TicketStatus.CLOSED)
             ),
             "FRAUD", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.INVESTIGATING),
-                    TicketStatus.INVESTIGATING,
-                    EnumSet.of(TicketStatus.CONFIRMED, TicketStatus.FALSE_POSITIVE),
-                    TicketStatus.CONFIRMED,
-                    EnumSet.of(TicketStatus.CLOSED),
-                    TicketStatus.FALSE_POSITIVE,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.INVESTIGATING),
+                    TicketStatus.INVESTIGATING, EnumSet.of(TicketStatus.CONFIRMED, TicketStatus.FALSE_POSITIVE),
+                    TicketStatus.CONFIRMED, EnumSet.of(TicketStatus.CLOSED),
+                    TicketStatus.FALSE_POSITIVE, EnumSet.of(TicketStatus.CLOSED)
             ),
             "KYC_REVIEW", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.UNDER_REVIEW),
-                    TicketStatus.UNDER_REVIEW,
-                    EnumSet.of(TicketStatus.APPROVED, TicketStatus.REJECTED),
-                    TicketStatus.APPROVED,
-                    EnumSet.of(TicketStatus.CLOSED),
-                    TicketStatus.REJECTED,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.UNDER_REVIEW),
+                    TicketStatus.UNDER_REVIEW, EnumSet.of(TicketStatus.APPROVED, TicketStatus.REJECTED),
+                    TicketStatus.APPROVED, EnumSet.of(TicketStatus.CLOSED),
+                    TicketStatus.REJECTED, EnumSet.of(TicketStatus.CLOSED)
             ),
             "CARD_DISPUTE", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.UNDER_REVIEW),
-                    TicketStatus.UNDER_REVIEW,
-                    EnumSet.of(TicketStatus.APPROVED, TicketStatus.REJECTED),
-                    TicketStatus.APPROVED,
-                    EnumSet.of(TicketStatus.CLOSED),
-                    TicketStatus.REJECTED,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.UNDER_REVIEW),
+                    TicketStatus.UNDER_REVIEW, EnumSet.of(TicketStatus.APPROVED, TicketStatus.REJECTED),
+                    TicketStatus.APPROVED, EnumSet.of(TicketStatus.CLOSED),
+                    TicketStatus.REJECTED, EnumSet.of(TicketStatus.CLOSED)
             ),
             "IT_SECURITY", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.IN_PROGRESS),
-                    TicketStatus.IN_PROGRESS,
-                    EnumSet.of(TicketStatus.RESOLVED),
-                    TicketStatus.RESOLVED,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.IN_PROGRESS),
+                    TicketStatus.IN_PROGRESS, EnumSet.of(TicketStatus.RESOLVED),
+                    TicketStatus.RESOLVED, EnumSet.of(TicketStatus.CLOSED)
             ),
             "LOAN_ACCOUNT", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.IN_PROGRESS),
-                    TicketStatus.IN_PROGRESS,
-                    EnumSet.of(TicketStatus.RESOLVED),
-                    TicketStatus.RESOLVED,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.IN_PROGRESS),
+                    TicketStatus.IN_PROGRESS, EnumSet.of(TicketStatus.RESOLVED),
+                    TicketStatus.RESOLVED, EnumSet.of(TicketStatus.CLOSED)
             ),
             "COMPLAINT", buildMap(
-                    TicketStatus.OPEN,
-                    EnumSet.of(TicketStatus.ASSIGNED),
-                    TicketStatus.ASSIGNED,
-                    EnumSet.of(TicketStatus.IN_PROGRESS),
-                    TicketStatus.IN_PROGRESS,
-                    EnumSet.of(TicketStatus.RESOLVED),
-                    TicketStatus.RESOLVED,
-                    EnumSet.of(TicketStatus.CLOSED)
+                    TicketStatus.OPEN, EnumSet.of(TicketStatus.ASSIGNED),
+                    TicketStatus.ASSIGNED, EnumSet.of(TicketStatus.IN_PROGRESS),
+                    TicketStatus.IN_PROGRESS, EnumSet.of(TicketStatus.RESOLVED),
+                    TicketStatus.RESOLVED, EnumSet.of(TicketStatus.CLOSED)
             )
     );
 

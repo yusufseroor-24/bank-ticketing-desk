@@ -6,6 +6,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+//encode passwords to prevent plain text saving of password
 public class PasswordConfig {
 
     @Bean

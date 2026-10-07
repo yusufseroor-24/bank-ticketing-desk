@@ -64,6 +64,7 @@ public class TicketService {
         return ticketMapper.toResponse(save);
     }
 
+    //sla hours depending on priority
     int slaHours(TicketPriority priority){
         return switch(priority) {
             case CRITICAL -> 4;
@@ -93,6 +94,7 @@ public class TicketService {
                 .toList();
     }
 
+    //employye/agent ticket creation (internal)
     public TicketCreationResponse internalTicketCreation(User agent, CreateInternalTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.categoryId() + " is not found"));
@@ -118,6 +120,7 @@ public class TicketService {
         return ticketMapper.toResponse(save);
     }
 
+    //statues that require a note to transition into
     private static final Set<TicketStatus> REQUIRED_NOTE = Set.of(TicketStatus.ESCALATED, TicketStatus.RESOLVED);
 
     public TicketCreationResponse changeStatus(User currentUser, Long ticketId, TicketStatus newStatus, String note){
@@ -152,6 +155,7 @@ public class TicketService {
         return ticketMapper.toResponse(save);
     }
 
+    //allows admin to reopen a closed ticket
     public TicketCreationResponse reopenTicket(User currentUser, Long ticketId, String reason){
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
@@ -168,6 +172,7 @@ public class TicketService {
         return ticketMapper.toResponse(save);
     }
 
+    //allows an agent to claim a ticket
     public TicketCreationResponse claimTicket(User agent, Long ticketId){
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
@@ -195,6 +200,7 @@ public class TicketService {
         return ticketMapper.toResponse(save);
     }
 
+    //allows the admin to reassign a ticket to a specific agent
     public TicketCreationResponse reassignTicket(Long ticketId, Long newAgentId){
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
@@ -327,6 +333,7 @@ public class TicketService {
 
     }
 
+    //SSE
     private void notifyTicketEvent(Ticket ticket, String eventType, String message){
         if(ticket.getCustomer() == null){
             //internal tickets have no customer
@@ -337,6 +344,7 @@ public class TicketService {
         emitterRegistry.sendToUser(ticket.getCustomer().getId(), "ticket-update", notification);
     }
 
+    //used to track ticket history
     private void recordHistory(Ticket ticket, User changedBy, String action, String oldValue, String newValue){
         TicketHistory history = new TicketHistory();
         history.setTicket(ticket);

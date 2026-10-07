@@ -16,7 +16,7 @@ public class NotificationController {
 
     private final SseEmitterRegistry emitterRegistry;
 
-    @GetMapping(value = "/subscribe", produces = "text/event-stream")
+    @GetMapping(value = "/subscribe", produces = "text/event-stream") //SSE content type
     public SseEmitter subscribe(@AuthenticationPrincipal AppUserDetails userDetails){
         return emitterRegistry.register(userDetails.getUser().getId());
     }

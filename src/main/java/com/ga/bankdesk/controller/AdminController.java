@@ -21,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/admin")
+//admin authorization
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 

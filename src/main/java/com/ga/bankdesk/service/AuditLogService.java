@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
+//global audit log for user activity
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;

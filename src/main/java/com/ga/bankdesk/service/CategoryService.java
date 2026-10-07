@@ -1,6 +1,5 @@
 package com.ga.bankdesk.service;
 
-import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.repository.CategoryRepository;

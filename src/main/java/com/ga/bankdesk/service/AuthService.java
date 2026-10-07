@@ -114,6 +114,7 @@ public class AuthService {
         emailService.sendVerificationEmail(user.getEmail(), verificationToken.getToken());
     }
 
+    //creates a token that gets sent in the email for reseting the password
     public void forgetPassword(String email){
         userRepository.findByEmail(email)
                 .ifPresent(user -> {
@@ -128,6 +129,7 @@ public class AuthService {
         });
     }
 
+    //reset password logic using the token sent through email from forgetPassword()
     public void resetPassword(String tokenString, String newPassword){
         Token resetPassToken = tokenRepository.findByToken(tokenString)
                 .orElseThrow(() -> new BusinessRuleException("Invalid verification link"));
@@ -149,6 +151,7 @@ public class AuthService {
         tokenRepository.save(resetPassToken);
     }
 
+    //change password when user is already logged in (needs a known current password)
     public void changePassword(User currentUser, String currentPassword, String newPassword){
         if(!passwordEncoder.matches(currentPassword, currentUser.getPassword())){
             throw new BusinessRuleException("Your current password is incorrect");

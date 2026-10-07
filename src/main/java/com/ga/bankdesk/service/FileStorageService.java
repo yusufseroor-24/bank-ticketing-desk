@@ -30,8 +30,9 @@ public class FileStorageService {
                 Files.createDirectories(uploadPath);
             }
 
+            //generate file name using random UUID and file name
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName);
+            Path filePath = uploadPath.resolve(fileName); //adds the path and the file name together
             file.transferTo(filePath);
 
             return fileName;

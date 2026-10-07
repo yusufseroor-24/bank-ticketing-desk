@@ -26,6 +26,7 @@ public class EmailService {
     }
 
     public void sendPasswordResetEmail(String toEmail, String token){
+        //creates a link with a token
         String link = "http://localhost:8080/api/auth/verify-email?token=" + token;
         SimpleMailMessage emailMessage = new SimpleMailMessage();
         emailMessage.setTo(toEmail);

@@ -34,12 +34,14 @@ public class AdminService {
     private final AuditLogService auditLogService;
     private final AuditLogRepository auditLogRepository;
 
+    //allows the user to view all the users of the app
     public List<UserResponse> listAllUsers(){
         return userRepository.findAll().stream()
                 .map(userMapper::toRespond)
                 .toList();
     }
 
+    //allows the user to change the roles of the users since customer is the default
     public UserResponse changeRole(User admin, Long userId, Role newRole){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
@@ -51,6 +53,7 @@ public class AdminService {
         return userMapper.toRespond(save);
     }
 
+    //allow the admin to soft delete a user account
     public UserResponse deactivateUser(User admin, Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " was not found"));
@@ -75,6 +78,7 @@ public class AdminService {
         return userMapper.toRespond(save);
     }
 
+    //allows the admin to assign the agent to a specific category to resolve tickets of that catgeory only
     public void assignCategoryToAgent(User admin, Long agentId, List<Long> categoryIds){
         User agent = userRepository.findById(agentId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + agentId + " is not found"));

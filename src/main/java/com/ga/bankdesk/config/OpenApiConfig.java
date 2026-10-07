@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+//use to connect endpoints to swagger UI
 public class OpenApiConfig {
 
     @Bean
