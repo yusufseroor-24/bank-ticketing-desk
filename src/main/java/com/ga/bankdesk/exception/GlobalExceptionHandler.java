@@ -3,6 +3,7 @@ package com.ga.bankdesk.exception;
 import com.ga.bankdesk.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -29,6 +30,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException exception, HttpServletRequest request){
         return buildResponse(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), request);
+    }
+
+    //two users changed the same record at the same time (409)
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(OptimisticLockingFailureException exception, HttpServletRequest request){
+        log.warn("Optimistic lock conflict on {}: {}", request.getRequestURI(), exception.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, "CONCURRENT_MODIFICATION",
+                "This record was changed by someone else. Please refresh and try again", request);
+
     }
 
     @ExceptionHandler(BusinessRuleException.class)
