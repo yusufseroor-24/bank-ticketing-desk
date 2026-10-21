@@ -65,4 +65,8 @@ public class Ticket {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Version //track version of the entity
+    @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0") //default 0 for existing rows
+    private Long version;
+
 }
