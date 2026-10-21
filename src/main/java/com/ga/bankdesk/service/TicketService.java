@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -173,6 +174,8 @@ public class TicketService {
     }
 
     //allows an agent to claim a ticket
+    //transactional - method is treated as one transaction (all succeed or roll back)
+    @Transactional
     public TicketCreationResponse claimTicket(User agent, Long ticketId){
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
@@ -190,12 +193,20 @@ public class TicketService {
         if(!categoryTicketWorkflow.isValidTransition(ticket.getCategory().getName(), ticket.getStatus(), TicketStatus.ASSIGNED)){
             throw new BusinessRuleException("This ticket can't be claimed from its current status");
         }
-        ticket.setAssignedTo(agent);
-        ticket.setStatus(TicketStatus.ASSIGNED);
-        Ticket save = ticketRepository.save(ticket);
+
+        //guard and query to update database
+        int updated = ticketRepository.claimIfUnassigned(ticketId, agent, TicketStatus.ASSIGNED, ticket.getStatus(), LocalDateTime.now());
+        if(updated == 0){
+            log.warn("Claim Conflict: ticketId={}, agent={}, thread={}", ticketId, agent.getEmail(), Thread.currentThread().getName());
+            throw new ConflictException("This ticket was just claimed by another agent");
+        }
+
+        //re-read because the update cleared the previous copy
+        Ticket save = ticketRepository.findById(ticketId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID "+ ticketId + " is not found"));
 
         recordHistory(save, agent, "ASSIGNED", "UNASSIGNED", agent.getEmail());
-        notifyTicketEvent(save, "ASSIGNED", "Your ticker has been assigned to an agent");
+        notifyTicketEvent(save, "ASSIGNED", "Your ticket has been assigned to an agent");
         log.info("Ticket {} claimed by agent {}", save.getId(), agent.getEmail());
         return ticketMapper.toResponse(save);
     }
