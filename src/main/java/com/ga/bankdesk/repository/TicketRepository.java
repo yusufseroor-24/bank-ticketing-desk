@@ -17,7 +17,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
     List<Ticket> findByCustomerId(Long customerId);
 
 
-    //atomic claim
+    //atomic claim, assigns, changes status, increments version, and updates timestamp of a ticket if conditions are met
 
     //flushAutomatically writes pending changes first and clearAutomatically drops the copies
     @Modifying(flushAutomatically = true, clearAutomatically = true)
