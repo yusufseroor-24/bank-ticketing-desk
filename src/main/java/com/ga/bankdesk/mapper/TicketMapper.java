@@ -20,7 +20,10 @@ public class TicketMapper {
                 ticket.getPriority(),
                 ticket.getStatus(),
                 ticket.getDueAt(),
-                ticket.getCreatedAt()
+                ticket.getCreatedAt(),
+                ticket.getFirstResponseDueAt(),
+                ticket.getFirstRespondedAt(),
+                ticket.getResolvedAt()
         );
 
     }

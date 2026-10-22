@@ -18,6 +18,9 @@ public record TicketCreationResponse(
         TicketPriority priority,
         TicketStatus status,
         LocalDateTime dueAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime firstResponseDueAt,
+        LocalDateTime firstRespondedAt,
+        LocalDateTime resolvedAt
 ) {
 }

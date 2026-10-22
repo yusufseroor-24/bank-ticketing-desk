@@ -54,8 +54,20 @@ public class Ticket {
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
 
+    //resolution deadline
     @Column
     private LocalDateTime dueAt;
+
+    @Column
+    private LocalDateTime firstResponseDueAt;
+
+    //when an agent first acted on the ticket
+    @Column
+    private LocalDateTime firstRespondedAt;
+
+    //when the agent reached a final stage status
+    @Column
+    private LocalDateTime resolvedAt;
 
     @Column
     @CreationTimestamp
