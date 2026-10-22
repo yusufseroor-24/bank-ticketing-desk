@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Component
-@Order(3)
+@Order(4)
 //seeding ticket data
 public class TicketSeeder implements CommandLineRunner {
 

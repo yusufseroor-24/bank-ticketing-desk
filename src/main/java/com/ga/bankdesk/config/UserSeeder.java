@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 @Component
-@Order(2)
+@Order(3)
 //seeding users
 public class UserSeeder implements CommandLineRunner {
 
