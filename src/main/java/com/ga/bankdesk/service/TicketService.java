@@ -11,6 +11,7 @@ import com.ga.bankdesk.model.*;
 import com.ga.bankdesk.notifications.SseEmitterRegistry;
 import com.ga.bankdesk.repository.*;
 import com.ga.bankdesk.specification.TicketSpecifications;
+import com.ga.bankdesk.workflow.CategoryRules;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,8 @@ public class TicketService {
     private final TicketAttachmentRepository ticketAttachmentRepository;
     private final SseEmitterRegistry emitterRegistry;
     private final TicketHistoryRepository ticketHistoryRepository;
+    private final SlaService slaService;
+    private final CategoryRules categoryRules;
 
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
@@ -55,24 +58,14 @@ public class TicketService {
         ticket.setCreatedBy(customer);
         ticket.setSource(SourceOfTicket.CUSTOMER);
         ticket.setStatus(TicketStatus.OPEN);
-        ticket.setPriority(request.priority());
-        ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(request.priority())));
+        ticket.setPriority(slaService.correctPriority(category, request.priority()));
+        slaService.applyDeadlines(ticket, LocalDateTime.now());
 
         Ticket save = ticketRepository.save(ticket);
 
         recordHistory(save, customer, "CREATED", null, save.getStatus().toString());
         log.info("Ticket created: id={}, category={}, customer={}", save.getId(), category.getName(), customer.getEmail());
         return ticketMapper.toResponse(save);
-    }
-
-    //sla hours depending on priority
-    int slaHours(TicketPriority priority){
-        return switch(priority) {
-            case CRITICAL -> 4;
-            case HIGH -> 24;
-            case MEDIUM -> 72;
-            case LOW -> 120;
-        };
     }
 
     public TicketCreationResponse getTicketById(User user, Long ticketId){
@@ -114,15 +107,13 @@ public class TicketService {
         ticket.setCreatedBy(agent);
         ticket.setSource(SourceOfTicket.INTERNAL);
         ticket.setStatus(TicketStatus.OPEN);
-        ticket.setPriority(request.priority());
-        ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(request.priority())));
+        ticket.setPriority(slaService.correctPriority(category, request.priority()));
+        slaService.applyDeadlines(ticket, LocalDateTime.now());
 
         Ticket save = ticketRepository.save(ticket);
         return ticketMapper.toResponse(save);
     }
 
-    //statues that require a note to transition into
-    private static final Set<TicketStatus> REQUIRED_NOTE = Set.of(TicketStatus.ESCALATED, TicketStatus.RESOLVED);
 
     public TicketCreationResponse changeStatus(User currentUser, Long ticketId, TicketStatus newStatus, String note){
         Ticket ticket = ticketRepository.findById(ticketId)
@@ -141,13 +132,16 @@ public class TicketService {
                     "Allowed next Statuses: " + allowed);
         }
 
-        if(REQUIRED_NOTE.contains(newStatus) && (note == null || note.isBlank())){ //check empty string too
+        if(categoryRules.isNoteRequired(categoryName, newStatus) && (note == null || note.isBlank())){ //check empty string too
             throw new BusinessRuleException("A note is required to move this ticket to " + newStatus);
         }
 
         TicketStatus oldStatus = ticket.getStatus();
 
         ticket.setStatus(newStatus);
+        if(slaService.isResolutionStatus(newStatus) && ticket.getResolvedAt() == null){
+            ticket.setResolvedAt(LocalDateTime.now()); //SLA resolution clock stops
+        }
         Ticket save = ticketRepository.save(ticket);
 
         recordHistory(save, currentUser, "STATUS_CHANGED", oldStatus.toString(), newStatus.toString());
@@ -167,6 +161,8 @@ public class TicketService {
             throw new BusinessRuleException("A reason is required to reopen a ticket");
         }
         ticket.setStatus(TicketStatus.OPEN);
+        ticket.setResolvedAt(null);
+        slaService.applyDeadlines(ticket, LocalDateTime.now()); //fresh SLA clock for reopened tickets
         Ticket save = ticketRepository.save(ticket);
 
         recordHistory(save, currentUser, "REOPENED", "CLOSED", reason);
@@ -204,6 +200,11 @@ public class TicketService {
         //re-read because the update cleared the previous copy
         Ticket save = ticketRepository.findById(ticketId)
                         .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID "+ ticketId + " is not found"));
+
+        if(save.getFirstRespondedAt() == null){
+            save.setFirstRespondedAt(LocalDateTime.now());//claim is the first response
+            ticketRepository.save(save);
+        }
 
         recordHistory(save, agent, "ASSIGNED", "UNASSIGNED", agent.getEmail());
         notifyTicketEvent(save, "ASSIGNED", "Your ticket has been assigned to an agent");
@@ -251,8 +252,10 @@ public class TicketService {
         }
 
         ticket.setStatus(TicketStatus.ESCALATED);
-        ticket.setPriority(TicketPriority.HIGH);
-        ticket.setDueAt(LocalDateTime.now().plusHours(slaHours(TicketPriority.HIGH)));
+        if(ticket.getPriority().ordinal() < TicketPriority.HIGH.ordinal()){
+            ticket.setPriority(TicketPriority.HIGH);
+        }
+        slaService.applyDeadlines(ticket, ticket.getCreatedAt());
         Ticket save = ticketRepository.save(ticket);
 
         recordHistory(save, currentUser, "ESCALATED", null, note);
@@ -266,6 +269,12 @@ public class TicketService {
         if(ticket.getStatus() == TicketStatus.CLOSED){
             throw new BusinessRuleException("Cannot comment on a closed ticket");
         }
+
+        if(currentUser.getRole() != Role.CUSTOMER && ticket.getFirstRespondedAt() == null){
+            ticket.setFirstRespondedAt(LocalDateTime.now());  //first staff reply counts as the first response
+            ticketRepository.save(ticket);
+        }
+
         TicketComments comment = new TicketComments();
         comment.setTicket(ticket);
         comment.setAuthor(currentUser);
