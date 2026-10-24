@@ -24,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -74,6 +75,7 @@ public class AuthService {
         return new LoginResponse(token);
     }
 
+    @Transactional
     public void verifyEmail(String tokenString){
         Token verificationToken = tokenRepository.findByToken(tokenString)
                 .orElseThrow(() -> new BusinessRuleException("Invalid verification link"));
@@ -87,12 +89,16 @@ public class AuthService {
             throw new BusinessRuleException("This verification link has expired");
         }
 
+        //guard
+        if(tokenRepository.markTokenUsedIfUnused(verificationToken.getId()) == 0){
+            log.warn("Verification token reuse blocked: tokedId={}, thread={}",
+                    verificationToken.getId(), Thread.currentThread().getName());
+            throw new BusinessRuleException("This verification link is already being used or has been previously used");
+        }
+
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
         userRepository.save(user);
-
-        verificationToken.setUsed(true);
-        tokenRepository.save(verificationToken);
     }
 
     public void resendVerification(String email){
@@ -130,6 +136,7 @@ public class AuthService {
     }
 
     //reset password logic using the token sent through email from forgetPassword()
+    @Transactional
     public void resetPassword(String tokenString, String newPassword){
         Token resetPassToken = tokenRepository.findByToken(tokenString)
                 .orElseThrow(() -> new BusinessRuleException("Invalid verification link"));
@@ -143,12 +150,16 @@ public class AuthService {
             throw new BusinessRuleException("This reset password link has expired");
         }
 
+        //claim token before doing anything with the password
+        if(tokenRepository.markTokenUsedIfUnused(resetPassToken.getId()) == 0){
+            log.warn("Reset token reuse blocked: tokedId={}, thread={}", resetPassToken.getId(),
+                    Thread.currentThread().getName());
+            throw new BusinessRuleException("This reset password link is already being used or has been previously used");
+        }
+
         User user = resetPassToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-
-        resetPassToken.setUsed(true);
-        tokenRepository.save(resetPassToken);
     }
 
     //change password when user is already logged in (needs a known current password)
