@@ -3,9 +3,11 @@ package com.ga.bankdesk.controller;
 import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.model.AuditLog;
 import com.ga.bankdesk.model.Category;
+import com.ga.bankdesk.model.SlaPolicy;
 import com.ga.bankdesk.security.AppUserDetails;
 import com.ga.bankdesk.service.AdminService;
 import com.ga.bankdesk.service.CategoryService;
+import com.ga.bankdesk.service.SlaService;
 import com.ga.bankdesk.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class AdminController {
     private final AdminService adminService;
     private final CategoryService categoryService;
     private final TicketService ticketService;
+    private final SlaService slaService;
 
     @GetMapping("/users")
     public List<UserResponse> listAllUsers(){
@@ -83,6 +86,16 @@ public class AdminController {
     @GetMapping("/audit-logs")
     public Page<AuditLog> listAuditLogs(Pageable pageable){
         return adminService.listAuditLogs(pageable);
+    }
+
+    @GetMapping("/sla-policies")
+    public List<SlaPolicy> listSlaPolicies(){
+        return slaService.listPolicies();
+    }
+
+    @PutMapping("/sla-policies/{policyId}")
+    public SlaPolicy updateSlaPolicy(@PathVariable Long policyId, @Valid @RequestBody UpdateSlaPolicyRequest request){
+        return slaService.updatePolicy(policyId, request.firstResponseMinutes(), request.resolutionMinutes());
     }
 
 }
