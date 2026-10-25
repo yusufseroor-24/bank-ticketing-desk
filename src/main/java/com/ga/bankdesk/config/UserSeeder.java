@@ -34,16 +34,16 @@ public class UserSeeder implements CommandLineRunner {
             return;
         }
 
-        User admin = seedUser("admin@bankdesk.com", "Admin User", Role.ADMIN);
+        User admin = seedUser("practice24in+admin@gmail.com", "Admin User", Role.ADMIN);
 
-        User agentInternal = seedUser("agent.security@bankdesk.com", "Agent Security", Role.AGENT);
+        User agentInternal = seedUser("practice24in+agent.security@gmail.com", "Agent Security", Role.AGENT);
         assignCategories(agentInternal, "AML", "FRAUD", "IT_SECURITY");
 
-        User agentGeneral = seedUser("agent.general@bankdesk.com", "Agent General", Role.AGENT);
+        User agentGeneral = seedUser("practice24in+agent.general@gmail.com", "Agent General", Role.AGENT);
         assignCategories(agentGeneral, "KYC_REVIEW", "CARD_DISPUTE", "LOAN_ACCOUNT", "COMPLAINT");
 
-        seedUser("customer1@bankdesk.com", "Customer One", Role.CUSTOMER);
-        seedUser("customer2@bankdesk.com", "Customer Two", Role.CUSTOMER);
+        seedUser("practice24in+customer1@gmail.com", "Customer One", Role.CUSTOMER);
+        seedUser("practice24in+customer2@gmail.com", "Customer Two", Role.CUSTOMER);
     }
 
     private User seedUser(String email, String fullName, Role role) {

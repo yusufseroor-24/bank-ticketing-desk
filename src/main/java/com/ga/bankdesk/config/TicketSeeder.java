@@ -33,9 +33,9 @@ public class TicketSeeder implements CommandLineRunner {
             return;
         }
 
-        User customer1 = userRepository.findByEmail("customer1@bankdesk.com").orElseThrow();
-        User customer2 = userRepository.findByEmail("customer2@bankdesk.com").orElseThrow();
-        User agentGeneral = userRepository.findByEmail("agent.general@bankdesk.com").orElseThrow();
+        User customer1 = userRepository.findByEmail("practice24in+customer1@gmail.com").orElseThrow();
+        User customer2 = userRepository.findByEmail("practice24in+customer2@gmail.com").orElseThrow();
+        User agentGeneral = userRepository.findByEmail("practice24in+agent.general@gmail.com").orElseThrow();
 
         Category cardDispute = findCategory("CARD_DISPUTE");
         Category complaint = findCategory("COMPLAINT");

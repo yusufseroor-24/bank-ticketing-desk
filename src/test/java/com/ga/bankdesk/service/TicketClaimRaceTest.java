@@ -61,7 +61,7 @@ class TicketClaimRaceTest {
                 .filter(c -> c.getName().equals("CARD_DISPUTE"))
                 .findFirst().orElseThrow();
 
-        User customer = userRepository.findByEmail("customer1@bankdesk.com").orElseThrow();
+        User customer = userRepository.findByEmail("practice24in+customer1@gmail.com").orElseThrow();
 
         Long ticketId = ticketService.createTicket(customer, new CreateTicketRequest("Race test ticket",
                 "Many agents claim this at once - test", cardDispute.getId(), TicketPriority.MEDIUM)).id();

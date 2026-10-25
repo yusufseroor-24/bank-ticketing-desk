@@ -35,8 +35,8 @@ public class TicketClaimConflictTest {
         Category cardDispute = categoryRepository.findAll().stream()
                 .filter(c -> c.getName().equals("CARD_DISPUTE"))
                 .findFirst().orElseThrow();
-        User customer = userRepository.findByEmail("customer1@bankdesk.com").orElseThrow();
-        User agent = userRepository.findByEmail("agent.general@bankdesk.com").orElseThrow();
+        User customer = userRepository.findByEmail("practice24in+customer1@gmail.com").orElseThrow();
+        User agent = userRepository.findByEmail("practice24in+agent.general@gmail.com").orElseThrow();
 
         Long ticketId = ticketService.createTicket(customer,
                 new CreateTicketRequest("Test dispute", "A test charge dispute",
