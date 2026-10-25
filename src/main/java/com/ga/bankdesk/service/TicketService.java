@@ -45,6 +45,7 @@ public class TicketService {
     private final TicketHistoryRepository ticketHistoryRepository;
     private final SlaService slaService;
     private final CategoryRules categoryRules;
+    private final EmailService emailService;
 
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
@@ -65,6 +66,7 @@ public class TicketService {
 
         recordHistory(save, customer, "CREATED", null, save.getStatus().toString());
         log.info("Ticket created: id={}, category={}, customer={}", save.getId(), category.getName(), customer.getEmail());
+        emailService.sendTicketCreatedEmail(customer.getEmail(), save.getId(), save.getTitle(), category.getName());
         return ticketMapper.toResponse(save);
     }
 
@@ -146,6 +148,7 @@ public class TicketService {
 
         recordHistory(save, currentUser, "STATUS_CHANGED", oldStatus.toString(), newStatus.toString());
         notifyTicketEvent(save,"STATUS_CHANGED", "Your ticket status changed to " + newStatus);
+        emailService.sendTicketStatusChangedEmail(save.getCustomer().getEmail(), save.getId(), save.getTitle(), newStatus.toString());
         log.info("Ticket {} status changed: {} -> {} by {}", save.getId(), oldStatus, newStatus, currentUser.getEmail());
         return ticketMapper.toResponse(save);
     }
