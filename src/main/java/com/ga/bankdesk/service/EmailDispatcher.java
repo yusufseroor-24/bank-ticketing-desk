@@ -22,7 +22,7 @@ public class EmailDispatcher {
     @Value("${spring.mail.username}")
     private String from;
 
-    @Async
+    @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void send(EmailMessage msg){
         try{
