@@ -10,4 +10,6 @@ public interface AgentCategoryRepository extends JpaRepository<AgentCategory, Lo
     List<AgentCategory> findByAgentId(Long agentId);
 
     boolean existsByAgentIdAndCategoryId(Long agentId, Long CategoryId);
+
+    List<AgentCategory> findByCategoryId(Long categoryId);
 }

@@ -7,12 +7,16 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class EmailService {
 
     private final ApplicationEventPublisher publisher;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
 
     @Value("${app.frontend-base-url:http://localhost:8080}")
     private String baseUrl;
@@ -90,5 +94,13 @@ public class EmailService {
                 .replace("{{intro}}", intro)
                 .replace("{{action}}", action)
                 .replace("{{footnote}}", footnote);
+    }
+
+    public void sendSlaAlertEmail(String toEmail, Long ticketId, String title, String headline, LocalDateTime dueAt){
+        publish(toEmail, "SLA Alert: ticket #" + ticketId,
+                headline,
+                "Ticket #" + ticketId + " (" + esc(title) + ") has a resolution deadline of <b>" + dueAt.format(FORMATTER) + "<b>.",
+                null, null,
+                "Open BankDesk to act on the ticket");
     }
 }

@@ -41,10 +41,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
                           @Param("expectedStatus") TicketStatus expectedStatus,
                           @Param("now") LocalDateTime now);
 
+    //finds tickets that need SLA notification
     @Query("SELECT t FROM Ticket t WHERE t.resolvedAt IS NULL AND t.dueAt IS NOT NULL " +
             "AND t.status <> :closed AND t.slaNotifyLevel < 3")
     List<Ticket> findSlaCandidates(@Param("closed") TicketStatus closed);
 
+    //increases the ticket notification level in the database
     @Transactional
     @Modifying
     @Query("UPDATE Ticket t SET t.slaNotifyLevel = :level WHERE t.id = :id AND t.slaNotifyLevel < :level")
