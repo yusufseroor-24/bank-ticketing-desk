@@ -52,7 +52,7 @@ public class SlaService {
         long resolutionMinutes;
 
         SlaPolicy policy = slaPolicyRepository
-                .findByCategoryIdAndPriorityId(ticket.getCategory().getId(), ticket.getPriority())
+                .findByCategoryIdAndPriority(ticket.getCategory().getId(), ticket.getPriority())
                 .orElse(null);
         if(policy !=null){
             responseMinutes = policy.getFirstResponseMinutes();
