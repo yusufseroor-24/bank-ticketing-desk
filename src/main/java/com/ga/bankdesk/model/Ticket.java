@@ -69,6 +69,10 @@ public class Ticket {
     @Column
     private LocalDateTime resolvedAt;
 
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 0")
+    //0 = none, 1 = 75%, 2 = 90%, 3 = breached
+    private Integer slaNotifyLevel = 0;
+
     @Column
     @CreationTimestamp
     private LocalDateTime createdAt;

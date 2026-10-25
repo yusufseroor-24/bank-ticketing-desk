@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,4 +40,13 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
                           @Param("newStatus")TicketStatus newStatus,
                           @Param("expectedStatus") TicketStatus expectedStatus,
                           @Param("now") LocalDateTime now);
+
+    @Query("SELECT t FROM Ticket t WHERE t.resolvedAt IS NULL AND t.dueAt IS NOT NULL " +
+            "AND t.status <> :closed AND t.slaNotifyLevel < 3")
+    List<Ticket> findSlaCandidates(@Param("closed") TicketStatus closed);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Ticket t SET t.slaNotifyLevel = :level WHERE t.id = :id AND t.slaNotifyLevel < :level")
+    int raiseSlaNotifyLevel(@Param("id") Long id, @Param("level") int level);
 }
