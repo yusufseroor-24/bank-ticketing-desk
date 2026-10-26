@@ -5,5 +5,5 @@ package com.ga.bankdesk.enums;
  */
 
 public enum SimulationScenario {
-    LARGE, STRUCTURING, VELOCITY, RISK_COUNTRY, GREY_LIST_COUNTRY
+    LARGE, STRUCTURING, VELOCITY, RISKY_COUNTRY, GREY_LIST_COUNTRY
 }
