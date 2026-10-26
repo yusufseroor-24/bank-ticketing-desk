@@ -148,7 +148,9 @@ public class TicketService {
 
         recordHistory(save, currentUser, "STATUS_CHANGED", oldStatus.toString(), newStatus.toString());
         notifyTicketEvent(save,"STATUS_CHANGED", "Your ticket status changed to " + newStatus);
-        emailService.sendTicketStatusChangedEmail(save.getCustomer().getEmail(), save.getId(), save.getTitle(), newStatus.toString());
+        if(save.getCustomer() != null) {
+            emailService.sendTicketStatusChangedEmail(save.getCustomer().getEmail(), save.getId(), save.getTitle(), newStatus.toString());
+        }
         log.info("Ticket {} status changed: {} -> {} by {}", save.getId(), oldStatus, newStatus, currentUser.getEmail());
         return ticketMapper.toResponse(save);
     }
