@@ -1,5 +1,6 @@
 package com.ga.bankdesk.model;
 
+import com.ga.bankdesk.enums.ScanStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -34,4 +35,16 @@ public class TicketAttachments {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Column(length = 64)
+    //has of file
+    private String sha256;
+
+    @Enumerated(EnumType.STRING)
+    private ScanStatus scanStatus;
+
+    @Column(length = 300)
+    private String scanSummary;
+
+    private LocalDateTime scannedAt;
 }
