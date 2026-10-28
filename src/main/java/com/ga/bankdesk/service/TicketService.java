@@ -401,5 +401,13 @@ public class TicketService {
                 .toList();
     }
 
-
+    public List<AttachmentResponse> listAttachments(User currentUser, Long ticketId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket with ID " + ticketId + " is not found"));
+        checkCanUerAccessTicket(currentUser, ticket);
+        boolean staff = currentUser.getRole() != Role.CUSTOMER;
+        return ticketAttachmentRepository.findByTicketId(ticketId).stream()
+                .map(a -> AttachmentResponse.from(a, staff))
+                .toList();
+    }
 }

@@ -141,6 +141,13 @@ public class TicketController {
         return ticketService.getTicketHistory(userDetails.getUser(), ticketId);
     }
 
+    @GetMapping("/{ticketId}/attachments")
+    public List<AttachmentResponse> listAttachments(@AuthenticationPrincipal AppUserDetails userDetails,
+                                                    @PathVariable Long ticketId) {
+        return ticketService.listAttachments(userDetails.getUser(), ticketId);
+    }
+
+
     @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
     @PostMapping("/attachments/{attachmentId}/rescan")
     public ResponseEntity<Void> rescan(@AuthenticationPrincipal AppUserDetails userDetails,
