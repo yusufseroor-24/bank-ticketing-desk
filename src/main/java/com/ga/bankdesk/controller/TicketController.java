@@ -1,10 +1,13 @@
 package com.ga.bankdesk.controller;
 
 import com.ga.bankdesk.dto.*;
+import com.ga.bankdesk.enums.ScanStatus;
 import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.enums.TicketStatus;
+import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.model.TicketAttachments;
 import com.ga.bankdesk.security.AppUserDetails;
+import com.ga.bankdesk.service.AttachmentScanService;
 import com.ga.bankdesk.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ import java.util.List;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final AttachmentScanService attachmentScanService;
 
     @PostMapping("/create")
     public ResponseEntity<TicketCreationResponse> createTicket(@AuthenticationPrincipal AppUserDetails userDetails,
@@ -102,6 +106,9 @@ public class TicketController {
     public ResponseEntity<Resource> downloadAttachment(@AuthenticationPrincipal AppUserDetails userDetails,
                                                        @PathVariable Long attachmentId) throws IOException {
         TicketAttachments attachment = ticketService.getAttachment(userDetails.getUser(), attachmentId);
+        if (attachment.getScanStatus() == ScanStatus.MALICIOUS) {
+            throw new BusinessRuleException("This file was flagged as malicious and cannot be downloaded");
+        }
         Path path = Paths.get("uploads").resolve(attachment.getFilePath());
         Resource resource = new UrlResource(path.toUri());
 
@@ -132,5 +139,14 @@ public class TicketController {
     public List<HistoryResponse> getHistory(@AuthenticationPrincipal AppUserDetails userDetails,
                                             @PathVariable Long ticketId){
         return ticketService.getTicketHistory(userDetails.getUser(), ticketId);
+    }
+
+    @PreAuthorize("hasAnyRole('AGENT','ADMIN')")
+    @PostMapping("/attachments/{attachmentId}/rescan")
+    public ResponseEntity<Void> rescan(@AuthenticationPrincipal AppUserDetails userDetails,
+                                       @PathVariable Long attachmentId) {
+        TicketAttachments attachment = ticketService.getAttachment(userDetails.getUser(), attachmentId);
+        attachmentScanService.rescan(attachment.getId());
+        return ResponseEntity.accepted().build();
     }
 }
