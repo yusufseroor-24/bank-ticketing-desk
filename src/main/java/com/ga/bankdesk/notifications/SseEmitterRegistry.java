@@ -20,9 +20,9 @@ public class SseEmitterRegistry {
         SseEmitter emitter = new SseEmitter(0L); //stays open all the time
         emitters.put(userId, emitter);
 
-        emitter.onCompletion(() -> emitters.remove(userId));
-        emitter.onTimeout(() -> emitters.remove(userId));
-        emitter.onError(e -> emitters.remove(userId));
+        emitter.onCompletion(() -> emitters.remove(userId, emitter));
+        emitter.onTimeout(() -> emitters.remove(userId, emitter));
+        emitter.onError(e -> emitters.remove(userId, emitter));
 
         return emitter;
     }
@@ -36,7 +36,7 @@ public class SseEmitterRegistry {
         try{
             emitter.send(SseEmitter.event().name(eventName).data(data));
         } catch (Exception e){
-            emitters.remove(userId);
+            emitters.remove(userId, emitter);
         }
     }
 }
