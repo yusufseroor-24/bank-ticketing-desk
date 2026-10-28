@@ -19,7 +19,7 @@ public class EmailDispatcher {
 
     private final JavaMailSender mailSender;
 
-    @Value("${app.mail.from}")
+    @Value("${app.mail.from:no-reply@bankdesk.local}")
     private String from;
 
     @Async("notificationExecutor")

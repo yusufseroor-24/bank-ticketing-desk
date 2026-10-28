@@ -65,8 +65,7 @@ class FraudDetectionServiceTest {
     }
 
     private void send(TransactionType type, String amount, String country, LocalDateTime when) {
-        transactionService.record(new CreateTransactionRequest(
-                customer.getId(), "ACC-TEST", type, new BigDecimal(amount), "USD", country, when));
+        transactionService.record(new CreateTransactionRequest(customer.getId(), "ACC-TEST", type, new BigDecimal(amount), "USD", country, when));
     }
 
     private List<FraudAlert> alertsFor(String ruleCode) {
