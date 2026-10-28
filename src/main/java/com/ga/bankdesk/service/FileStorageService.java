@@ -74,4 +74,13 @@ public class FileStorageService {
             throw new RuntimeException("Could not hash file", e);
         }
     }
+
+    public Path resolve(String storedName) {
+        Path base = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path file = base.resolve(storedName).normalize();
+        if (!file.startsWith(base)) {
+            throw new BusinessRuleException("Invalid file name");
+        }
+        return file;
+    }
 }

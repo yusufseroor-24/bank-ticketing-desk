@@ -1,6 +1,7 @@
 package com.ga.bankdesk.service;
 
 import com.ga.bankdesk.dto.UserResponse;
+import com.ga.bankdesk.exception.BusinessRuleException;
 import com.ga.bankdesk.mapper.UserMapper;
 import com.ga.bankdesk.model.User;
 import com.ga.bankdesk.repository.UserRepository;
@@ -23,6 +24,10 @@ public class UserService {
     }
 
     public UserResponse uploadProfilePic(User currentUser, MultipartFile file){
+        String type = file.getContentType();
+        if (!"image/png".equals(type) && !"image/jpeg".equals(type)) {
+            throw new BusinessRuleException("Profile picture must be a PNG or JPEG image");
+        }
         String fileName = fileStorageService.store(file);
         currentUser.setProfilePicPath(fileName);
         User save = userRepository.save(currentUser);
