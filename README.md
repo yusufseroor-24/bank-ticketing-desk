@@ -147,6 +147,7 @@ Major Challenges
 - **External services:** VirusTotal free trail has rate limit, to avoid errors or triggering the rate limit, a thread pool is used to run on one worker that waits 16 seconds between calls.
   
 Future Improvements 
+-
 - **Business-hours SLA calendars:** pausing the SLA while waiting for the customer.
 - **Approval Workflow:** integrate a workflow with multiple approval for sensitive status changes or actions.
 - **Logic integration to each category:** Add enhanced business logic for each category ex. CVSS integration to security related tickets, structural resolution to AML tickets, etc.
@@ -160,7 +161,7 @@ Resources
 | Mailtrap | https://mailtrap.io | Development email sandbox for verification/reset emails |
 | dbdiagram.io | https://dbdiagram.io | ERD creation |
 | SSE (Server-Sent Events) | https://www.baeldung.com/spring-server-sent-events | Notification implementation |
-| FATF Public Statements (FIAU Malta) | https://fiaumalta.org/news/fatf-public-statements-19th-june-2026/ | High-risk and grey-list country lists for the fraud/AML rules |
+| FATF Public Statements | https://fiaumalta.org/news/fatf-public-statements-19th-june-2026/ | High-risk and grey-list country lists for the fraud/AML rules |
 | MessageDigest (Java 17 API) | https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/MessageDigest.html | Computing file hashes |
 | SHA-256 Hashing in Java | https://www.baeldung.com/sha-256-hashing-java | SHA-256 hash of uploaded attachments |
 | VirusTotal API Overview | https://docs.virustotal.com/docs/api-overview | Looking up file hashes to scan attachments |
