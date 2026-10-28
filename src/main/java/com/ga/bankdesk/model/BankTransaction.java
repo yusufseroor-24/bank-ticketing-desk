@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "bank_transaction", indexes = @Index(name = "idx_tx_customer_time", columnList = "customer_id, occurred_at"))
+@Table(name = "bank_transactions", indexes = @Index(name = "idx_tx_customer_time", columnList = "customer_id, occurred_at"))
 public class BankTransaction {
 
     @Id

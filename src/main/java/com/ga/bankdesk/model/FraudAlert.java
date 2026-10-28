@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 //uniqueConstraints & dedup_key make sure the database cant have the same dedup_key to prevent duplication
-@Table(name = "fraud_alert", uniqueConstraints = @UniqueConstraint(columnNames = "dedup_key"))
+@Table(name = "fraud_alerts", uniqueConstraints = @UniqueConstraint(columnNames = "dedup_key"))
 public class FraudAlert {
 
     @Id
