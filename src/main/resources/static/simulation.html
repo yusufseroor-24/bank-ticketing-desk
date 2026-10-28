@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BankDesk Concurrency Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10243E; --ink-soft:#2C4568; --paper:#F6F4EE; --raised:#FFFFFF; --line:#D9D3C4;
+    --brass:#9C6B2A; --brass-dim:#C79A54; --ok:#2F6B4F; --danger:#A3372B; --warn:#B9791A; --info:#2C5C8F;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14.5px;line-height:1.5;}
+  h1,h2,h3{font-family:"Source Serif 4",Georgia,serif;font-weight:600;margin:0 0 .4em;}
+  code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;}
+  button{font-family:inherit;font-size:13.5px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    padding:.5em 1em;border-radius:var(--radius);}
+  button:hover{background:var(--ink-soft);}
+  button.secondary{background:transparent;color:var(--ink);border-color:var(--line);}
+  button.secondary:hover{background:#eee9db;}
+  button.go{background:var(--brass);border-color:var(--brass);color:#fff;font-weight:600;}
+  button.go:hover{background:#85591f;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+  input,select{font-family:inherit;font-size:13.5px;padding:.45em .6em;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink);}
+  input[type=number]{width:80px;}
+  label{font-size:12px;color:var(--ink-soft);display:block;margin-bottom:2px;}
+  .hidden{display:none !important;}
+
+  .shell{display:grid;grid-template-columns:250px minmax(0,1fr) 340px;min-height:100vh;}
+  aside.left{background:var(--ink);color:#CDD6E4;padding:22px 16px;position:sticky;top:0;height:100vh;overflow:auto;}
+  aside.left .brand{font-family:"Source Serif 4",serif;font-size:19px;font-weight:700;color:#fff;}
+  aside.left .sub{font-size:11.5px;color:#8FA1BA;margin-bottom:18px;}
+  aside.left button.nav{display:block;width:100%;text-align:left;background:none;border:none;color:#CDD6E4;padding:.55em .6em;margin-bottom:2px;font-size:13.5px;}
+  aside.left button.nav:hover{background:#1C3657;color:#fff;}
+  aside.left button.nav.active{background:var(--brass);color:#1A1203;font-weight:600;}
+  aside.left button.nav .n{display:inline-block;width:20px;color:#8FA1BA;font-size:12px;}
+  aside.left button.nav.active .n{color:#3a2706;}
+  aside.left h4{margin:18px 0 6px;font-size:11px;letter-spacing:.8px;color:#7E8FA8;text-transform:uppercase;font-family:Inter;font-weight:600;}
+
+  main{padding:28px 32px 80px;min-width:0;}
+  aside.right{border-left:1px solid var(--line);background:#FBFAF6;padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto;}
+
+  .card{background:var(--raised);border:1px solid var(--line);padding:20px;margin-bottom:16px;}
+  .card.accent{border-top:3px solid var(--brass);}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .muted{color:var(--ink-soft);font-size:13px;}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#EEE9DB;color:var(--ink-soft);}
+  .tag.ok{background:#E6EFE9;color:var(--ok);} .tag.bad{background:#F6E4E1;color:var(--danger);}
+  .tag.warn{background:#FBF0DD;color:var(--warn);} .tag.info{background:#E3ECF6;color:var(--info);}
+
+  details.card > summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--brass);list-style:none;}
+  details.card > summary::-webkit-details-marker{display:none;}
+  details.card > summary::before{content:'▾ ';}
+  details.card:not([open]) > summary::before{content:'▸ ';}
+  .concept{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .concept h3{font-size:15px;}
+  .concept ol{margin:0;padding-left:18px;} .concept li{margin-bottom:4px;}
+  pre{background:#14233A;color:#E7ECF4;padding:12px 14px;border-radius:var(--radius);overflow:auto;margin:8px 0 0;line-height:1.55;}
+  pre .k{color:#E7B96A;} pre .c{color:#7E92AE;}
+  .say{border-left:3px solid var(--brass);background:#FBF3E4;padding:8px 12px;font-size:13px;margin-top:12px;}
+
+  .steps{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px;}
+  .step{font-size:12px;padding:3px 10px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink-soft);}
+  .step.done{background:#E6EFE9;border-color:#b9d6c6;color:var(--ok);}
+  .step.run{background:#FBF0DD;border-color:#e6c98f;color:var(--warn);}
+
+  .lanes{margin-top:10px;border:1px solid var(--line);background:#fff;}
+  .lane{display:grid;grid-template-columns:70px 1fr 210px;gap:8px;align-items:center;padding:3px 8px;border-bottom:1px dotted var(--line);font-size:12px;}
+  .lane:last-child{border-bottom:none;}
+  .lane .track{position:relative;height:16px;background:#F3F0E6;border-radius:2px;}
+  .lane .bar{position:absolute;top:2px;bottom:2px;border-radius:2px;min-width:3px;}
+  .lane .res{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .s200,.s201,.s202{background:var(--ok);} .s409{background:var(--warn);} .s422{background:var(--danger);} .s400{background:var(--danger);}
+  .s429,.s500,.s0,.s403,.s401,.s404{background:#6b6b6b;}
+  .axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);padding:2px 8px 4px 78px;}
+
+  .verdict{margin-top:12px;padding:12px 14px;border-radius:var(--radius);border:1px solid;}
+  .verdict.pass{background:#E6EFE9;border-color:#b9d6c6;color:#1d4a35;}
+  .verdict.fail{background:#F6E4E1;border-color:#e3b9b1;color:#7a2219;}
+  .verdict.info{background:#E3ECF6;border-color:#b8cde6;color:#1d3f66;}
+  .verdict b{font-weight:600;}
+  .counts{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0;}
+  .count{background:#fff;border:1px solid var(--line);padding:8px 14px;min-width:92px;}
+  .count .v{font-family:"Source Serif 4",serif;font-size:26px;font-weight:700;line-height:1.1;}
+  .count .l{font-size:11.5px;color:var(--ink-soft);}
+
+  .pool{margin-top:12px;border:1px solid var(--line);background:#fff;padding:12px 14px;}
+  .pool h4{margin:0 0 8px;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-soft);font-family:Inter;}
+  .slots{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .slot{width:92px;border:1px solid var(--line);padding:6px;text-align:center;font-size:11px;background:#F8F6EF;}
+  .slot.busy{background:#FBF0DD;border-color:#e6c98f;color:var(--warn);font-weight:600;}
+  .slot.idle{color:var(--ink-soft);} .slot.sleep{background:#E3ECF6;border-color:#b8cde6;color:var(--info);font-weight:600;}
+  .qbar{height:12px;background:#EEE9DB;border-radius:2px;overflow:hidden;position:relative;}
+  .qbar i{display:block;height:100%;background:var(--brass-dim);transition:width .2s;}
+  .poolstats{font-size:12px;color:var(--ink-soft);margin-top:6px;display:flex;gap:16px;flex-wrap:wrap;}
+
+  table.t{width:100%;border-collapse:collapse;background:#fff;margin-top:8px;}
+  table.t th,table.t td{padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;text-align:left;}
+  table.t th{border-bottom:2px solid var(--ink);color:var(--ink-soft);}
+
+  .ev{font-size:12px;padding:7px 8px;border-bottom:1px solid var(--line);}
+  .ev .who{font-weight:600;} .ev .type{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--brass);}
+  .ev .when{color:var(--ink-soft);font-size:11px;float:right;}
+  .ev.SLA_BREACHED,.ev.MALICIOUS_FILE,.ev.FRAUD_ALERT{border-left:3px solid var(--danger);}
+  .ev.SLA_WARNING{border-left:3px solid var(--warn);}
+  .ev.NEW_TICKET,.ev.ASSIGNED,.ev.STATUS_CHANGED,.ev.ESCALATED{border-left:3px solid var(--info);}
+  .timeline{position:relative;height:46px;margin:16px 6px 26px;}
+  .timeline .base{position:absolute;left:0;right:0;top:20px;height:6px;background:#EEE9DB;border-radius:3px;}
+  .timeline .fill{position:absolute;left:0;top:20px;height:6px;border-radius:3px;background:var(--ok);transition:width .5s,background .5s;}
+  .timeline .mk{position:absolute;top:8px;transform:translateX(-50%);font-size:11px;text-align:center;color:var(--ink-soft);}
+  .timeline .mk i{display:block;width:2px;height:30px;background:var(--ink-soft);margin:0 auto;}
+  .timeline .mk.hit{color:var(--danger);font-weight:600;} .timeline .mk.hit i{background:var(--danger);}
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:4px;z-index:50;font-size:13px;}
+  @media (max-width:1250px){.shell{grid-template-columns:220px minmax(0,1fr);} aside.right{display:none;}}
+  @media (max-width:800px){.shell{grid-template-columns:1fr;} aside.left{position:static;height:auto;} .concept{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="left">
+    <div class="brand">BankDesk Lab</div>
+    <div class="sub">Concurrency &amp; multithreading, live against the real backend</div>
+    <button class="nav active" data-p="overview" onclick="show('overview')"><span class="n">★</span>Overview</button>
+    <h4>Race conditions</h4>
+    <button class="nav" data-p="claim" onclick="show('claim')"><span class="n">1</span>Ticket claim race</button>
+    <button class="nav" data-p="lock" onclick="show('lock')"><span class="n">2</span>Optimistic locking</button>
+    <button class="nav" data-p="token" onclick="show('token')"><span class="n">3</span>One-time reset token</button>
+    <button class="nav" data-p="report" onclick="show('report')"><span class="n">4</span>Monthly report claim</button>
+    <button class="nav" data-p="fraud" onclick="show('fraud')"><span class="n">5</span>Fraud alert dedup</button>
+    <h4>Thread pools &amp; background</h4>
+    <button class="nav" data-p="email" onclick="show('email')"><span class="n">6</span>Email thread pool</button>
+    <button class="nav" data-p="vt" onclick="show('vt')"><span class="n">7</span>VirusTotal scan queue</button>
+    <button class="nav" data-p="sla" onclick="show('sla')"><span class="n">8</span>SLA scheduler</button>
+    <h4>Live updates</h4>
+    <button class="nav" data-p="sse" onclick="show('sse')"><span class="n">9</span>SSE registry</button>
+  </aside>
+
+  <main>
+    <div class="card accent" id="conn-card">
+      <div class="row">
+        <div><label>Admin email</label><input id="em-admin" size="30" value="practice24in+admin@gmail.com"></div>
+        <div><label>Agent email</label><input id="em-agent" size="34" value="practice24in+agent.general@gmail.com"></div>
+        <div><label>Customer email</label><input id="em-customer" size="30" value="practice24in+customer1@gmail.com"></div>
+        <div><label>Password</label><input id="pw" type="text" size="14" value="Password123!"></div>
+        <button class="go" id="btn-connect" onclick="connectAccounts()">Connect demo accounts</button>
+        <span id="conn-state" class="tag">not connected</span>
+      </div>
+    </div>
+    <div id="panels"></div>
+  </main>
+
+  <aside class="right">
+    <h3 style="font-size:15px">Live event stream (SSE)</h3>
+    <div class="muted" style="margin-bottom:8px">Every push the server sends, as it arrives.</div>
+    <div class="row" style="margin-bottom:6px;gap:10px">
+      <label style="display:flex;gap:4px;align-items:center"><input type="checkbox" id="sse-agent" onchange="syncStreams()"> agent</label>
+      <label style="display:flex;gap:4px;align-items:center"><input type="checkbox" id="sse-customer" onchange="syncStreams()"> customer</label>
+      <label style="display:flex;gap:4px;align-items:center"><input type="checkbox" id="sse-admin" onchange="syncStreams()"> admin</label>
+      <button class="secondary" style="padding:.2em .6em" onclick="document.getElementById('events').innerHTML=''">clear</button>
+    </div>
+    <div class="muted" style="font-size:11.5px;margin-bottom:6px">Each open stream uses one browser connection (a browser allows about 6 per server over plain HTTP). Keep this to the roles you need.</div>
+    <div id="events"></div>
+  </aside>
+</div>
+<div id="toast" class="hidden"></div>
+<script>
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const S = { tok: {}, uid: {}, cats: {}, emails: {} };
+const P = {};
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('hidden'), 3800);
+}
+
+async function call(role, method, path, body, opts = {}) {
+  const start = performance.now();
+  const headers = { 'ngrok-skip-browser-warning': '1' };
+  let payload;
+  if (opts.form) payload = opts.form;
+  else if (body !== undefined) { headers['Content-Type'] = 'application/json'; payload = JSON.stringify(body); }
+  if (role && S.tok[role]) headers.Authorization = 'Bearer ' + S.tok[role];
+  try {
+    const res = await fetch(path, { method, headers, body: payload });
+    const raw = await res.text();
+    let data = raw; try { data = raw ? JSON.parse(raw) : null; } catch (e) { /* plain text */ }
+    const msg = (data && typeof data === 'object' && data.message) ? data.message : (typeof data === 'string' ? data : '');
+    return { status: res.status, ok: res.ok, data, msg, start, end: performance.now() };
+  } catch (e) {
+    return { status: 0, ok: false, data: null, msg: e.message, start, end: performance.now() };
+  }
+}
+
+// Fires n requests in the same instant and returns each one's timing relative to the first send
+async function burst(n, makeCall) {
+  const t0 = performance.now();
+  const pending = [];
+  for (let i = 0; i < n; i++) pending.push(makeCall(i));
+  const raw = await Promise.all(pending);
+  const results = raw.map((r, i) => ({ ...r, i: i + 1, start: r.start - t0, end: r.end - t0 }));
+  return { results, total: Math.max(...results.map(r => r.end)) };
+}
+
+function lanes(el, results, total) {
+  const rows = results.map(r => {
+    const left = (r.start / total) * 100, width = Math.max(((r.end - r.start) / total) * 100, 0.8);
+    const note = r.msg ? ' ' + r.msg : '';
+    return `<div class="lane"><span class="mono">req #${r.i}</span>
+      <div class="track"><div class="bar s${r.status}" style="left:${left}%;width:${width}%"></div></div>
+      <span class="res" title="${esc(r.status + note)}"><b>${r.status || 'ERR'}</b>${esc(note).slice(0, 42)}</span></div>`;
+  }).join('');
+  el.innerHTML = `<div class="lanes">${rows}</div>
+    <div class="axis"><span>0 ms</span><span>${(total / 2).toFixed(0)} ms</span><span>${total.toFixed(0)} ms</span></div>`;
+}
+function counts(el, items) {
+  el.innerHTML = `<div class="counts">${items.map(([v, l, color]) =>
+    `<div class="count"><div class="v" style="color:${color || 'inherit'}">${v}</div><div class="l">${l}</div></div>`).join('')}</div>`;
+}
+function verdict(el, kind, html) { el.innerHTML = `<div class="verdict ${kind}">${html}</div>`; }
+function stepState(id, idx, state) {
+  const s = document.querySelectorAll('#' + id + ' .step')[idx];
+  if (s) s.className = 'step ' + (state || '');
+}
+const byStatus = (rs, code) => rs.filter(r => r.status === code).length;
+
+/* ---------- accounts ---------- */
+function ready() {
+  if (!S.tok.admin || !S.tok.agent || !S.tok.customer) { toast('Connect the demo accounts first'); return false; }
+  return true;
+}
+async function connectAccounts() {
+  const pw = $('pw').value;
+  const roles = { admin: 'em-admin', agent: 'em-agent', customer: 'em-customer' };
+  $('btn-connect').disabled = true; $('conn-state').className = 'tag warn'; $('conn-state').textContent = 'connecting…';
+  try {
+    for (const [role, field] of Object.entries(roles)) {
+      const email = $(field).value.trim();
+      const r = await call(null, 'POST', '/api/auth/login', { email, password: pw });
+      if (!r.ok) throw new Error(role + ': ' + (r.msg || r.status));
+      S.tok[role] = r.data.token; S.emails[role] = email;
+      const me = await call(role, 'GET', '/api/users/me');
+      S.uid[role] = me.data.id;
+    }
+    const cats = await call('admin', 'GET', '/api/categories');
+    (cats.data || []).forEach(c => S.cats[c.name] = c.id);
+    $('conn-state').className = 'tag ok'; $('conn-state').textContent = 'connected';
+    sessionStorage.setItem('lab_session', JSON.stringify({ tok: S.tok, uid: S.uid, emails: S.emails, cats: S.cats }));
+    toast('Connected as admin, agent and customer');
+    loadCustomers(); loadReportList();
+  } catch (e) {
+    $('conn-state').className = 'tag bad'; $('conn-state').textContent = 'failed';
+    toast(e.message);
+  }
+  $('btn-connect').disabled = false;
+}
+function restoreSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('lab_session') || 'null');
+    if (!saved) return;
+    Object.assign(S, saved);
+    $('conn-state').className = 'tag ok'; $('conn-state').textContent = 'connected (restored)';
+    loadCustomers(); loadReportList();
+  } catch (e) { /* ignore */ }
+}
+async function newTicket(title, category, priority) {
+  return call('customer', 'POST', '/api/tickets/create', {
+    title, description: 'Created by the BankDesk Concurrency Lab', categoryId: S.cats[category], priority });
+}
+
+/* ---------- SSE ---------- */
+function openStream(role, onEvt) {
+  const ac = new AbortController();
+  (async () => {
+    try {
+      const res = await fetch('/api/notifications/subscribe', {
+        headers: { Authorization: 'Bearer ' + S.tok[role], 'ngrok-skip-browser-warning': '1' }, signal: ac.signal });
+      if (!res.ok || !res.body) { toast('SSE for ' + role + ' failed: ' + res.status); return; }
+      const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+      while (true) {
+        const { value, done } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split('\n\n'); buf = parts.pop();
+        for (const p of parts) {
+          const line = p.split('\n').find(l => l.startsWith('data:')); if (!line) continue;
+          try { onEvt(JSON.parse(line.slice(5).trim())); } catch (e) { /* not JSON */ }
+        }
+      }
+    } catch (e) { /* aborted */ }
+  })();
+  return ac;
+}
+const dock = {};
+const eventHooks = [];
+function logEvent(role, n) {
+  const d = document.createElement('div');
+  d.className = 'ev ' + (n.eventType || '');
+  d.innerHTML = `<span class="when">${new Date().toLocaleTimeString()}</span><span class="who">${esc(role)}</span>
+    <div class="type">${esc(n.eventType)}</div><div>${esc(n.message)}</div>`;
+  $('events').prepend(d);
+  eventHooks.forEach(h => h(role, n));
+}
+function syncStreams() {
+  for (const role of ['agent', 'customer', 'admin']) {
+    const want = $('sse-' + role).checked;
+    if (want && !dock[role]) {
+      if (!S.tok[role]) { toast('Connect the demo accounts first'); $('sse-' + role).checked = false; continue; }
+      dock[role] = openStream(role, n => logEvent(role, n));
+    } else if (!want && dock[role]) { dock[role].abort(); dock[role] = null; }
+  }
+}
+function needStream(role) { if (!$('sse-' + role).checked) { $('sse-' + role).checked = true; syncStreams(); } }
+
+/* ---------- thread pool monitor (needs GET /api/admin/diagnostics/executors) ---------- */
+const pools = {};
+function poolBox(id, title) {
+  return `<div class="pool" id="${id}"><h4>${title}</h4>
+    <div class="slots"></div><div class="qbar"><i style="width:0%"></i></div>
+    <div class="poolstats"><span>queue: <b class="q">–</b></span><span>completed: <b class="done">–</b></span>
+    <span>peak working: <b class="pa">0</b></span><span>peak queued: <b class="pq">0</b></span></div>
+    <div class="muted note" style="margin-top:4px">Press the button to start watching.</div></div>`;
+}
+function startPool(id, key) {
+  stopPool(id);
+  const peak = { a: 0, q: 0 };
+  const tick = async () => {
+    const r = await call('admin', 'GET', '/api/admin/diagnostics/executors');
+    const box = $(id); if (!box) return;
+    if (!r.ok) { box.querySelector('.note').textContent = 'Live pool numbers unavailable (status ' + r.status + ').'; return; }
+    const e = r.data[key]; if (!e) return;
+    peak.a = Math.max(peak.a, e.active); peak.q = Math.max(peak.q, e.queued);
+    const n = Math.max(e.corePoolSize, e.threads.length);
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      const t = e.threads[i];
+      let cls = 'idle', label = 'not started yet';
+      if (t) {
+        if (e.active > 0 && t.state === 'TIMED_WAITING') { cls = 'sleep'; label = 'sleeping (16 s gap)'; }
+        else if (t.state === 'RUNNABLE' || t.state === 'BLOCKED') { cls = 'busy'; label = 'working'; }
+        else { label = 'idle'; }
+      }
+      html += `<div class="slot ${cls}"><div class="mono">${esc(t ? t.name : '—')}</div>${label}</div>`;
+    }
+    box.querySelector('.slots').innerHTML = html;
+    box.querySelector('.qbar i').style.width = (e.queueCapacity ? (e.queued / e.queueCapacity) * 100 : 0) + '%';
+    box.querySelector('.q').textContent = e.queued + ' / ' + e.queueCapacity;
+    box.querySelector('.done').textContent = e.completed;
+    box.querySelector('.pa').textContent = peak.a; box.querySelector('.pq').textContent = peak.q;
+    box.querySelector('.note').textContent = '';
+    pools[id].peak = peak;
+  };
+  pools[id] = { timer: setInterval(tick, 400), peak, tick };
+  tick();
+}
+function stopPool(id) { if (pools[id]) clearInterval(pools[id].timer); }
+
+/* ============================================================
+   PANEL SHELLS
+   ============================================================ */
+function concept(problem, how, code) {
+  return `<details class="card" open><summary>How it works (click to fold away)</summary><div class="concept" style="margin-top:12px">
+    <div><h3>The problem</h3><div>${problem}</div>
+      <h3 style="margin-top:12px">How the backend solves it</h3><ol>${how.map(h => `<li>${h}</li>`).join('')}</ol></div>
+    <div><h3>The real code</h3><pre>${code}</pre></div></div></details>`;
+}
+const PANELS = {};
+
+PANELS.overview = () => `
+  <h2>Concurrency in BankDesk</h2>
+  <table class="t">
+    <thead><tr><th></th><th>Feature</th><th>Concurrency technique</th><th>What goes wrong without it</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><a href="#" onclick="show('claim');return false">Ticket claim</a></td><td>Atomic conditional <code>UPDATE</code> (rows changed 1 or 0)</td><td>Two agents both get the same ticket</td></tr>
+      <tr><td>2</td><td><a href="#" onclick="show('lock');return false">Status changes</a></td><td>Optimistic locking, <code>@Version</code></td><td>Lost update: one agent's change silently overwrites another's</td></tr>
+      <tr><td>3</td><td><a href="#" onclick="show('token');return false">Password reset / email verify</a></td><td>Atomic "mark used" claim</td><td>One link used twice at the same moment</td></tr>
+      <tr><td>4</td><td><a href="#" onclick="show('report');return false">Monthly SLA report</a></td><td>Atomic claim with <code>INSERT … ON CONFLICT</code></td><td>Two admins generate the same month twice</td></tr>
+      <tr><td>5</td><td><a href="#" onclick="show('fraud');return false">Fraud / AML alerts</a></td><td>Unique <code>dedup_key</code> + <code>ON CONFLICT DO NOTHING</code></td><td>Many workers open many tickets for one pattern</td></tr>
+      <tr><td>6</td><td><a href="#" onclick="show('email');return false">Notification emails</a></td><td>Bounded thread pool (3 workers, queue 100), <code>@Async</code></td><td>Every request waits for slow email servers</td></tr>
+      <tr><td>7</td><td><a href="#" onclick="show('vt');return false">VirusTotal scans</a></td><td>Single-worker pool (queue 50) + rate spacing</td><td>Quota blown, uploads slowed down</td></tr>
+      <tr><td>8</td><td><a href="#" onclick="show('sla');return false">SLA alerts</a></td><td><code>@Scheduled</code> background thread + atomic level raise</td><td>Missed deadlines, or the same alert sent again and again</td></tr>
+      <tr><td>9</td><td><a href="#" onclick="show('sse');return false">Live notifications</a></td><td><code>ConcurrentHashMap</code> registry, SSE</td><td>Lost connections, data races on a shared map</td></tr>
+    </tbody>
+  </table>
+  <div class="card" style="margin-top:16px"><h3>Before you start</h3>
+    <ol style="margin:0;padding-left:18px">
+      <li>Press <b>Connect demo accounts</b> above (admin, agent, customer).</li>
+      <li>Open the <b>live event stream</b> on the right for the agent or customer when a demo says so.</li>
+      <li>Do not keep the normal BankDesk app logged in as the same user: only one live connection per user is kept.</li>
+    </ol></div>`;
+
+/* ---- 1. claim ---- */
+PANELS.claim = () => `
+  <h2>1 · Ticket claim race</h2>
+  <p class="muted">Many requests try to claim the same ticket in the same instant. Exactly one may win.</p>
+  ${concept(
+    'Two agents claim the same ticket at once. Check-then-save lets both pass the check.',
+    ['Claim is one SQL <code>UPDATE … WHERE assigned_to IS NULL</code>.',
+     'The database lets only the first statement change the row.',
+     'Rows changed = 1: you won. 0: <code>409</code>.'],
+    `<span class="c">// TicketRepository</span>
+<span class="k">UPDATE</span> Ticket t
+<span class="k">SET</span>   t.assignedTo = :agent,
+      t.status = :newStatus,
+      t.version = t.version + 1
+<span class="k">WHERE</span>  t.id = :ticketId
+  <span class="k">AND</span> t.assignedTo <span class="k">IS NULL</span>
+  <span class="k">AND</span> t.status = :expectedStatus
+
+<span class="c">// TicketService.claimTicket</span>
+int updated = repo.claimIfUnassigned(...);
+if (updated == 0) <span class="k">throw new</span> ConflictException(
+  "just claimed by another agent");`)}
+  <div class="card">
+    <div class="steps" id="claim-steps"><span class="step">1 create ticket</span><span class="step">2 fire claims</span><span class="step">3 check the database</span></div>
+    <div class="row">
+      <button class="secondary" onclick="claimCreate()">1 · Create a fresh ticket</button>
+      <div><label>Simultaneous claims</label><input id="claim-n" type="number" min="2" max="20" value="8"></div>
+      <button class="go" onclick="claimFire()">2 · Fire the claims</button>
+      <span id="claim-ticket" class="muted"></span>
+    </div>
+    <div id="claim-counts"></div><div id="claim-lanes"></div><div id="claim-verdict"></div>
+  </div>`;
+
+async function claimCreate() {
+  if (!ready()) return;
+  stepState('claim-steps', 0, 'run');
+  const r = await newTicket('Claim race demo', 'CARD_DISPUTE', 'MEDIUM');
+  if (!r.ok) { toast('Could not create ticket: ' + r.msg); stepState('claim-steps', 0, ''); return; }
+  P.claimTicket = r.data.id;
+  $('claim-ticket').innerHTML = `Ticket <b>#${r.data.id}</b> is <span class="tag">${r.data.status}</span>, unassigned`;
+  stepState('claim-steps', 0, 'done'); stepState('claim-steps', 1, ''); stepState('claim-steps', 2, '');
+  ['claim-counts', 'claim-lanes', 'claim-verdict'].forEach(i => $(i).innerHTML = '');
+}
+async function claimFire() {
+  if (!ready()) return;
+  if (!P.claimTicket) await claimCreate();
+  if (!P.claimTicket) return;
+  const n = Math.min(20, Math.max(2, +$('claim-n').value));
+  stepState('claim-steps', 1, 'run');
+  const id = P.claimTicket;
+  const { results, total } = await burst(n, () => call('agent', 'PUT', `/api/tickets/${id}/claim`));
+  lanes($('claim-lanes'), results, total);
+  const won = byStatus(results, 200), conflict = byStatus(results, 409);
+  const dbGuard = results.filter(r => r.status === 409 && /just claimed/i.test(r.msg)).length;
+  const late = conflict - dbGuard;
+  counts($('claim-counts'), [[won, 'won (200)', 'var(--ok)'], [conflict, 'rejected (409)', 'var(--warn)'],
+    [results.length - won - conflict, 'other', 'var(--danger)']]);
+  stepState('claim-steps', 1, 'done'); stepState('claim-steps', 2, 'run');
+  const t = await call('agent', 'GET', `/api/tickets/${id}`);
+  const h = await call('agent', 'GET', `/api/tickets/${id}/history`);
+  const assigned = (h.data || []).filter(x => x.action === 'ASSIGNED').length;
+  stepState('claim-steps', 2, 'done');
+  const proof = `<br>Database says: ticket <b>#${id}</b> is <b>${t.data?.status}</b>, assigned to <b>${esc(t.data?.assignedToEmail)}</b>, with <b>${assigned}</b> “ASSIGNED” history row(s).`;
+  if (won === 1 && assigned === 1) {
+    verdict($('claim-verdict'), 'pass', `<b>Exactly one winner.</b> ${conflict} requests were refused with 409 — ${dbGuard} of them were caught by the database guard (the real race), ${late} arrived after the winner had committed and were turned away by the early check.${proof}`);
+  } else if (won === 0) {
+    verdict($('claim-verdict'), 'info', `Nobody won: ${esc(results[0].msg)}. Create a fresh ticket and try again.${proof}`);
+  } else {
+    verdict($('claim-verdict'), 'fail', `<b>${won} requests won.</b> That would be a double assignment.${proof}`);
+  }
+}
+
+/* ---- 2. optimistic lock ---- */
+PANELS.lock = () => `
+  <h2>2 · Optimistic locking</h2>
+  <p class="muted">Many agents change the status of the same ticket at once. No change may be silently lost.</p>
+  ${concept(
+    'Two agents edit the same ticket. The second save silently overwrites the first.',
+    ['Each ticket has a <code>version</code> (<code>@Version</code>).',
+     'Save = <code>UPDATE … WHERE id = ? AND version = v</code>.',
+     'Version changed: 0 rows, <code>409 CONCURRENT_MODIFICATION</code>. No locks held.'],
+    `<span class="c">// Ticket.java</span>
+<span class="k">@Version</span>
+<span class="k">private</span> Long version;
+
+<span class="c">// GlobalExceptionHandler</span>
+<span class="k">@ExceptionHandler</span>(OptimisticLockingFailureException.class)
+→ 409 "CONCURRENT_MODIFICATION"`)}
+  <div class="card">
+    <div class="steps" id="lock-steps"><span class="step">1 ticket ready</span><span class="step">2 fire status changes</span><span class="step">3 count history rows</span></div>
+    <div class="row">
+      <button class="secondary" onclick="lockPrepare()">1 · Create + claim a ticket</button>
+      <div><label>Simultaneous changes</label><input id="lock-n" type="number" min="2" max="20" value="8"></div>
+      <button class="go" onclick="lockFire()">2 · Everyone sets “UNDER_REVIEW”</button>
+      <span id="lock-ticket" class="muted"></span>
+    </div>
+    <div id="lock-counts"></div><div id="lock-lanes"></div><div id="lock-verdict"></div>
+  </div>`;
+
+async function lockPrepare() {
+  if (!ready()) return;
+  stepState('lock-steps', 0, 'run');
+  const c = await newTicket('Optimistic lock demo', 'CARD_DISPUTE', 'MEDIUM');
+  if (!c.ok) { toast(c.msg); stepState('lock-steps', 0, ''); return; }
+  const cl = await call('agent', 'PUT', `/api/tickets/${c.data.id}/claim`);
+  if (!cl.ok) { toast('Claim failed: ' + cl.msg); stepState('lock-steps', 0, ''); return; }
+  P.lockTicket = c.data.id;
+  $('lock-ticket').innerHTML = `Ticket <b>#${c.data.id}</b> is <span class="tag">ASSIGNED</span>`;
+  stepState('lock-steps', 0, 'done'); stepState('lock-steps', 1, ''); stepState('lock-steps', 2, '');
+  ['lock-counts', 'lock-lanes', 'lock-verdict'].forEach(i => $(i).innerHTML = '');
+}
+async function lockFire() {
+  if (!ready()) return;
+  if (!P.lockTicket) await lockPrepare();
+  if (!P.lockTicket) return;
+  const n = Math.min(20, Math.max(2, +$('lock-n').value)), id = P.lockTicket;
+  stepState('lock-steps', 1, 'run');
+  const { results, total } = await burst(n, () =>
+    call('agent', 'PUT', `/api/tickets/${id}/status`, { newStatus: 'UNDER_REVIEW', note: 'concurrency lab' }));
+  lanes($('lock-lanes'), results, total);
+  const ok = byStatus(results, 200), lockFail = results.filter(r => r.status === 409).length, late = byStatus(results, 422);
+  counts($('lock-counts'), [[ok, 'saved (200)', 'var(--ok)'], [lockFail, 'version conflict (409)', 'var(--warn)'],
+    [late, 'too late (422)', 'var(--danger)']]);
+  stepState('lock-steps', 1, 'done'); stepState('lock-steps', 2, 'run');
+  const h = await call('agent', 'GET', `/api/tickets/${id}/history`);
+  const changes = (h.data || []).filter(x => x.action === 'STATUS_CHANGED').length;
+  stepState('lock-steps', 2, 'done');
+  const explain = `${lockFail} request(s) read the ticket at the same moment as the winner and were stopped by the version check. ${late} arrived after the winner committed, saw status UNDER_REVIEW and were refused by the workflow rule.`;
+  if (ok === 1 && changes === 1) {
+    verdict($('lock-verdict'), 'pass', `<b>One save, no lost updates.</b> The history has exactly <b>${changes}</b> status change, matching the single 200. ${explain}`);
+  } else if (ok === 0) {
+    verdict($('lock-verdict'), 'info', `No request succeeded: ${esc(results[0].msg)}. Create a new ticket and retry.`);
+  } else {
+    verdict($('lock-verdict'), ok === changes ? 'info' : 'fail', `${ok} saved, history shows ${changes} change(s). ${explain}`);
+  }
+}
+
+/* ---- 3. token ---- */
+PANELS.token = () => `
+  <h2>3 · One-time reset link</h2>
+  <p class="muted">The same password-reset link is submitted many times at once. Only one submission may use it.</p>
+  ${concept(
+    'A reset link is used twice at the same moment. Both requests see “not used”.',
+    ['Claim the token first: <code>SET used = true WHERE used = false</code>.',
+     '1 row changed: continue. 0: <code>422 already used</code>.',
+     'Same pattern for email verification.'],
+    `<span class="c">// TokenRepository</span>
+<span class="k">UPDATE</span> Token t <span class="k">SET</span> t.used = true
+<span class="k">WHERE</span> t.id = :tokenId <span class="k">AND</span> t.used = false
+
+<span class="c">// AuthService.resetPassword</span>
+<span class="k">if</span> (tokenRepository.markTokenUsedIfUnused(id) == 0)
+  <span class="k">throw new</span> BusinessRuleException("already used");`)}
+  <div class="card">
+    <div class="steps" id="token-steps"><span class="step">1 get a real link</span><span class="step">2 paste it</span><span class="step">3 fire</span></div>
+    <div class="row">
+      <button class="secondary" onclick="tokenSend()">1 · Email a reset link to the customer</button>
+      <span class="muted">Rate limited to 5 per minute. Open the inbox, copy the link (or just the token).</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>Reset link or token</label><input id="tok-value" size="52" placeholder="http://localhost:8080/?resetToken=…"></div>
+      <div><label>New password</label><input id="tok-pw" value="Password123!"></div>
+      <div><label>Simultaneous submits</label><input id="tok-n" type="number" min="2" max="20" value="8"></div>
+      <button class="go" onclick="tokenFire()">3 · Submit it everywhere at once</button>
+    </div>
+    <div id="token-counts"></div><div id="token-lanes"></div><div id="token-verdict"></div>
+  </div>`;
+
+async function tokenSend() {
+  if (!ready()) return;
+  const r = await call(null, 'POST', '/api/auth/forget-password', { email: S.emails.customer });
+  toast(r.ok ? 'Reset email requested for ' + S.emails.customer : 'Failed: ' + (r.msg || r.status));
+  if (r.ok) stepState('token-steps', 0, 'done');
+}
+async function tokenFire() {
+  if (!ready()) return;
+  let raw = $('tok-value').value.trim();
+  const m = raw.match(/resetToken=([^&\s]+)/); if (m) raw = m[1];
+  if (!raw) { toast('Paste the reset link or token first'); return; }
+  const pw = $('tok-pw').value, n = Math.min(20, Math.max(2, +$('tok-n').value));
+  stepState('token-steps', 2, 'run');
+  const { results, total } = await burst(n, () => call(null, 'POST', '/api/auth/reset-password', { token: raw, newPassword: pw }));
+  lanes($('token-lanes'), results, total);
+  const ok = byStatus(results, 200), used = byStatus(results, 422);
+  counts($('token-counts'), [[ok, 'password reset (200)', 'var(--ok)'], [used, 'link already used (422)', 'var(--warn)'],
+    [results.length - ok - used, 'other', 'var(--danger)']]);
+  stepState('token-steps', 2, 'done');
+  if (ok === 1) {
+    verdict($('token-verdict'), 'pass', `<b>The link worked exactly once.</b> ${used} simultaneous attempts were refused. The customer's password is now <code>${esc(pw)}</code>.`);
+  } else if (ok === 0) {
+    verdict($('token-verdict'), 'info', `Nothing succeeded: <b>${esc(results[0].msg)}</b>. The link was already used or has expired (30 minutes). Request a new one.`);
+  } else {
+    verdict($('token-verdict'), 'fail', `<b>${ok} requests reset the password.</b> The link was used more than once.`);
+  }
+}
+
+/* ---- 4. report ---- */
+PANELS.report = () => `
+  <h2>4 · Monthly SLA report claim</h2>
+  <p class="muted">Several admins press “Generate” for the same month together. One report, one file.</p>
+  ${concept(
+    'Two admins (or the cron) generate the same month. Two rows, same CSV written twice.',
+    ['Claim the month: <code>INSERT … ON CONFLICT (report_period)</code>.',
+     'Only a FAILED month can be claimed again.',
+     'Winner builds the CSV. Everyone else: <code>409</code>.'],
+    `<span class="k">INSERT INTO</span> sla_reports (report_period, status, …)
+<span class="k">VALUES</span> (:period, 'GENERATING', …)
+<span class="k">ON CONFLICT</span> (report_period) <span class="k">DO UPDATE</span>
+  <span class="k">SET</span> status = 'GENERATING', …
+  <span class="k">WHERE</span> sla_reports.status = 'FAILED'
+
+if (reportRepository.claim(period, userId) == 0)
+  <span class="k">throw new</span> ConflictException(…);`)}
+  <div class="card">
+    <div class="row">
+      <div><label>Month to generate (first free month)</label><input id="rep-month" size="10" readonly></div>
+      <div><label>Simultaneous requests</label><input id="rep-n" type="number" min="2" max="20" value="6"></div>
+      <button class="go" onclick="reportFire()">Generate it from all requests at once</button>
+      <span class="muted">This creates one real report that stays in the list.</span>
+    </div>
+    <div id="rep-counts"></div><div id="rep-lanes"></div><div id="rep-verdict"></div>
+    <h3 style="margin-top:14px;font-size:15px">Reports in the database</h3>
+    <div id="rep-table" class="muted">connect the accounts to load</div>
+  </div>`;
+
+async function loadReportList() {
+  if (!$('rep-table')) return;
+  const r = await call('admin', 'GET', '/api/admin/sla-reports');
+  if (!r.ok) { $('rep-table').textContent = 'Could not load reports: ' + r.msg; return; }
+  P.reports = r.data;
+  const taken = new Set(r.data.map(x => x.period));
+  const d = new Date(); d.setDate(1);
+  let pick = null;
+  for (let i = 1; i <= 48 && !pick; i++) {
+    const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    const key = m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+    if (!taken.has(key)) pick = key;
+  }
+  $('rep-month').value = pick || '(none free)';
+  $('rep-table').innerHTML = r.data.length ? `<table class="t"><thead><tr><th>Period</th><th>Status</th><th>Tickets</th><th>Compliance</th><th>By</th></tr></thead><tbody>${
+    r.data.map(x => `<tr><td>${esc(x.period)}</td><td>${esc(x.status)}</td><td>${x.totalTickets ?? '–'}</td>
+      <td>${x.resolutionCompliancePercent != null ? Number(x.resolutionCompliancePercent).toFixed(1) + '%' : '–'}</td><td>${esc(x.generatedBy)}</td></tr>`).join('')}</tbody></table>` : 'No reports yet.';
+}
+async function reportFire() {
+  if (!ready()) return;
+  const month = $('rep-month').value;
+  if (!/^\d{4}-\d{2}$/.test(month)) { toast('No free month found'); return; }
+  const n = Math.min(20, Math.max(2, +$('rep-n').value));
+  const { results, total } = await burst(n, () => call('admin', 'POST', '/api/admin/sla-reports?month=' + month));
+  lanes($('rep-lanes'), results, total);
+  const created = byStatus(results, 201), conflict = byStatus(results, 409);
+  counts($('rep-counts'), [[created, 'generated (201)', 'var(--ok)'], [conflict, 'refused (409)', 'var(--warn)'],
+    [results.length - created - conflict, 'other', 'var(--danger)']]);
+  await loadReportList();
+  const rows = (P.reports || []).filter(x => x.period === month).length;
+  if (created === 1 && rows === 1) {
+    verdict($('rep-verdict'), 'pass', `<b>One report for ${month}.</b> ${conflict} duplicate requests were refused, and the table below has exactly <b>${rows}</b> row for that month.`);
+  } else if (created === 0) {
+    verdict($('rep-verdict'), 'info', `No request created a report: ${esc(results[0].msg)}.`);
+  } else {
+    verdict($('rep-verdict'), 'fail', `${created} requests created a report for ${month}; the table shows ${rows} row(s).`);
+  }
+}
+
+/* ---- 5. fraud ---- */
+PANELS.fraud = () => `
+  <h2>5 · Fraud alert de-duplication</h2>
+  <p class="muted">The same suspicious pattern is detected by many threads at once. It must open one ticket, not many.</p>
+  ${concept(
+    'Several threads see the same suspicious pattern at once and each opens a ticket.',
+    ['Each alert has a unique <code>dedup_key</code> (rule + customer + time bucket).',
+     'Claim it: <code>INSERT … ON CONFLICT DO NOTHING</code>.',
+     'Winner creates the internal ticket. Customer is never told.'],
+    `<span class="k">INSERT INTO</span> fraud_alerts (…, dedup_key, …)
+<span class="k">VALUES</span> (…, :key, now())
+<span class="k">ON CONFLICT</span> (dedup_key) <span class="k">DO NOTHING</span>
+
+<span class="k">if</span> (alertRepository.claim(…) == 0) {
+  log.debug("Alert already raised, skipping");
+  <span class="k">return</span>;
+}`)}
+  <div class="card">
+    <div class="row">
+      <div><label>Customer</label><select id="fr-customer"></select></div>
+      <div><label>Simultaneous scenarios (3 deposits each)</label><input id="fr-n" type="number" min="1" max="10" value="4"></div>
+      <button class="go" onclick="fraudFire()">Run “structuring” from all of them at once</button>
+    </div>
+    <div class="muted" style="margin-top:6px">Pick a customer with no structuring alert today to see the first alert being created. A repeat run shows the de-duplication on its own.</div>
+    <div id="fr-counts"></div><div id="fr-lanes"></div><div id="fr-verdict"></div>
+    <div id="fr-table"></div>
+  </div>`;
+
+async function loadCustomers() {
+  const sel = $('fr-customer'); if (!sel) return;
+  const r = await call('admin', 'GET', '/api/admin/users');
+  if (!r.ok) return;
+  const customers = r.data.filter(u => u.role === 'CUSTOMER');
+  sel.innerHTML = customers.map(u => `<option value="${u.id}">${esc(u.fullName)} (${esc(u.email)})</option>`).join('');
+  const customer2 = customers.find(u => /customer2/.test(u.email));
+  if (customer2) sel.value = customer2.id;
+}
+const STRUCT = 'STRUCTURING_DEPOSITS';
+async function fraudFire() {
+  if (!ready()) return;
+  const cid = +$('fr-customer').value, n = Math.min(10, Math.max(1, +$('fr-n').value));
+  const before = await call('admin', 'GET', '/api/admin/fraud-alerts');
+  const countFor = list => (list || []).filter(a => a.customerId === cid && a.ruleCode === STRUCT);
+  const was = countFor(before.data).length;
+  const { results, total } = await burst(n, () => call('admin', 'POST', '/api/admin/transactions/simulate', { customerId: cid, scenario: 'STRUCTURING' }));
+  lanes($('fr-lanes'), results, total);
+  await sleep(800);
+  const after = await call('admin', 'GET', '/api/admin/fraud-alerts');
+  const now = countFor(after.data);
+  const created = now.length - was;
+  const okReq = byStatus(results, 201);
+  counts($('fr-counts'), [[okReq * 3, 'deposits recorded', 'var(--ink)'], [created, 'new alerts', created <= 1 ? 'var(--ok)' : 'var(--danger)'],
+    [new Set(now.map(a => a.ticketId)).size, 'tickets for this customer', 'var(--ink)']]);
+  $('fr-table').innerHTML = `<table class="t"><thead><tr><th>When</th><th>Rule</th><th>Ticket</th></tr></thead><tbody>${
+    now.map(a => `<tr><td>${new Date(a.createdAt).toLocaleString()}</td><td>${esc(a.ruleCode)}</td><td>#${a.ticketId ?? '–'}</td></tr>`).join('')}</tbody></table>`;
+  if (okReq === 0) verdict($('fr-verdict'), 'info', `Requests failed: ${esc(results[0].msg)}`);
+  else if (created === 1) verdict($('fr-verdict'), 'pass', `<b>${okReq * 3} deposits, one alert, one ticket.</b> Every detection thread tried to claim the same dedup key; one succeeded and the rest backed off.`);
+  else if (created === 0 && was >= 1) verdict($('fr-verdict'), 'pass', `<b>${okReq * 3} more deposits, zero new alerts.</b> This customer already had a structuring alert in the current 24-hour window, so every attempt was de-duplicated.`);
+  else if (created === 0) verdict($('fr-verdict'), 'info', 'No alert was raised. Check that the rules are seeded and enabled.');
+  else verdict($('fr-verdict'), 'fail', `${created} alerts were created for one window. That would be a duplicate-alert bug. (A run that crosses midnight UTC can legitimately start a new window.)`);
+}
+
+/* ---- 6. email pool ---- */
+PANELS.email = () => `
+  <h2>6 · Email thread pool</h2>
+  <p class="muted">Many tickets are created at once. Every request answers immediately while a small pool of worker threads sends the confirmation emails in the background.</p>
+  ${concept(
+    'Sending email is slow. Doing it in the request makes every request wait.',
+    ['Services publish an event after commit.',
+     '<code>@Async</code> sends it on a pool of 3 workers, queue 100.',
+     'Queue full: <code>CallerRunsPolicy</code> slows the sender, nothing is lost.'],
+    `<span class="c">// AsyncConfig</span>
+ex.setCorePoolSize(<span class="k">3</span>);
+ex.setMaxPoolSize(<span class="k">3</span>);
+ex.setQueueCapacity(<span class="k">100</span>);
+ex.setThreadNamePrefix("<span class="k">notification-</span>");
+ex.setRejectedExecutionHandler(<span class="k">new</span> CallerRunsPolicy());
+
+<span class="c">// EmailDispatcher</span>
+<span class="k">@Async</span>("notificationExecutor")
+<span class="k">@TransactionalEventListener</span>(phase = AFTER_COMMIT)
+<span class="k">public void</span> send(EmailMessage msg) { … }`)}
+  <div class="card">
+    <div class="row">
+      <div><label>Tickets created at once</label><input id="em-n" type="number" min="3" max="20" value="9"></div>
+      <button class="go" onclick="emailFire()">Create the tickets now</button>
+      <span class="muted">Sends one real confirmation email per ticket to the customer's inbox.</span>
+    </div>
+    ${poolBox('pool-email', 'notificationExecutor — what the workers are doing right now')}
+    <div id="em-counts"></div><div id="em-lanes"></div><div id="em-verdict"></div>
+  </div>`;
+
+async function emailFire() {
+  if (!ready()) return;
+  const n = Math.min(20, Math.max(3, +$('em-n').value));
+  startPool('pool-email', 'notification');
+  await sleep(700);
+  const { results, total } = await burst(n, i => newTicket('Email pool demo ' + (i + 1), 'CARD_DISPUTE', 'LOW'));
+  lanes($('em-lanes'), results, total);
+  const ok = byStatus(results, 201);
+  const slowest = Math.max(...results.map(r => r.end - r.start));
+  counts($('em-counts'), [[ok, 'tickets created (201)', 'var(--ok)'], [slowest.toFixed(0) + ' ms', 'slowest response', 'var(--ink)'],
+    [ok, 'emails queued for the pool', 'var(--ink)']]);
+  verdict($('em-verdict'), 'info', `<b>${ok} tickets answered in ${total.toFixed(0)} ms.</b> The confirmation emails were not waited for: watch the three workers above take them off the queue.`);
+  await sleep(Math.min(25000, 2500 + n * 900));
+  const pk = pools['pool-email']?.peak;
+  stopPool('pool-email');
+  if (pk) verdict($('em-verdict'), pk.a > 0 ? 'pass' : 'info',
+    `<b>${ok} tickets answered in ${total.toFixed(0)} ms</b>, before their emails were sent. Peak workers busy: <b>${pk.a}</b> (never above 3, the pool size). Peak queue length: <b>${pk.q}</b>.`);
+}
+
+/* ---- 7. virustotal ---- */
+PANELS.vt = () => `
+  <h2>7 · VirusTotal scan queue</h2>
+  <p class="muted">Many files are uploaded at once. Uploads return instantly while a single background worker scans them one at a time, spaced out to respect VirusTotal's free limit.</p>
+  ${concept(
+    'VirusTotal allows about 4 lookups a minute. Scanning inside uploads is slow and blows the quota.',
+    ['Upload saves the file and hash, status PENDING, then returns.',
+     'One worker, queue 50, waits 16 s between lookups. Only the hash is sent.',
+     'Queue full: ERROR, rescan later. PENDING files are re-queued at startup.'],
+    `<span class="c">// AsyncConfig</span>
+ex.setCorePoolSize(<span class="k">1</span>);   <span class="c">// one worker</span>
+ex.setMaxPoolSize(<span class="k">1</span>);
+ex.setQueueCapacity(<span class="k">50</span>);
+ex.setRejectedExecutionHandler(<span class="k">new</span> AbortPolicy());
+
+<span class="c">// AttachmentScanService</span>
+<span class="k">private synchronized void</span> waitForSlot() {
+  <span class="k">long</span> wait = lastCallAt + minIntervalMs - now();
+  <span class="k">if</span> (wait > 0) Thread.sleep(wait);   <span class="c">// 16 000 ms</span>
+}`)}
+  <div class="card">
+    <div class="row">
+      <div><label>Files uploaded at once</label><input id="vt-n" type="number" min="2" max="8" value="4"></div>
+      <button class="go" onclick="vtFire()">Upload random PNGs now</button>
+      <span class="muted">Each file has unique bytes, so VirusTotal reports “unknown”. Uploading as the agent so scan results are visible.</span>
+    </div>
+    ${poolBox('pool-vt', 'virusTotalExecutor — the single scan worker')}
+    <div id="vt-lanes"></div><div id="vt-table"></div><div id="vt-verdict"></div>
+  </div>`;
+
+function makePng(name) {
+  return new Promise(resolve => {
+    const c = document.createElement('canvas'); c.width = 24; c.height = 24;
+    const ctx = c.getContext('2d');
+    for (let x = 0; x < 24; x++) for (let y = 0; y < 24; y++) {
+      ctx.fillStyle = `rgb(${Math.random() * 255 | 0},${Math.random() * 255 | 0},${Math.random() * 255 | 0})`;
+      ctx.fillRect(x, y, 1, 1);
+    }
+    c.toBlob(b => resolve(new File([b], name, { type: 'image/png' })), 'image/png');
+  });
+}
+async function vtFire() {
+  if (!ready()) return;
+  const n = Math.min(8, Math.max(2, +$('vt-n').value));
+  const run = Date.now().toString(36);
+  const t = await newTicket('VirusTotal queue demo', 'CARD_DISPUTE', 'LOW');
+  if (!t.ok) { toast('Could not create ticket: ' + t.msg); return; }
+  const tid = t.data.id;
+  const files = await Promise.all(Array.from({ length: n }, (_, i) => makePng(`lab-${run}-${i + 1}.png`)));
+  startPool('pool-vt', 'virustotal');
+  await sleep(500);
+  const { results, total } = await burst(n, i => {
+    const fd = new FormData(); fd.append('file', files[i]);
+    return call('agent', 'POST', `/api/tickets/${tid}/attachments`, undefined, { form: fd });
+  });
+  lanes($('vt-lanes'), results, total);
+  const uploadMs = results.map(r => r.end - r.start);
+  const deadline = Date.now() + 6 * 60 * 1000;
+  let rows = [];
+  while (Date.now() < deadline) {
+    const r = await call('agent', 'GET', `/api/tickets/${tid}/attachments`);
+    rows = (r.data || []).filter(a => a.fileName && a.fileName.includes(`lab-${run}-`));
+    renderVt(rows, uploadMs);
+    if (rows.length >= n && rows.every(a => a.scanStatus && a.scanStatus !== 'PENDING')) break;
+    await sleep(2000);
+  }
+  stopPool('pool-vt');
+  const done = rows.filter(a => a.scannedAt).map(a => new Date(a.scannedAt).getTime()).sort((a, b) => a - b);
+  const gaps = done.slice(1).map((v, i) => (v - done[i]) / 1000);
+  const pending = rows.filter(a => !a.scanStatus || a.scanStatus === 'PENDING').length;
+  if (pending > 0) verdict($('vt-verdict'), 'info', `${pending} scan(s) still waiting after 6 minutes. They remain queued and will finish on their own.`);
+  else if (gaps.length && Math.min(...gaps) >= 14) verdict($('vt-verdict'), 'pass',
+    `<b>${n} uploads returned in ${total.toFixed(0)} ms; the scans took one at a time.</b> Gap between consecutive scans: ${gaps.map(g => g.toFixed(1) + ' s').join(', ')}. That is the 16 s spacing enforced by the single worker.`);
+  else verdict($('vt-verdict'), 'info', `Scans finished. Gaps: ${gaps.map(g => g.toFixed(1) + ' s').join(', ') || 'n/a'}.`);
+}
+function renderVt(rows, uploadMs) {
+  const sorted = [...rows].sort((a, b) => a.fileName.localeCompare(b.fileName.replace(/^.*?_/, '')));
+  let prev = null;
+  const order = [...rows].filter(a => a.scannedAt).sort((a, b) => new Date(a.scannedAt) - new Date(b.scannedAt));
+  const gapOf = new Map();
+  order.forEach((a, i) => gapOf.set(a.id, i === 0 ? null : (new Date(a.scannedAt) - new Date(order[i - 1].scannedAt)) / 1000));
+  $('vt-table').innerHTML = `<table class="t"><thead><tr><th>File</th><th>Status</th><th>Scan order</th><th>Gap after previous scan</th><th>Detail</th></tr></thead><tbody>${
+    sorted.map(a => {
+      const idx = order.findIndex(o => o.id === a.id);
+      const g = gapOf.get(a.id);
+      return `<tr><td>${esc(a.fileName.replace(/^[0-9a-f-]{36}_/, ''))}</td>
+        <td><span class="tag ${a.scanStatus === 'PENDING' ? 'warn' : a.scanStatus === 'ERROR' ? 'bad' : 'ok'}">${esc(a.scanStatus || '…')}</span></td>
+        <td>${idx >= 0 ? '#' + (idx + 1) : 'waiting in queue'}</td><td>${g != null ? g.toFixed(1) + ' s' : '–'}</td><td>${esc(a.scanSummary || '')}</td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+/* ---- 8. SLA scheduler ---- */
+PANELS.sla = () => `
+  <h2>8 · SLA scheduler</h2>
+  <p class="muted">A background thread watches every open ticket and warns the agents at 75%, 90% and 100% of the SLA time. Each warning is sent once.</p>
+  ${concept(
+    'Nobody watches deadlines by hand, and warnings must not repeat on every check.',
+    ['<code>@Scheduled</code> checks open tickets every 60 s.',
+     'Level: 0 none, 1 = 75%, 2 = 90%, 3 = breached.',
+     'Atomic raise: <code>UPDATE … WHERE sla_notify_level &lt; :level</code>. Only the winner sends.'],
+    `<span class="k">@Scheduled</span>(initialDelay = 30000, fixedDelayString = "…60000")
+<span class="k">public void</span> checkTickets() {
+  <span class="k">for</span> (Ticket t : candidates) {
+    <span class="k">int</span> level = levelFor(created, due, now);
+    <span class="k">if</span> (level <= t.getSlaNotifyLevel()) <span class="k">continue</span>;
+    <span class="k">if</span> (repo.raiseSlaNotifyLevel(t.getId(), level) == 0)
+      <span class="k">continue</span>;           <span class="c">// someone else raised it</span>
+    notifyAgents(t, level);
+  }
+}`)}
+  <div class="card">
+    <div class="steps" id="sla-steps"><span class="step">1 shrink the policy</span><span class="step">2 create a ticket</span><span class="step">3 watch the alerts</span><span class="step">4 restore the policy</span></div>
+    <div class="row">
+      <div><label>Resolution time for the demo (minutes)</label><input id="sla-min" type="number" min="3" max="30" value="6"></div>
+      <button class="go" onclick="slaStart()">Start the demo</button>
+      <button class="secondary" onclick="slaRestore()">Restore the original policy</button>
+    </div>
+    <div class="muted" style="margin-top:6px">Temporarily sets the CARD_DISPUTE / LOW policy to the time above, creates one ticket in that category, and listens to the agent's live stream. The policy is restored automatically after the breach alert (or press the button).</div>
+    <div class="timeline" id="sla-timeline" style="display:none">
+      <div class="base"></div><div class="fill" id="sla-fill" style="width:0"></div>
+      <div class="mk" style="left:75%"><i></i>75%</div><div class="mk" style="left:90%"><i></i>90%</div><div class="mk" style="left:100%"><i></i>deadline</div>
+    </div>
+    <div id="sla-info" class="muted"></div><div id="sla-log"></div><div id="sla-verdict"></div>
+  </div>`;
+
+eventHooks.push((role, n) => {
+  if (!P.sla || role !== 'agent' || n.ticketId !== P.sla.ticket || !/^SLA_/.test(n.eventType)) return;
+  const level = /BREACH/i.test(n.message) ? 3 : /90%/.test(n.message) ? 2 : 1;
+  const el = ((performance.now() - P.sla.start) / 1000);
+  P.sla.hits[level] = el;
+  const marks = document.querySelectorAll('#sla-timeline .mk');
+  if (marks[level - 1]) marks[level - 1].classList.add('hit');
+  $('sla-log').insertAdjacentHTML('beforeend',
+    `<div class="verdict ${level === 3 ? 'fail' : 'info'}" style="margin-top:6px"><b>${el.toFixed(0)} s after creation:</b> ${esc(n.eventType)} — ${esc(n.message)}</div>`);
+  if (level === 3) {
+    stepState('sla-steps', 2, 'done');
+    verdict($('sla-verdict'), 'pass', `<b>Three levels, three alerts, one each.</b> The scheduler checked many times in between, but the stored level stopped any repeats. Restoring the policy now…`);
+    setTimeout(slaRestore, 4000);
+  }
+});
+
+async function slaStart() {
+  if (!ready()) return;
+  const R = Math.min(30, Math.max(3, +$('sla-min').value));
+  needStream('agent');
+  stepState('sla-steps', 0, 'run');
+  const pol = await call('admin', 'GET', '/api/admin/sla-policies');
+  const p = (pol.data || []).find(x => x.category && x.category.name === 'CARD_DISPUTE' && x.priority === 'LOW');
+  if (!p) { toast('No CARD_DISPUTE / LOW policy found. Is the SLA policy seeder saving policies?'); stepState('sla-steps', 0, ''); return; }
+  if (!sessionStorage.getItem('lab_sla_orig')) {
+    sessionStorage.setItem('lab_sla_orig', JSON.stringify({ id: p.id, fr: p.firstResponseMinutes, res: p.resolutionMinutes }));
+  }
+  const put = await call('admin', 'PUT', '/api/admin/sla-policies/' + p.id, { firstResponseMinutes: 1, resolutionMinutes: R });
+  if (!put.ok) { toast('Could not change the policy: ' + put.msg); return; }
+  stepState('sla-steps', 0, 'done'); stepState('sla-steps', 1, 'run');
+  const t = await newTicket('SLA scheduler demo', 'CARD_DISPUTE', 'LOW');
+  if (!t.ok) { toast('Could not create ticket: ' + t.msg); return; }
+  const dur = new Date(t.data.dueAt) - new Date(t.data.createdAt);
+  P.sla = { ticket: t.data.id, start: performance.now(), dur, hits: {} };
+  stepState('sla-steps', 1, 'done'); stepState('sla-steps', 2, 'run');
+  $('sla-log').innerHTML = ''; $('sla-verdict').innerHTML = '';
+  document.querySelectorAll('#sla-timeline .mk').forEach(m => m.classList.remove('hit'));
+  $('sla-timeline').style.display = '';
+  const mins = (dur / 60000).toFixed(1);
+  $('sla-info').innerHTML = `Ticket <b>#${t.data.id}</b> was given <b>${mins} minutes</b> to resolve` +
+    (Math.abs(dur / 60000 - R) > 0.5 ? ` <span class="tag bad">expected ${R}: the new policy was not applied</span>` : '') +
+    `. Expected alerts at about ${(dur / 60000 * .75).toFixed(1)}, ${(dur / 60000 * .9).toFixed(1)} and ${mins} minutes, plus up to a minute for the scheduler's next check.`;
+  clearInterval(P.slaTimer);
+  P.slaTimer = setInterval(() => {
+    const frac = Math.min(1, (performance.now() - P.sla.start) / P.sla.dur);
+    const f = $('sla-fill'); f.style.width = (frac * 100) + '%';
+    f.style.background = frac >= 1 ? 'var(--danger)' : frac >= .9 ? 'var(--danger)' : frac >= .75 ? 'var(--warn)' : 'var(--ok)';
+    if (frac >= 1) clearInterval(P.slaTimer);
+  }, 400);
+}
+async function slaRestore() {
+  const raw = sessionStorage.getItem('lab_sla_orig');
+  if (!raw) { toast('Nothing to restore'); return; }
+  const o = JSON.parse(raw);
+  const r = await call('admin', 'PUT', '/api/admin/sla-policies/' + o.id, { firstResponseMinutes: o.fr, resolutionMinutes: o.res });
+  if (r.ok) { sessionStorage.removeItem('lab_sla_orig'); stepState('sla-steps', 3, 'done'); toast('SLA policy restored to ' + o.fr + ' / ' + o.res + ' minutes'); }
+  else toast('Restore failed: ' + r.msg);
+}
+
+/* ---- 9. SSE ---- */
+PANELS.sse = () => `
+  <h2>9 · SSE registry</h2>
+  <p class="muted">Many users hold a live connection open at once. Events are pushed only to the people they are for.</p>
+  ${concept(
+    'Many threads send to the same open connections. A plain map gets corrupted.',
+    ['<code>ConcurrentHashMap</code> of userId to emitter.',
+     '<code>LiveNotifier</code> sends after the transaction commits.',
+     'Cleanup uses <code>remove(userId, emitter)</code>, so a reconnect is never removed by the old connection.'],
+    `<span class="k">private final</span> Map&lt;Long, SseEmitter&gt; emitters =
+    <span class="k">new</span> ConcurrentHashMap&lt;&gt;();
+
+emitter.onCompletion(() -&gt; emitters.<span class="k">remove(userId, emitter)</span>);
+emitter.onTimeout   (() -&gt; emitters.<span class="k">remove(userId, emitter)</span>);
+emitter.onError     (e  -&gt; emitters.<span class="k">remove(userId, emitter)</span>);`)}
+  <div class="card">
+    <h3 style="font-size:15px">Who receives what</h3>
+    <table class="t"><thead><tr><th>Event</th><th>Sent to</th></tr></thead><tbody>
+      <tr><td>NEW_TICKET</td><td>agents of the ticket's category</td></tr>
+      <tr><td>ASSIGNED / STATUS_CHANGED</td><td>the ticket's customer</td></tr>
+      <tr><td>ESCALATED</td><td>admins, responsible agents (not the person who escalated), and the customer</td></tr>
+      <tr><td>FRAUD_ALERT</td><td>admins and the agents of the alert's category (never the customer)</td></tr>
+      <tr><td>SLA_WARNING / SLA_BREACHED</td><td>assigned agent, or the category's agents</td></tr>
+      <tr><td>SLA_REPORT_READY</td><td>other admins</td></tr>
+      <tr><td>MALICIOUS_FILE</td><td>admins and responsible agents (never the customer)</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h3 style="font-size:15px">Reconnect test</h3>
+    <div class="muted">Opens two connections for the same agent, closes the first one (as a page reload would), then makes a customer create a ticket in the agent's category. The agent's <b>second</b> connection must still receive the event.</div>
+    <div class="row" style="margin-top:10px"><button class="go" onclick="sseTest()">Run the reconnect test</button></div>
+    <div id="sse-log"></div><div id="sse-verdict"></div>
+  </div>`;
+
+async function sseTest() {
+  if (!ready()) return;
+  const log = m => $('sse-log').insertAdjacentHTML('beforeend', `<div class="muted">• ${m}</div>`);
+  $('sse-log').innerHTML = ''; $('sse-verdict').innerHTML = '';
+  const hadDock = !!dock.agent;
+  if (dock.agent) { dock.agent.abort(); dock.agent = null; }
+  const seen = [];
+  const a1 = openStream('agent', () => {});
+  log('Connection A1 opened for the agent'); await sleep(700);
+  const a2 = openStream('agent', n => { if (n.eventType === 'NEW_TICKET') seen.push(n.ticketId); });
+  log('Connection A2 opened for the same agent (it replaces A1 in the registry)'); await sleep(700);
+  a1.abort();
+  log('A1 closed: its cleanup runs <code>remove(userId, emitterA1)</code>'); await sleep(900);
+  const t = await newTicket('SSE reconnect test', 'CARD_DISPUTE', 'LOW');
+  if (!t.ok) { toast(t.msg); a2.abort(); return; }
+  log(`Customer created ticket #${t.data.id}`);
+  for (let i = 0; i < 20 && !seen.includes(t.data.id); i++) await sleep(300);
+  a2.abort();
+  if (seen.includes(t.data.id)) verdict($('sse-verdict'), 'pass', '<b>PASS.</b> The agent’s new connection received the event after the old one closed.');
+  else verdict($('sse-verdict'), 'fail', '<b>FAIL.</b> The event never arrived. The old connection’s cleanup probably removed the new one: check that every callback in <code>register()</code> uses <code>emitters.remove(userId, emitter)</code>, and that the agent is assigned to CARD_DISPUTE.');
+  if (hadDock) syncStreams();
+}
+
+/* ---------- navigation ---------- */
+function show(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('hidden', p.id !== 'panel-' + name));
+  document.querySelectorAll('aside.left .nav').forEach(b => b.classList.toggle('active', b.dataset.p === name));
+  window.scrollTo(0, 0);
+}
+(function init() {
+  const host = $('panels');
+  for (const key of Object.keys(PANELS)) {
+    const d = document.createElement('section');
+    d.className = 'panel hidden'; d.id = 'panel-' + key;
+    d.innerHTML = PANELS[key]();
+    host.appendChild(d);
+  }
+  show('overview');
+  restoreSession();
+})();
+</script>
+</body>
+</html>
