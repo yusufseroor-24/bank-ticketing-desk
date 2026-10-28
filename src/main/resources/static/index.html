@@ -117,10 +117,8 @@
     padding:26px 18px;
     display:flex;flex-direction:column;
   }
-  nav .brand{font-family:"Source Serif 4",serif;font-size:20px;font-weight:700;margin-bottom:4px;}
-  nav .who{font-size:12px;color:#B9C3D4;margin-bottom:10px;}
-  nav .who b{color:var(--brass-dim);}
-  nav .conn{font-size:11px;color:#7E8FA8;margin-bottom:22px;display:flex;align-items:center;gap:6px;}
+  nav .brand{font-family:"Source Serif 4",serif;font-size:20px;font-weight:700;margin-bottom:18px;}
+    nav .conn{font-size:11px;color:#7E8FA8;margin-bottom:22px;display:flex;align-items:center;gap:6px;}
   nav .conn .dot{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;}
   nav .conn.live .dot{background:#4CAF6D;}
   nav button.nav-link{
@@ -180,6 +178,39 @@
   .checkbox-row input{width:auto;}
   .avatar-box{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
   .avatar-box img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:1px solid var(--line);background:#eee9db;}
+  .avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--brass);color:#1A1203;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;border:2px solid #2C4568;}
+  .avatar.big{width:72px;height:72px;font-size:26px;border:1px solid var(--line);}
+  nav .me{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+  nav .me-text{min-width:0;}
+  nav .me-name{font-weight:600;font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  nav .me-role{display:inline-block;margin-top:2px;padding:1px 8px;border-radius:10px;background:#1C3657;
+    color:var(--brass-dim);font-size:10.5px;font-weight:600;letter-spacing:.5px;}
+  nav .me-email{font-size:12px;color:#8FA1BA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:12px;}
+  nav .badge{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:9px;background:var(--danger);
+    color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:18px;}
+  .pill.scan-CLEAN{background:#E6EFE9;color:var(--ok);}
+  .pill.scan-PENDING,.pill.scan-UNKNOWN,.pill.scan-NOT_SCANNED{background:#E6EBF3;color:var(--ink-soft);}
+  .pill.scan-SUSPICIOUS{background:#FBF0DD;color:var(--brass);}
+  .pill.scan-MALICIOUS{background:#A3372B;color:#fff;}
+  .pill.scan-ERROR{background:#F6E4E1;color:var(--danger);}
+  .pill.sla-ok{background:#E6EFE9;color:var(--ok);}
+  .pill.sla-warn{background:#FBF0DD;color:var(--brass);}
+  .pill.sla-urgent{background:#F6D9A8;color:#7A4A07;}
+  .pill.sla-breach{background:#A3372B;color:#fff;}
+  .pill.sla-none{background:#E6EBF3;color:var(--ink-soft);}
+  .sla-bar{height:6px;background:#EEE9DB;border-radius:3px;overflow:hidden;margin-top:4px;min-width:90px;}
+  .sla-bar > i{display:block;height:100%;background:var(--ok);}
+  .sla-bar > i.warn{background:var(--brass-dim);}
+  .sla-bar > i.urgent{background:#D98A1F;}
+  .sla-bar > i.breach{background:var(--danger);}
+  .notif{padding:10px 12px;border-bottom:1px solid var(--line);background:var(--paper-raised);display:flex;gap:12px;justify-content:space-between;align-items:flex-start;}
+  .notif.unread{border-left:4px solid var(--brass);}
+  .notif.SLA_BREACHED,.notif.MALICIOUS_FILE,.notif.FRAUD_ALERT{border-left:4px solid var(--danger);}
+  .notif .t{font-size:12px;color:var(--ink-soft);}
+  .hint{font-size:12.5px;color:var(--ink-soft);}
+  .drop-note{font-size:12px;color:var(--ink-soft);margin:4px 0 0;}
+  input.inline{width:90px;padding:.35em .5em;}
 </style>
 </head>
 <body>
@@ -228,9 +259,20 @@
       <div class="auth-links"><button type="button" class="link-btn" onclick="showAuthTab('login')">&larr; Back to login</button></div>
     </form>
 
+    <form id="reset-form" class="hidden" onsubmit="handleResetPassword(event)">
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:0">Choose a new password. The link you used works only once.</p>
+      <div class="field"><label>New password (min 8 characters)</label><input type="password" id="reset-new-password" minlength="8" required></div>
+      <div class="field"><label>Repeat new password</label><input type="password" id="reset-new-password2" minlength="8" required></div>
+      <button type="submit" style="width:100%">Set new password</button>
+      <div class="auth-links"><button type="button" class="link-btn" onclick="leaveResetPage()">&larr; Back to login</button></div>
+    </form>
+
     <div class="seed-hint">
       Seeded accounts (password <code>Password123!</code>):<br>
-      <code>admin@bankdesk.com</code> &middot; <code>agent.general@bankdesk.com</code> &middot; <code>customer1@bankdesk.com</code>
+      <code>practice24in+admin@gmail.com</code><br>
+      <code>practice24in+agent.general@gmail.com</code> (KYC, card disputes, loans, complaints)<br>
+      <code>practice24in+agent.security@gmail.com</code> (AML, fraud, IT security)<br>
+      <code>practice24in+customer1@gmail.com</code> &middot; <code>practice24in+customer2@gmail.com</code>
     </div>
   </div>
 </div>
@@ -239,7 +281,14 @@
 <div id="app-screen" class="hidden">
   <nav>
     <div class="brand">BankDesk</div>
-    <div class="who">Signed in as<br><b id="nav-email"></b> &middot; <span id="nav-role"></span></div>
+    <div class="me">
+      <div id="nav-avatar"></div>
+      <div class="me-text">
+        <div class="me-name" id="nav-name"></div>
+        <span class="me-role" id="nav-role"></span>
+      </div>
+    </div>
+    <div class="me-email" id="nav-email"></div>
     <div class="conn" id="conn-status"><span class="dot"></span><span id="conn-label">Connecting…</span></div>
 
     <div id="nav-links"></div>
@@ -262,6 +311,19 @@ let currentUser = null;
 let categories = [];
 let currentView = null;
 let sseAbortController = null;
+let currentParam = null;          // id of the ticket currently open (used by live updates)
+let notifications = [];           // live notifications received this session (newest first)
+let unreadCount = 0;
+let avatarUrl = null;            // blob: URL of the profile picture served by GET /api/users/me/profile-pic
+let sessionNotice = '';           // one-off message shown on the login screen (e.g. after a password reset)
+
+const isStaffRole = r => r === 'AGENT' || r === 'ADMIN';
+const ALLOWED_UPLOAD_TYPES = ['image/png', 'image/jpeg', 'application/pdf'];
+const MAX_UPLOAD_MB = 10;         // client-side guard only; the server decides what it really accepts
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 /* ============================================================
    API HELPER
@@ -286,19 +348,28 @@ async function api(path, opts = {}) {
   return data;
 }
 
-// Downloads a protected file (needs the Authorization header, so a plain <a href> won't work)
 async function downloadFile(path, suggestedName) {
-  const res = await fetch(path, { headers: { Authorization: 'Bearer ' + token } });
-  if (!res.ok) { toast('Could not download file', true); return; }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = suggestedName || 'download';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  try {
+    const res = await fetch(path, { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) {
+      let message = 'Could not download file';
+      try { const body = await res.json(); if (body && body.message) message = body.message; } catch (e) { /* not JSON */ }
+      if (!isStaffRole(currentUser && currentUser.role) && /malicious|flagged/i.test(message)) {
+        message = 'This file is not available for download.';
+      }
+      toast(message, true);
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = suggestedName || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) { toast('Could not download file', true); }
 }
 
 function toast(message, isError) {
@@ -320,6 +391,8 @@ function showAuthTab(which) {
   document.getElementById('register-form').classList.toggle('hidden', which !== 'register');
   document.getElementById('resend-form').classList.toggle('hidden', which !== 'resend');
   document.getElementById('forgot-form').classList.toggle('hidden', which !== 'forgot');
+  document.getElementById('reset-form').classList.toggle('hidden', which !== 'reset');
+  document.querySelector('.auth-toggle').classList.toggle('hidden', which === 'reset');
   document.getElementById('auth-msg').innerHTML = '';
 }
 
@@ -333,7 +406,7 @@ async function handleLogin(e) {
     localStorage.setItem('bankdesk_token', token);
     await bootApp();
   } catch (err) {
-    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
 
@@ -345,10 +418,10 @@ async function handleRegister(e) {
   try {
     await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ fullName, email, password }) });
     document.getElementById('auth-msg').innerHTML =
-      `<div class="msg ok">Account created. Check your inbox (Mailtrap) for a verification link, then log in.</div>`;
+      `<div class="msg ok">Account created. Check your inbox for the verification link, then log in.</div>`;
     showAuthTab('login');
   } catch (err) {
-    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
 
@@ -360,7 +433,7 @@ async function handleResendVerification(e) {
     document.getElementById('auth-msg').innerHTML = `<div class="msg ok">${typeof res === 'string' ? res : 'A new verification email has been sent.'}</div>`;
     showAuthTab('login');
   } catch (err) {
-    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
 
@@ -372,7 +445,28 @@ async function handleForgotPassword(e) {
     document.getElementById('auth-msg').innerHTML = `<div class="msg ok">${typeof res === 'string' ? res : 'If an account exists, a reset link has been sent.'}</div>`;
     showAuthTab('login');
   } catch (err) {
-    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${err.message}</div>`;
+    document.getElementById('auth-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
+  }
+}
+
+function getResetToken() { return new URLSearchParams(window.location.search).get('resetToken'); }
+function leaveResetPage() {
+  window.history.replaceState({}, '', window.location.pathname);
+  showAuthTab('login');
+}
+async function handleResetPassword(e) {
+  e.preventDefault();
+  const pw = document.getElementById('reset-new-password').value;
+  const pw2 = document.getElementById('reset-new-password2').value;
+  const box = document.getElementById('auth-msg');
+  if (pw !== pw2) { box.innerHTML = '<div class="msg error">The two passwords do not match.</div>'; return; }
+  try {
+    await api('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token: getResetToken(), newPassword: pw }) });
+    window.history.replaceState({}, '', window.location.pathname);
+    showAuthTab('login');
+    document.getElementById('auth-msg').innerHTML = '<div class="msg ok">Password reset. You can log in with your new password.</div>';
+  } catch (err) {
+    box.innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
 
@@ -381,6 +475,9 @@ function logout() {
   if (sseReconnectTimer) { clearTimeout(sseReconnectTimer); sseReconnectTimer = null; }
   token = null;
   currentUser = null;
+  notifications = [];
+  unreadCount = 0;
+  if (avatarUrl) { URL.revokeObjectURL(avatarUrl); avatarUrl = null; }
   localStorage.removeItem('bankdesk_token');
   document.getElementById('app-screen').classList.add('hidden');
   document.getElementById('auth-screen').classList.remove('hidden');
@@ -398,8 +495,9 @@ async function bootApp() {
   }
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app-screen').classList.remove('hidden');
-  document.getElementById('nav-email').textContent = currentUser.email;
-  document.getElementById('nav-role').textContent = currentUser.role;
+  setNavIdentity();
+  await loadAvatar();
+  refreshNavAvatar();
 
   try { categories = await api('/api/categories'); } catch (e) { categories = []; }
 
@@ -409,27 +507,101 @@ async function bootApp() {
   renderView(defaultView);
 }
 
+function avatarKey() { return 'bd_avatar_' + (currentUser ? currentUser.id : ''); }
+function getCachedAvatar() {
+  try {
+    const c = JSON.parse(localStorage.getItem(avatarKey()) || 'null');
+    return (c && currentUser.profilePicPath && c.path === currentUser.profilePicPath) ? c.dataUrl : null;
+  } catch (e) { return null; }
+}
+function cacheAvatar(path, dataUrl) {
+  try { localStorage.setItem(avatarKey(), JSON.stringify({ path, dataUrl })); } catch (e) { /* storage full or blocked */ }
+}
+function initials(name, email) {
+  const src = (name || email || '?').trim();
+  const parts = src.split(/\s+/).filter(Boolean);
+  return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+async function loadAvatar() {
+  if (avatarUrl) { URL.revokeObjectURL(avatarUrl); avatarUrl = null; }
+  if (!currentUser || !currentUser.profilePicPath) return;
+  try {
+    const res = await fetch('/api/users/me/profile-pic', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) return;                       // falls back to the local copy or initials
+    avatarUrl = URL.createObjectURL(await res.blob());
+  } catch (e) { /* offline: fall back */ }
+}
+function avatarHtml(big) {
+  const img = avatarUrl || getCachedAvatar();
+  const cls = 'avatar' + (big ? ' big' : '');
+  return img ? `<img class="${cls}" src="${img}" alt="Profile picture">`
+             : `<div class="${cls}">${esc(initials(currentUser.fullName, currentUser.email))}</div>`;
+}
+function setNavIdentity() {
+  const email = document.getElementById('nav-email');
+  email.textContent = currentUser.email;
+  email.title = currentUser.email;
+  document.getElementById('nav-name').textContent = currentUser.fullName || currentUser.email;
+  document.getElementById('nav-role').textContent = currentUser.role;
+}
+function refreshNavAvatar() {
+  const el = document.getElementById('nav-avatar');
+  if (el) el.innerHTML = avatarHtml(false);
+}
+function imageToSmallDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the image'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not read the image'));
+      img.onload = () => {
+        const size = 160;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const side = Math.min(img.width, img.height);
+        canvas.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function buildNav() {
   const links = [];
   if (currentUser.role === 'CUSTOMER') {
     links.push(['my-tickets', 'My tickets']);
     links.push(['new-ticket', 'New ticket']);
   }
-  if (currentUser.role === 'AGENT' || currentUser.role === 'ADMIN') {
+  if (isStaffRole(currentUser.role)) {
     links.push(['queue', 'Ticket queue']);
     links.push(['new-internal-ticket', 'New internal ticket']);
   }
   if (currentUser.role === 'ADMIN') {
     links.push(['admin-users', 'Users']);
     links.push(['admin-categories', 'Categories']);
+    links.push(['admin-sla', 'SLA policies']);
+    links.push(['admin-reports', 'SLA reports']);
+    links.push(['admin-fraud', 'Fraud monitoring']);
     links.push(['admin-audit', 'Audit log']);
   }
+  links.push(['notifications', 'Notifications']);
   links.push(['profile', 'My profile']);
 
   const nav = document.getElementById('nav-links');
   nav.innerHTML = links.map(([key, label]) =>
-    `<button class="nav-link" data-view="${key}" onclick="renderView('${key}')">${label}</button>`
+    `<button class="nav-link" data-view="${key}" onclick="renderView('${key}')">${label}${key === 'notifications' ? '<span id="notif-badge" class="badge hidden">0</span>' : ''}</button>`
   ).join('');
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  const b = document.getElementById('notif-badge');
+  if (!b) return;
+  b.textContent = unreadCount;
+  b.classList.toggle('hidden', unreadCount === 0);
 }
 
 function markActiveNav(view) {
@@ -439,6 +611,7 @@ function markActiveNav(view) {
 
 function renderView(view, param) {
   currentView = view;
+  currentParam = param ?? null;
   markActiveNav(view.split(':')[0]);
   const main = document.getElementById('main-content');
   main.innerHTML = '<p class="empty">Loading…</p>';
@@ -451,7 +624,11 @@ function renderView(view, param) {
     'ticket-detail': () => renderTicketDetail(param),
     'admin-users': renderAdminUsers,
     'admin-categories': renderAdminCategories,
+    'admin-sla': renderAdminSla,
+    'admin-reports': renderAdminReports,
+    'admin-fraud': renderAdminFraud,
     'admin-audit': renderAdminAudit,
+    'notifications': renderNotifications,
     'profile': renderProfile,
   };
   (routes[view] || renderMyTickets)();
@@ -464,24 +641,36 @@ function priorityPill(p) { return `<span class="pill priority-${p}">${p}</span>`
 function statusPill(s) { return `<span class="pill ${s}">${s.replaceAll('_',' ')}</span>`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleString() : '—'; }
 
-// SLA indicator — there's no separate SLA field in the backend; the due date (dueAt) IS
-// the SLA, already computed server-side from the ticket's priority. This just compares it
-// to "now" so staff get an at-a-glance badge instead of having to read a raw timestamp.
-function slaInfo(dueAt, status) {
-  if (!dueAt) return { label: 'No SLA', cls: 'OPEN' };
-  if (status === 'CLOSED' || status === 'RESOLVED' || status === 'APPROVED' || status === 'REJECTED' || status === 'FALSE_POSITIVE') {
-    return { label: 'Closed', cls: 'OPEN' };
-  }
-  const now = new Date();
-  const due = new Date(dueAt);
-  const hoursLeft = (due - now) / 36e5;
-  if (hoursLeft < 0) return { label: 'Overdue', cls: 'ESCALATED' };
-  if (hoursLeft <= 4) return { label: 'Due soon', cls: 'ASSIGNED' };
-  return { label: 'On time', cls: 'RESOLVED' };
+const DONE_STATUSES = ['CLOSED','RESOLVED','APPROVED','REJECTED','FALSE_POSITIVE'];
+
+// Same 75% / 90% / breached levels the backend uses for its alerts
+function slaInfo(createdAt, dueAt, status) {
+  if (!dueAt) return { label: 'No SLA', cls: 'sla-none', pct: 0, bar: '' };
+  if (DONE_STATUSES.includes(status)) return { label: 'Closed', cls: 'sla-none', pct: 0, bar: '' };
+  const due = new Date(dueAt).getTime();
+  const start = createdAt ? new Date(createdAt).getTime() : due - 24 * 36e5;
+  const now = Date.now();
+  const pct = due > start ? Math.max(0, ((now - start) / (due - start)) * 100) : 100;
+  if (now >= due) return { label: 'Breached', cls: 'sla-breach', pct: 100, bar: 'breach' };
+  if (pct >= 90) return { label: 'Urgent (90%+)', cls: 'sla-urgent', pct, bar: 'urgent' };
+  if (pct >= 75) return { label: 'Warning (75%+)', cls: 'sla-warn', pct, bar: 'warn' };
+  return { label: 'On time', cls: 'sla-ok', pct, bar: '' };
 }
-function slaBadge(dueAt, status) {
-  const info = slaInfo(dueAt, status);
-  return `<span class="pill ${info.cls}">${info.label}</span>`;
+function slaBadge(t) {
+  const info = slaInfo(t.createdAt, t.dueAt, t.status);
+  const bar = info.label === 'No SLA' || info.label === 'Closed' ? '' :
+    `<div class="sla-bar"><i class="${info.bar}" style="width:${Math.min(100, info.pct).toFixed(0)}%"></i></div>`;
+  return `<span class="pill ${info.cls}">${info.label}</span>${bar}`;
+}
+function firstResponseBadge(t) {
+  if (!t.firstResponseDueAt) return '<span class="pill sla-none">—</span>';
+  const due = new Date(t.firstResponseDueAt).getTime();
+  if (t.firstRespondedAt) {
+    const ok = new Date(t.firstRespondedAt).getTime() <= due;
+    return `<span class="pill ${ok ? 'sla-ok' : 'sla-breach'}">${ok ? 'Responded in time' : 'Responded late'}</span>`;
+  }
+  return Date.now() > due ? '<span class="pill sla-breach">Response overdue</span>'
+                          : '<span class="pill sla-warn">Awaiting response</span>';
 }
 
 function ticketsTable(tickets) {
@@ -492,19 +681,18 @@ function ticketsTable(tickets) {
       <tbody>
         ${tickets.map(t => `
           <tr class="row-click" onclick="renderView('ticket-detail', ${t.id})">
-            <td>${t.title}</td>
-            <td>${t.categoryName}</td>
+            <td>${esc(t.title)}${t.source === 'SYSTEM' ? ' <span class="pill ESCALATED">SYSTEM</span>' : ''}</td>
+            <td>${esc(t.categoryName)}</td>
             <td>${priorityPill(t.priority)}</td>
             <td>${statusPill(t.status)}</td>
-            <td>${slaBadge(t.dueAt, t.status)}</td>
-            <td>${t.assignedToEmail || '—'}</td>
+            <td>${slaBadge(t)}</td>
+            <td>${esc(t.assignedToEmail) || '—'}</td>
             <td>${fmtDate(t.dueAt)}</td>
           </tr>`).join('')}
       </tbody>
     </table>`;
 }
 
-// Handles both known Page<T> JSON shapes: flat (older Spring) and nested under "page" (newer Spring Boot)
 function extractPage(pageResponse) {
   if (!pageResponse) return [];
   return pageResponse.content || [];
@@ -518,9 +706,9 @@ async function renderMyTickets() {
   try {
     const tickets = await api('/api/tickets/my-tickets');
     main.innerHTML = `
-      <div class="section-head"><div><h2>My tickets</h2><p>Everything you've raised, newest activity first.</p></div></div>
+      <div class="section-head"><div><h2>My tickets</h2><p>Everything you've raised.</p></div></div>
       ${ticketsTable(tickets)}`;
-  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
 }
 
 function renderNewTicket() {
@@ -534,7 +722,7 @@ function renderNewTicket() {
       <div class="field"><label>Description</label><textarea id="nt-desc" rows="4" required></textarea></div>
       <div class="two-col">
         <div class="field"><label>Category</label>
-          <select id="nt-category">${visible.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select>
+          <select id="nt-category">${visible.map(c => `<option value="${c.id}">${esc(c.name.replaceAll('_',' '))}</option>`).join('')}</select>
         </div>
         <div class="field"><label>Priority</label>
           <select id="nt-priority">
@@ -560,7 +748,7 @@ async function submitNewTicket() {
     toast('Ticket #' + ticket.id + ' created.');
     renderView('ticket-detail', ticket.id);
   } catch (err) {
-    msg.innerHTML = `<div class="msg error">${err.message}</div>`;
+    msg.innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
 
@@ -577,7 +765,7 @@ function renderNewInternalTicket() {
       <div class="field"><label>Description</label><textarea id="it-desc" rows="4" required></textarea></div>
       <div class="two-col">
         <div class="field"><label>Category</label>
-          <select id="it-category">${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select>
+          <select id="it-category">${categories.map(c => `<option value="${c.id}">${esc(c.name.replaceAll('_',' '))}</option>`).join('')}</select>
         </div>
         <div class="field"><label>Priority</label>
           <select id="it-priority">
@@ -607,7 +795,7 @@ async function submitInternalTicket() {
     toast('Internal ticket #' + ticket.id + ' created.');
     renderView('ticket-detail', ticket.id);
   } catch (err) {
-    msg.innerHTML = `<div class="msg error">${err.message}</div>`;
+    msg.innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
 
@@ -618,18 +806,13 @@ async function renderQueue() {
   const main = document.getElementById('main-content');
   main.innerHTML = `
     <div class="section-head"><div><h2>Ticket queue</h2><p>Search, filter, and claim work.</p></div></div>
-    <p class="empty" style="margin-top:-10px;padding-top:0">
-      Note: staff can see and search every category here on purpose — the category restriction only kicks in when an agent tries to
-      <b>claim</b> a ticket. Claiming outside your assigned categories is blocked with "out of scope category" — ask an admin which
-      categories you're assigned if you're not sure.
-    </p>
     <div class="card">
       <div class="grid-form">
         <div><label>Status</label><select id="q-status"><option value="">Any</option>
           ${['OPEN','ASSIGNED','IN_PROGRESS','UNDER_REVIEW','ESCALATED','INVESTIGATING','CONFIRMED','FALSE_POSITIVE','APPROVED','REJECTED','RESOLVED','CLOSED']
             .map(s => `<option>${s}</option>`).join('')}</select></div>
         <div><label>Category</label><select id="q-category"><option value="">Any</option>
-          ${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}</select></div>
+          ${categories.map(c => `<option value="${c.id}">${esc(c.name.replaceAll('_',' '))}</option>`).join('')}</select></div>
         <div><label>Priority</label><select id="q-priority"><option value="">Any</option>
           <option>LOW</option><option>MEDIUM</option><option>HIGH</option><option>CRITICAL</option></select></div>
         <div class="checkbox-row"><input type="checkbox" id="q-assigned-me"><label style="margin:0">Assigned to me</label></div>
@@ -655,7 +838,7 @@ async function runQueueSearch() {
   try {
     const page = await api('/api/tickets?' + params.toString());
     results.innerHTML = ticketsTable(extractPage(page));
-  } catch (err) { results.innerHTML = `<p class="msg error">${err.message}</p>`; }
+  } catch (err) { results.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
 }
 
 /* ============================================================
@@ -664,18 +847,16 @@ async function runQueueSearch() {
 async function renderTicketDetail(ticketId) {
   const main = document.getElementById('main-content');
   try {
-    // The backend has no endpoint to list a ticket's attachments after upload (only
-    // upload/download-by-id/delete-by-id), so we can't show previously-uploaded files
-    // here — we only know about ones uploaded earlier in THIS browser session.
-    let attachmentsEndpointMissing = false;
-    const [ticket, comments, history, attachments] = await Promise.all([
+    const [ticket, comments, history, rawAttachments] = await Promise.all([
       api(`/api/tickets/${ticketId}`),
       api(`/api/tickets/${ticketId}/comments`),
       api(`/api/tickets/${ticketId}/history`),
-      api(`/api/tickets/${ticketId}/attachments`).catch(() => { attachmentsEndpointMissing = true; return getSessionAttachments(ticketId); }),
+      api(`/api/tickets/${ticketId}/attachments`).catch(() => getSessionAttachments(ticketId)),
     ]);
+    const attachments = normaliseAttachments(rawAttachments);
+    window.__attachments = attachments;
 
-    const isStaff = currentUser.role === 'AGENT' || currentUser.role === 'ADMIN';
+    const isStaff = isStaffRole(currentUser.role);
     const isAdmin = currentUser.role === 'ADMIN';
     const canClaim = currentUser.role === 'AGENT' && !ticket.assignedToEmail && ticket.status === 'OPEN';
     const isClosed = ticket.status === 'CLOSED';
@@ -687,13 +868,14 @@ async function renderTicketDetail(ticketId) {
       <button class="back-link" onclick="renderView(currentUser.role==='CUSTOMER' ? 'my-tickets' : 'queue')">&larr; Back</button>
       <div class="section-head">
         <div>
-          <h2>#${ticket.id} &middot; ${ticket.title}</h2>
+          <h2>#${ticket.id} &middot; ${esc(ticket.title)}</h2>
           <div class="ticket-meta">
             <span>${statusPill(ticket.status)}</span>
             <span>${priorityPill(ticket.priority)}</span>
-            <span>Category: <b>${ticket.categoryName}</b></span>
-            <span>Source: ${ticket.source}</span>
-            <span>SLA: ${slaBadge(ticket.dueAt, ticket.status)}</span>
+            <span>Category: <b>${esc(ticket.categoryName)}</b></span>
+            <span>Source: ${esc(ticket.source)}</span>
+            <span>Resolution SLA: ${slaBadge(ticket)}</span>
+            <span>First response: ${firstResponseBadge(ticket)}</span>
             <span>Due: ${fmtDate(ticket.dueAt)}</span>
           </div>
         </div>
@@ -701,13 +883,15 @@ async function renderTicketDetail(ticketId) {
 
       <div class="card">
         <h3>Description</h3>
-        <p>${ticket.description}</p>
+        <p style="white-space:pre-wrap">${esc(ticket.description)}</p>
         <hr class="divider">
         <div class="two-col" style="font-size:13px;color:var(--ink-soft)">
-          <div>Customer: ${ticket.customerEmail || '—'}</div>
-          <div>Created by: ${ticket.createdByEmail || 'SYSTEM'}</div>
-          <div>Assigned to: ${ticket.assignedToEmail || 'Unassigned'}</div>
+          <div>Customer: ${esc(ticket.customerEmail) || '—'}</div>
+          <div>Created by: ${esc(ticket.createdByEmail) || 'SYSTEM'}</div>
+          <div>Assigned to: ${esc(ticket.assignedToEmail) || 'Unassigned'}</div>
           <div>Created: ${fmtDate(ticket.createdAt)}</div>
+          <div>First response due: ${fmtDate(ticket.firstResponseDueAt)}</div>
+          <div>Resolved: ${fmtDate(ticket.resolvedAt)}</div>
         </div>
       </div>
 
@@ -748,29 +932,29 @@ async function renderTicketDetail(ticketId) {
 
       <div class="card">
         <h3>Attachments</h3>
-        ${attachmentsEndpointMissing ? `
-          <p class="empty" style="color:var(--danger)">
-            This server doesn't expose a way to list a ticket's attachments after upload (only upload / download-by-id / delete-by-id exist),
-            so files uploaded in an earlier visit can't be shown or downloaded here. Below are only the file names you've uploaded
-            <b>during this browser session</b> — uploading still works.
-          </p>` : ''}
         <div id="attachments-list">
-          ${attachments.length ? attachments.map(a => `
+          ${attachments.length ? attachments.map((a, i) => `
             <div class="attachment-row">
-              <span>${a.fileName}</span>
               <span>
+                ${esc(displayFileName(a.fileName))}
+                ${isStaff && a.scanStatus ? ` <span class="pill scan-${esc(a.scanStatus)}" title="${esc(a.scanSummary || '')}">Scan: ${esc(a.scanStatus)}</span>` : ''}
+                ${isStaff && a.scanSummary ? `<div class="hint">${esc(a.scanSummary)}</div>` : ''}
+              </span>
+              <span style="white-space:nowrap">
                 ${a.id ? `
-                  <button class="link-btn" onclick="downloadFile('/api/tickets/attachments/${a.id}', '${a.fileName}')">Download</button>
+                  <button class="link-btn" onclick="downloadAttachment(${i})">Download</button>
+                  ${isStaff ? `&nbsp;&middot;&nbsp;<button class="link-btn" onclick="doRescan(${ticket.id}, ${a.id})">Rescan</button>` : ''}
                   &nbsp;&middot;&nbsp;
                   <button class="link-btn" onclick="doDeleteAttachment(${ticket.id}, ${a.id})">Delete</button>
-                ` : `<span style="color:var(--ink-soft)">Uploaded — no ID returned to download by</span>`}
+                ` : `<span class="hint">Uploaded (no ID to download by)</span>`}
               </span>
             </div>`).join('') : '<p class="empty">No attachments yet.</p>'}
         </div>
         ${!isClosed ? `
           <hr class="divider">
-          <input type="file" id="attachment-files" multiple>
-          <div class="btn-row"><button onclick="doUploadAttachments(${ticket.id})">Upload file(s)</button></div>
+          <input type="file" id="attachment-files" multiple accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf">
+          <p class="drop-note">PNG, JPEG or PDF, up to ${MAX_UPLOAD_MB} MB each. ${isStaff ? 'Files are scanned with VirusTotal in the background.' : ''}</p>
+          <div class="btn-row"><button id="upload-btn" onclick="doUploadAttachments(${ticket.id})">Upload file(s)</button></div>
         ` : ''}
       </div>
 
@@ -779,8 +963,8 @@ async function renderTicketDetail(ticketId) {
         <div id="comments-list">
           ${comments.length ? comments.map(c => `
             <div class="comment">
-              <span class="who">${c.authorEmail}</span><span class="when">${fmtDate(c.createdAt)}</span>
-              <div>${c.content ?? c.commentContent ?? ''}</div>
+              <span class="who">${esc(c.authorEmail)}</span><span class="when">${fmtDate(c.createdAt)}</span>
+              <div style="white-space:pre-wrap">${esc(c.commentContent ?? c.content ?? '')}</div>
             </div>`).join('') : '<p class="empty">No comments yet.</p>'}
         </div>
         ${!isClosed ? `
@@ -793,13 +977,13 @@ async function renderTicketDetail(ticketId) {
       <div class="card">
         <h3>History</h3>
         ${history.length ? history.map(h => `
-          <div class="history-row"><b>${h.action}</b> by ${h.changedByEmail} — ${fmtDate(h.createdAt)}
-            ${h.oldValue || h.newValue ? `(${h.oldValue || '—'} → ${h.newValue || '—'})` : ''}</div>
+          <div class="history-row"><b>${esc(h.action)}</b> by ${esc(h.changedByEmail)} — ${fmtDate(h.createdAt)}
+            ${h.oldValue || h.newValue ? `(${esc(h.oldValue) || '—'} → ${esc(h.newValue) || '—'})` : ''}</div>
         `).join('') : '<p class="empty">No history yet.</p>'}
       </div>
     `;
   } catch (err) {
-    main.innerHTML = `<p class="msg error">${err.message}</p>`;
+    main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`;
   }
 }
 
@@ -813,28 +997,28 @@ async function doChangeStatus(id) {
   try {
     await api(`/api/tickets/${id}/status`, { method: 'PUT', body: JSON.stringify({ newStatus, note }) });
     toast('Status updated.'); renderView('ticket-detail', id);
-  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
 }
 async function doEscalate(id) {
   const note = document.getElementById('escalate-note').value;
   try {
     await api(`/api/tickets/${id}/escalate`, { method: 'PUT', body: JSON.stringify({ note }) });
     toast('Ticket escalated.'); renderView('ticket-detail', id);
-  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
 }
 async function doReassign(id) {
   const agentId = Number(document.getElementById('reassign-agent').value);
   try {
     await api(`/api/admin/tickets/${id}/reassign`, { method: 'PUT', body: JSON.stringify({ agentId }) });
     toast('Ticket reassigned.'); renderView('ticket-detail', id);
-  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
 }
 async function doReopen(id) {
   const reason = document.getElementById('reopen-reason').value;
   try {
     await api(`/api/admin/tickets/${id}/reopen`, { method: 'PUT', body: JSON.stringify({ reason }) });
     toast('Ticket reopened.'); renderView('ticket-detail', id);
-  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+  } catch (err) { document.getElementById('action-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
 }
 async function doAddComment(id) {
   const commentContent = document.getElementById('new-comment').value;
@@ -844,37 +1028,67 @@ async function doAddComment(id) {
     renderView('ticket-detail', id);
   } catch (err) { toast(err.message, true); }
 }
-// Session-only memory of what's been uploaded per ticket, since the backend has no
-// "list attachments" endpoint to re-fetch this after a page reload (see note above).
 function getSessionAttachments(ticketId) {
   try { return JSON.parse(sessionStorage.getItem('bd_attachments_' + ticketId) || '[]'); }
   catch (e) { return []; }
 }
 function addSessionAttachments(ticketId, fileNames) {
-  const existing = getSessionAttachments(ticketId);
-  const updated = existing.concat(fileNames.map(fileName => ({ fileName })));
-  sessionStorage.setItem('bd_attachments_' + ticketId, JSON.stringify(updated));
+  const updated = getSessionAttachments(ticketId).concat(fileNames.map(fileName => ({ fileName })));
+  try { sessionStorage.setItem('bd_attachments_' + ticketId, JSON.stringify(updated)); } catch (e) { /* ignore */ }
+}
+function normaliseAttachments(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(a => typeof a === 'string' ? { fileName: a } : a);
+}
+function displayFileName(name) {
+  return String(name || '').replace(/^[0-9a-fA-F-]{36}_/, '');
+}
+function validateFiles(fileList) {
+  for (const f of fileList) {
+    if (!ALLOWED_UPLOAD_TYPES.includes(f.type)) return `"${f.name}" is not allowed. Only PNG, JPEG and PDF files can be uploaded.`;
+    if (f.size === 0) return `"${f.name}" is empty.`;
+    if (f.size > MAX_UPLOAD_MB * 1024 * 1024) return `"${f.name}" is larger than ${MAX_UPLOAD_MB} MB.`;
+  }
+  return null;
 }
 
 async function doUploadAttachments(id) {
   const input = document.getElementById('attachment-files');
-  if (!input.files.length) return;
+  if (!input.files.length) { toast('Choose at least one file first', true); return; }
+  const problem = validateFiles(input.files);
+  if (problem) { toast(problem, true); return; }
+
   const formData = new FormData();
-  // The real backend method is @RequestParam("file") List<MultipartFile> file —
-  // every part must be named "file" (singular), not "files".
   for (const file of input.files) formData.append('file', file);
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
   try {
     const savedFileNames = await api(`/api/tickets/${id}/attachments`, { method: 'POST', body: formData });
     addSessionAttachments(id, Array.isArray(savedFileNames) ? savedFileNames : []);
-    toast('File(s) uploaded.');
+    toast(input.files.length + ' file(s) uploaded.');
     renderView('ticket-detail', id);
-  } catch (err) { toast(err.message, true); }
+  } catch (err) {
+    toast(err.message, true);
+    btn.disabled = false; btn.textContent = 'Upload file(s)';
+  }
+}
+function downloadAttachment(index) {
+  const a = (window.__attachments || [])[index];
+  if (a && a.id) downloadFile(`/api/tickets/attachments/${a.id}`, displayFileName(a.fileName));
 }
 async function doDeleteAttachment(ticketId, attachmentId) {
+  if (!confirm('Delete this attachment?')) return;
   try {
     await api(`/api/tickets/attachments/${attachmentId}`, { method: 'DELETE' });
     toast('Attachment deleted.');
     renderView('ticket-detail', ticketId);
+  } catch (err) { toast(err.message, true); }
+}
+async function doRescan(ticketId, attachmentId) {
+  try {
+    await api(`/api/tickets/attachments/${attachmentId}/rescan`, { method: 'POST' });
+    toast('Rescan queued. It can take a minute because VirusTotal limits free requests.');
+    setTimeout(() => { if (currentView === 'ticket-detail' && currentParam === ticketId) renderView('ticket-detail', ticketId); }, 20000);
   } catch (err) { toast(err.message, true); }
 }
 
@@ -892,7 +1106,7 @@ async function renderAdminUsers() {
         <tbody>
           ${users.map(u => `
             <tr>
-              <td>${u.id}</td><td>${u.email}</td><td>${u.fullName}</td>
+              <td>${u.id}</td><td>${esc(u.email)}</td><td>${esc(u.fullName)}</td>
               <td>
                 <select onchange="doChangeRole(${u.id}, this.value)">
                   ${['CUSTOMER','AGENT','ADMIN'].map(r => `<option ${r===u.role?'selected':''}>${r}</option>`).join('')}
@@ -914,12 +1128,12 @@ async function renderAdminUsers() {
         <div class="field"><label>Agent user ID</label><input id="assign-agent-id" type="number"></div>
         <div class="field"><label>Categories</label>
           <select id="assign-category-ids" multiple size="7">
-            ${categories.map(c => `<option value="${c.id}">${c.name.replaceAll('_',' ')}</option>`).join('')}
+            ${categories.map(c => `<option value="${c.id}">${esc(c.name.replaceAll('_',' '))}</option>`).join('')}
           </select>
         </div>
         <button onclick="doAssignCategories()">Assign</button>
       </div>`;
-  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
 }
 async function doChangeRole(userId, newRole) {
   try { await api(`/api/admin/${userId}/role`, { method: 'PUT', body: JSON.stringify({ newRole }) }); toast('Role updated.'); }
@@ -956,10 +1170,10 @@ async function renderAdminCategories() {
         <tbody>
           ${all.map(c => `
             <tr>
-              <td>${c.name}</td>
+              <td>${esc(c.name)}</td>
               <td>${c.visibilityToCustomers ? 'Yes' : 'No'}</td>
               <td>${c.active ? 'Yes' : 'No'}</td>
-              <td><button class="secondary" onclick="doToggleCategoryVisibility(${c.id}, ${!c.visibilityToCustomers}, '${c.name}')">
+              <td><button class="secondary" onclick="doToggleCategoryVisibility(${c.id}, ${!c.visibilityToCustomers}, '${esc(c.name)}')">
                 ${c.visibilityToCustomers ? 'Hide from customers' : 'Show to customers'}
               </button></td>
             </tr>`).join('')}
@@ -971,7 +1185,7 @@ async function renderAdminCategories() {
         <div class="checkbox-row field"><input type="checkbox" id="new-cat-visible"><label style="margin:0">Visible to customers</label></div>
         <button onclick="doCreateCategory()">Create</button>
       </div>`;
-  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
 }
 async function doToggleCategoryVisibility(id, newValue, name) {
   try {
@@ -991,6 +1205,178 @@ async function doCreateCategory() {
 }
 
 /* ============================================================
+   ADMIN: SLA POLICIES  (GET/PUT /api/admin/sla-policies)
+   ============================================================ */
+async function renderAdminSla() {
+  const main = document.getElementById('main-content');
+  try {
+    const policies = await api('/api/admin/sla-policies');
+    const order = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+    policies.sort((a, b) => (a.category?.name || '').localeCompare(b.category?.name || '') || order[a.priority] - order[b.priority]);
+    main.innerHTML = `
+      <div class="section-head"><div><h2>SLA policies</h2>
+        <p>How long each category and priority has for a first response and for resolution. Changes apply to tickets created from now on.</p></div></div>
+      <div id="sla-msg"></div>
+      <table>
+        <thead><tr><th>Category</th><th>Priority</th><th>First response (min)</th><th>Resolution (min)</th><th></th></tr></thead>
+        <tbody>
+          ${policies.map(po => `
+            <tr>
+              <td>${esc((po.category?.name || '').replaceAll('_', ' '))}</td>
+              <td>${priorityPill(po.priority)}</td>
+              <td><input class="inline" type="number" min="1" id="sla-fr-${po.id}" value="${po.firstResponseMinutes}"></td>
+              <td><input class="inline" type="number" min="1" id="sla-res-${po.id}" value="${po.resolutionMinutes}"></td>
+              <td><button class="secondary" onclick="doSaveSlaPolicy(${po.id})">Save</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${!policies.length ? '<p class="empty">No SLA policies found.</p>' : ''}`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
+}
+async function doSaveSlaPolicy(id) {
+  const firstResponseMinutes = Number(document.getElementById('sla-fr-' + id).value);
+  const resolutionMinutes = Number(document.getElementById('sla-res-' + id).value);
+  if (!(firstResponseMinutes >= 1) || !(resolutionMinutes >= 1)) { toast('Both values must be at least 1 minute', true); return; }
+  try {
+    await api('/api/admin/sla-policies/' + id, { method: 'PUT', body: JSON.stringify({ firstResponseMinutes, resolutionMinutes }) });
+    toast('SLA policy saved.');
+  } catch (err) { toast(err.message, true); }
+}
+
+/* ============================================================
+   ADMIN: SLA REPORTS  (/api/admin/sla-reports)
+   ============================================================ */
+async function renderAdminReports() {
+  const main = document.getElementById('main-content');
+  try {
+    const reports = await api('/api/admin/sla-reports');
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    const lastMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    main.innerHTML = `
+      <div class="section-head"><div><h2>SLA reports</h2>
+        <p>A report is created automatically each month. You can also generate one yourself; each month has only one report.</p></div>
+        <button class="secondary" onclick="downloadFile('/api/admin/sla-reports/latest/download', 'sla-report-latest.csv')">Download latest CSV</button>
+      </div>
+      <div class="card" style="max-width:420px">
+        <h3>Generate a report</h3>
+        <div id="report-msg"></div>
+        <div class="field"><label>Month</label><input type="month" id="report-month" value="${lastMonth}"></div>
+        <button onclick="doGenerateReport()">Generate</button>
+      </div>
+      <table>
+        <thead><tr><th>Period</th><th>Status</th><th>Tickets</th><th>Resolution compliance</th><th>Generated</th><th>By</th></tr></thead>
+        <tbody>
+          ${reports.map(r => `
+            <tr>
+              <td><b>${esc(r.period)}</b></td>
+              <td><span class="pill ${r.status === 'FAILED' ? 'ESCALATED' : 'RESOLVED'}">${esc(r.status)}</span></td>
+              <td>${r.totalTickets ?? '—'}</td>
+              <td>${r.resolutionCompliancePercent != null ? Number(r.resolutionCompliancePercent).toFixed(1) + '%' : '—'}</td>
+              <td>${fmtDate(r.generatedAt)}</td>
+              <td>${esc(r.generatedBy)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${!reports.length ? '<p class="empty">No reports yet.</p>' : ''}`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
+}
+async function doGenerateReport() {
+  const month = document.getElementById('report-month').value;
+  if (!month) { document.getElementById('report-msg').innerHTML = '<div class="msg error">Choose a month.</div>'; return; }
+  try {
+    await api('/api/admin/sla-reports?month=' + encodeURIComponent(month), { method: 'POST' });
+    toast('Report for ' + month + ' generated.');
+    renderAdminReports();
+  } catch (err) { document.getElementById('report-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
+}
+
+/* ============================================================
+   ADMIN: FRAUD MONITORING  (/api/admin/transactions, /transactions/simulate, /fraud-alerts)
+   ============================================================ */
+const SCENARIOS = {
+  LARGE: 'Large transfer',
+  STRUCTURING: 'Structuring (deposits just under the limit)',
+  VELOCITY: 'Rapid activity (many transactions fast)',
+  RISKY_COUNTRY: 'High-risk country',
+  GREY_LIST_COUNTRY: 'Grey-list country',
+};
+async function renderAdminFraud() {
+  const main = document.getElementById('main-content');
+  try {
+    const [alerts, users] = await Promise.all([api('/api/admin/fraud-alerts'), api('/api/admin/users')]);
+    const customers = users.filter(u => u.role === 'CUSTOMER');
+    const customerOptions = customers.map(u => `<option value="${u.id}">${esc(u.fullName)} (${esc(u.email)})</option>`).join('');
+    main.innerHTML = `
+      <div class="section-head"><div><h2>Fraud monitoring</h2>
+        <p>Transactions are checked against the fraud and AML rules. A match creates an internal ticket for the right team. The customer is not told.</p></div></div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Simulate a suspicious pattern</h3>
+          <div id="sim-msg"></div>
+          <div class="field"><label>Customer</label><select id="sim-customer">${customerOptions}</select></div>
+          <div class="field"><label>Scenario</label>
+            <select id="sim-scenario">${Object.entries(SCENARIOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+          <button onclick="doSimulate()">Run scenario</button>
+        </div>
+        <div class="card">
+          <h3>Record one transaction</h3>
+          <div id="tx-msg"></div>
+          <div class="field"><label>Customer</label><select id="tx-customer">${customerOptions}</select></div>
+          <div class="two-col">
+            <div class="field"><label>Account reference</label><input id="tx-account" value="ACC-1001"></div>
+            <div class="field"><label>Type</label><select id="tx-type">
+              ${['CASH_DEPOSIT', 'CASH_WITHDRAWAL', 'TRANSFER', 'CARD_PAYMENT'].map(t => `<option>${t}</option>`).join('')}</select></div>
+            <div class="field"><label>Amount</label><input id="tx-amount" type="number" min="0.01" step="0.01" value="500"></div>
+            <div class="field"><label>Currency</label><input id="tx-currency" maxlength="3" value="BHD"></div>
+            <div class="field"><label>Country (2 letters)</label><input id="tx-country" maxlength="2" value="BH"></div>
+          </div>
+          <button onclick="doRecordTransaction()">Record</button>
+        </div>
+      </div>
+      <div class="section-head" style="margin-top:8px"><div><h3>Fraud alerts</h3></div>
+        <button class="secondary" onclick="renderAdminFraud()">Refresh</button></div>
+      <table>
+        <thead><tr><th>When</th><th>Rule</th><th>Customer ID</th><th>Transaction</th><th>Ticket</th></tr></thead>
+        <tbody>
+          ${alerts.map(a => `
+            <tr>
+              <td>${fmtDate(a.createdAt)}</td>
+              <td><b>${esc(a.ruleCode)}</b></td>
+              <td>${a.customerId}</td>
+              <td>${a.transactionId ?? '—'}</td>
+              <td>${a.ticketId ? `<button class="link-btn" onclick="renderView('ticket-detail', ${a.ticketId})">Open #${a.ticketId}</button>` : '—'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      ${!alerts.length ? '<p class="empty">No alerts yet. Run a scenario above.</p>' : ''}`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
+}
+async function doSimulate() {
+  const customerId = Number(document.getElementById('sim-customer').value);
+  const scenario = document.getElementById('sim-scenario').value;
+  try {
+    const txs = await api('/api/admin/transactions/simulate', { method: 'POST', body: JSON.stringify({ customerId, scenario }) });
+    toast(txs.length + ' transaction(s) recorded. Alerts appear in a moment.');
+    setTimeout(() => { if (currentView === 'admin-fraud') renderAdminFraud(); }, 1500);
+  } catch (err) { document.getElementById('sim-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
+}
+async function doRecordTransaction() {
+  const body = {
+    customerId: Number(document.getElementById('tx-customer').value),
+    accountRef: document.getElementById('tx-account').value,
+    type: document.getElementById('tx-type').value,
+    amount: Number(document.getElementById('tx-amount').value),
+    currency: document.getElementById('tx-currency').value.toUpperCase(),
+    country: document.getElementById('tx-country').value.toUpperCase(),
+  };
+  try {
+    await api('/api/admin/transactions', { method: 'POST', body: JSON.stringify(body) });
+    toast('Transaction recorded.');
+    setTimeout(() => { if (currentView === 'admin-fraud') renderAdminFraud(); }, 1500);
+  } catch (err) { document.getElementById('tx-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
+}
+
+/* ============================================================
    ADMIN: AUDIT LOG
    ============================================================ */
 async function renderAdminAudit() {
@@ -1006,30 +1392,45 @@ async function renderAdminAudit() {
           ${rows.map(r => `
             <tr>
               <td>${fmtDate(r.createdAt)}</td>
-              <td>${r.action}</td>
-              <td>${r.entityType || '—'} ${r.entityId ?? ''}</td>
-              <td>${r.user ? r.user.email : 'SYSTEM'}</td>
+              <td>${esc(r.action)}</td>
+              <td>${esc(r.entityType) || '—'} ${esc(r.entityId)}</td>
+              <td>${r.user ? esc(r.user.email) : 'SYSTEM'}</td>
             </tr>`).join('')}
         </tbody>
       </table>
       ${!rows.length ? '<p class="empty">No audit entries yet.</p>' : ''}`;
-  } catch (err) { main.innerHTML = `<p class="msg error">${err.message}</p>`; }
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
 }
 
 /* ============================================================
    PROFILE
    ============================================================ */
+function renderNotifications() {
+  const main = document.getElementById('main-content');
+  unreadCount = 0; updateNotifBadge();
+  main.innerHTML = `
+    <div class="section-head"><div><h2>Notifications</h2>
+      <p>Live updates received since you logged in. ${currentUser.role === 'CUSTOMER'
+        ? 'You are told when your ticket is assigned, escalated or its status changes.'
+        : 'You are told about new tickets, escalations, fraud alerts, SLA warnings, flagged files' + (currentUser.role === 'ADMIN' ? ' and new SLA reports.' : '.')}</p></div>
+      ${notifications.length ? '<button class="secondary" onclick="notifications=[];renderNotifications()">Clear</button>' : ''}</div>
+    ${notifications.length ? notifications.map(n => `
+      <div class="notif ${esc(n.eventType)}">
+        <div>
+          <b>${esc(n.message)}</b>
+          <div class="t">${esc(labelForEvent(n.eventType))} &middot; ${n.ticketId ? 'ticket #' + n.ticketId + ' ' : ''}${esc(n.title)} &middot; ${fmtDate(n.timestamp)}</div>
+        </div>
+        <button class="link-btn" onclick="${n.ticketId ? `renderView('ticket-detail', ${n.ticketId})` : `renderView('admin-reports')`}">Open</button>
+      </div>`).join('') : '<p class="empty">Nothing yet. Keep this tab open and updates will appear here as they happen.</p>'}`;
+}
+function labelForEvent(t) {
+  return ({ STATUS_CHANGED: 'Status changed', ASSIGNED: 'Assigned', NEW_TICKET: 'New ticket', ESCALATED: 'Escalated',
+     FRAUD_ALERT: 'Fraud alert', SLA_REPORT_READY: 'SLA report', MALICIOUS_FILE: 'Malicious file',
+     SLA_WARNING: 'SLA warning', SLA_BREACHED: 'SLA breached' })[t] || t;
+}
+
 function renderProfile() {
   const main = document.getElementById('main-content');
-  // The real field from UserResponse is "profilePicPath" (the frontend was reading the
-  // wrong name, "profilePicturePath", which is always undefined — that alone hid the picture).
-  // Even with the right field, the backend has no endpoint that serves this file back to the
-  // browser (no static mapping for the "uploads" folder, no GET-by-path controller method),
-  // so there's currently no URL this <img> can actually load. We still wire it up correctly
-  // and show a clear message instead of a silently-broken image, so this starts working the
-  // moment a serving route is added backend-side.
-  const picPath = currentUser.profilePicPath || null;
-  const guessedUrl = picPath ? `/uploads/${picPath}` : null;
   main.innerHTML = `
     <div class="section-head"><div><h2>My profile</h2></div></div>
     <div class="two-col">
@@ -1037,49 +1438,76 @@ function renderProfile() {
         <h3>Details</h3>
         <div id="profile-msg"></div>
         <div class="avatar-box">
-          <img id="avatar-preview" src="${guessedUrl || ''}" alt="Profile picture"
-               style="${guessedUrl ? '' : 'display:none'}"
-               onerror="this.style.display='none'; document.getElementById('avatar-placeholder').style.display='flex'; document.getElementById('avatar-missing-note').style.display='block';">
-          <div style="width:56px;height:56px;border-radius:50%;background:#eee9db;border:1px solid var(--line);display:${guessedUrl ? 'none' : 'flex'};align-items:center;justify-content:center;font-size:11px;color:var(--ink-soft)" id="avatar-placeholder">${picPath ? '' : 'No photo'}</div>
+          <div id="profile-avatar">${avatarHtml(true)}</div>
           <div>
             <label>Profile picture</label>
-            <input type="file" id="profile-pic-file" accept="image/*">
+            <input type="file" id="profile-pic-file" accept="image/png,image/jpeg" onchange="previewProfilePic(this)">
+            <p class="drop-note">PNG or JPEG, up to ${MAX_UPLOAD_MB} MB.</p>
           </div>
         </div>
-        ${picPath ? `<p class="empty" id="avatar-missing-note" style="display:none;color:var(--danger);margin-top:-8px">
-          A picture was uploaded (file: ${picPath}) but this server doesn't expose a route to serve it back, so it can't display here yet.
-        </p>` : ''}
-        <div class="btn-row"><button onclick="doUploadProfilePic()">Upload picture</button></div>
+        <div class="btn-row"><button id="pic-btn" onclick="doUploadProfilePic()">Upload picture</button></div>
+        ${currentUser.profilePicPath && !avatarUrl && !getCachedAvatar() ? `<p class="hint" style="margin-top:10px">
+          A picture is saved, but the server did not return it. Check that GET /api/users/me/profile-pic exists, or upload it again.</p>` : ''}
         <hr class="divider">
-        <div class="field"><label>Full name</label><input id="profile-name" value="${currentUser.fullName}"></div>
+        <div class="field"><label>Full name</label><input id="profile-name" value="${esc(currentUser.fullName)}"></div>
+        <div class="field"><label>Email</label><input value="${esc(currentUser.email)}" disabled></div>
         <button onclick="doUpdateProfile()">Save name</button>
       </div>
       <div class="card">
         <h3>Change password</h3>
         <div id="password-msg"></div>
         <div class="field"><label>Current password</label><input type="password" id="current-password"></div>
-        <div class="field"><label>New password</label><input type="password" id="new-password" minlength="8"></div>
+        <div class="field"><label>New password (min 8 characters)</label><input type="password" id="new-password" minlength="8"></div>
         <button onclick="doChangePassword()">Change password</button>
       </div>
     </div>`;
+}
+async function previewProfilePic(input) {
+  const f = input.files[0];
+  if (!f) return;
+  const problem = validateProfilePic(f);
+  if (problem) { toast(problem, true); input.value = ''; return; }
+  try {
+    const url = await imageToSmallDataUrl(f);
+    document.getElementById('profile-avatar').innerHTML = `<img class="avatar big" src="${url}" alt="Preview">`;
+  } catch (e) { toast(e.message, true); }
+}
+function validateProfilePic(f) {
+  if (!['image/png', 'image/jpeg'].includes(f.type)) return 'Profile pictures must be PNG or JPEG.';
+  if (f.size > MAX_UPLOAD_MB * 1024 * 1024) return 'That image is larger than ' + MAX_UPLOAD_MB + ' MB.';
+  return null;
 }
 async function doUpdateProfile() {
   const fullName = document.getElementById('profile-name').value;
   try {
     currentUser = await api('/api/users/me', { method: 'PUT', body: JSON.stringify({ fullName }) });
+    setNavIdentity();
+    refreshNavAvatar();
     document.getElementById('profile-msg').innerHTML = '<div class="msg ok">Saved.</div>';
-  } catch (err) { document.getElementById('profile-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+  } catch (err) { document.getElementById('profile-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
 }
 async function doUploadProfilePic() {
   const input = document.getElementById('profile-pic-file');
   if (!input.files.length) { toast('Choose an image first', true); return; }
-  const formData = new FormData();
-  formData.append('file', input.files[0]);
+  const file = input.files[0];
+  const problem = validateProfilePic(file);
+  if (problem) { toast(problem, true); return; }
+  const btn = document.getElementById('pic-btn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
   try {
+    const small = await imageToSmallDataUrl(file);
+    const formData = new FormData();
+    formData.append('file', file);
     currentUser = await api('/api/users/me/profile-pic', { method: 'POST', body: formData });
+    cacheAvatar(currentUser.profilePicPath, small);
+    await loadAvatar();
+    refreshNavAvatar();
     renderProfile();
     document.getElementById('profile-msg').innerHTML = '<div class="msg ok">Profile picture uploaded.</div>';
-  } catch (err) { document.getElementById('profile-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+  } catch (err) {
+    btn.disabled = false; btn.textContent = 'Upload picture';
+    document.getElementById('profile-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
+  }
 }
 async function doChangePassword() {
   const currentPassword = document.getElementById('current-password').value;
@@ -1087,7 +1515,8 @@ async function doChangePassword() {
   try {
     await api('/api/users/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) });
     document.getElementById('password-msg').innerHTML = '<div class="msg ok">Password changed.</div>';
-  } catch (err) { document.getElementById('password-msg').innerHTML = `<div class="msg error">${err.message}</div>`; }
+    document.getElementById('current-password').value = ''; document.getElementById('new-password').value = '';
+  } catch (err) { document.getElementById('password-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`; }
 }
 
 /* ============================================================
@@ -1102,7 +1531,7 @@ function setConnLabel(connected) {
   label.textContent = connected ? 'Live updates on' : 'Reconnecting…';
 }
 
-let sseReconnectDelay = 2000; // resets to 2s on a clean connect; backs off up to 30s on repeated failures
+let sseReconnectDelay = 2000;
 let sseReconnectTimer = null;
 
 async function connectNotifications() {
@@ -1118,7 +1547,7 @@ async function connectNotifications() {
     });
     if (!res.ok || !res.body) { setConnLabel(false); scheduleReconnect(); return; }
     setConnLabel(true);
-    sseReconnectDelay = 2000; // connected fine, so reset the backoff for next time
+    sseReconnectDelay = 2000;
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1129,33 +1558,39 @@ async function connectNotifications() {
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
 
-      // SSE messages are separated by a blank line; each may have "event:" and "data:" lines.
-      // Note: the backend only ever notifies the TICKET'S CUSTOMER (see
-      // TicketService.notifyTicketEvent -> emitterRegistry.sendToUser(ticket.getCustomer()...)),
-      // not the agent/admin who made the change — so to see this fire, change a ticket's status
-      // while logged in as a DIFFERENT browser session as that ticket's customer.
       const chunks = buffer.split('\n\n');
-      buffer = chunks.pop(); // keep any incomplete trailing chunk for next read
+      buffer = chunks.pop();
 
       for (const chunk of chunks) {
         const dataLine = chunk.split('\n').find(l => l.startsWith('data:'));
         if (!dataLine) continue;
-        try {
-          const payload = JSON.parse(dataLine.slice(5).trim());
-          toast(payload.message || 'Ticket updated');
-          if (currentView === 'ticket-detail') renderView('ticket-detail', payload.ticketId);
-        } catch (e) { /* ignore malformed event */ }
+        try { handleLiveEvent(JSON.parse(dataLine.slice(5).trim())); }
+        catch (e) { /* ignore malformed event */ }
       }
     }
   } catch (err) {
-    if (err.name === 'AbortError') return; // we intentionally tore this connection down (logout / re-login)
+    if (err.name === 'AbortError') return;
   }
-  // Stream ended (server closed it, network blip, etc). If this is still the live attempt
-  // (not one we superseded by calling connectNotifications again), reconnect with backoff.
   if (myController === sseAbortController) {
     setConnLabel(false);
     scheduleReconnect();
   }
+}
+
+function handleLiveEvent(n) {
+  notifications.unshift(n);
+  notifications = notifications.slice(0, 50);
+  if (currentView !== 'notifications') { unreadCount++; updateNotifBadge(); }
+  const bad = n.eventType === 'SLA_BREACHED' || n.eventType === 'SLA_WARNING';
+  const bad2 = bad || n.eventType === 'MALICIOUS_FILE' || n.eventType === 'FRAUD_ALERT';
+  toast(n.ticketId ? `#${n.ticketId} ${n.title}: ${n.message}` : `${n.title}: ${n.message}`, bad2);
+
+  if (currentView === 'ticket-detail' && n.ticketId && currentParam === n.ticketId) renderView('ticket-detail', n.ticketId);
+  else if (currentView === 'queue') runQueueSearch();
+  else if (currentView === 'my-tickets') renderMyTickets();
+  else if (currentView === 'admin-reports' && n.eventType === 'SLA_REPORT_READY') renderAdminReports();
+  else if (currentView === 'admin-fraud' && n.eventType === 'FRAUD_ALERT') renderAdminFraud();
+  else if (currentView === 'notifications') renderNotifications();
 }
 
 function scheduleReconnect() {
@@ -1169,7 +1604,13 @@ function scheduleReconnect() {
 /* ============================================================
    STARTUP
    ============================================================ */
-if (token) { bootApp(); }
+if (getResetToken()) {
+  token = null;
+  localStorage.removeItem('bankdesk_token');
+  showAuthTab('reset');
+} else if (token) {
+  bootApp();
+}
 </script>
 </body>
 </html>
