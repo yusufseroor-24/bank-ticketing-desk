@@ -26,4 +26,15 @@ public class AsyncConfig {
         ex.setAwaitTerminationSeconds(20);
         return ex;
     }
+
+    @Bean(name = "virusTotalExecutor")
+    public ThreadPoolTaskExecutor virusTotalExecutor() {
+        ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
+        ex.setCorePoolSize(1);
+        ex.setMaxPoolSize(1);
+        ex.setQueueCapacity(50);
+        ex.setThreadNamePrefix("virustotal-");
+        ex.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+        return ex;
+    }
 }

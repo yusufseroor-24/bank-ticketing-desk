@@ -15,6 +15,7 @@ import com.ga.bankdesk.workflow.CategoryRules;
 import com.ga.bankdesk.workflow.CategoryTicketWorkflow;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -46,6 +47,7 @@ public class TicketService {
     private final SlaService slaService;
     private final CategoryRules categoryRules;
     private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
@@ -324,7 +326,11 @@ public class TicketService {
             attachment.setFileName(saved.get(i));
             attachment.setFilePath(saved.get(i));
             attachment.setContentType(files.get(i).getContentType());
-            ticketAttachmentRepository.save(attachment);
+
+            attachment.setSha256(fileStorageService.sha256(saved.get(i)));
+            attachment.setScanStatus(ScanStatus.PENDING);
+            TicketAttachments stored = ticketAttachmentRepository.save(attachment);
+            eventPublisher.publishEvent(new AttachmentStoredEvent(stored.getId()));
         }
         return saved;
     }
