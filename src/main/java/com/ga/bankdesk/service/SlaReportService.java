@@ -8,6 +8,7 @@ import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.model.SlaReport;
 import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.model.User;
+import com.ga.bankdesk.notifications.LiveNotifier;
 import com.ga.bankdesk.repository.SlaReportRepository;
 import com.ga.bankdesk.repository.TicketRepository;
 import com.ga.bankdesk.repository.UserRepository;
@@ -38,6 +39,7 @@ public class SlaReportService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final LiveNotifier liveNotifier;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -92,6 +94,8 @@ public class SlaReportService {
             report.setGeneratedAt(LocalDateTime.now());
             SlaReport saved = reportRepository.save(report);
             log.info("SLA report {} generated: {} tickets, file {}", period, total.created(), file);
+            liveNotifier.send(liveNotifier.admins(), userId, null, "SLA report " + period, "SLA_REPORT_READY",
+                    "The SLA report for " + period + " is ready (" + total.created() + " tickets)");
             return saved;
         } catch (Exception e) {
             //failed month can be claimed again

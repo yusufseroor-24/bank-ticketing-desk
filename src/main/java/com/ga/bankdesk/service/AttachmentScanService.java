@@ -1,7 +1,9 @@
 package com.ga.bankdesk.service;
 
 import com.ga.bankdesk.enums.ScanStatus;
+import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.model.TicketAttachments;
+import com.ga.bankdesk.notifications.LiveNotifier;
 import com.ga.bankdesk.repository.TicketAttachmentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,7 +17,9 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -29,13 +33,16 @@ public class AttachmentScanService {
     private final ThreadPoolTaskExecutor executor;
     private final long minIntervalMs;
     private long lastCallAt = 0;
+    private final LiveNotifier liveNotifier;
 
     public AttachmentScanService(TicketAttachmentRepository attachmentRepository,
                                  VirusTotalClient virusTotalClient,
+                                 LiveNotifier liveNotifier,
                                  @Qualifier("virusTotalExecutor") ThreadPoolTaskExecutor executor,
                                  @Value("${app.virustotal.min-interval-ms:16000}") long minIntervalMs) {
         this.attachmentRepository = attachmentRepository;
         this.virusTotalClient = virusTotalClient;
+        this.liveNotifier = liveNotifier;
         this.executor = executor;
         this.minIntervalMs = minIntervalMs;
     }
@@ -88,7 +95,14 @@ public class AttachmentScanService {
             }
             attachmentRepository.updateScan(attachmentId, status, summary, LocalDateTime.now());
             log.info("Attachment {} scanned: {} ({})", attachmentId, status, summary);
-
+            if (status == ScanStatus.MALICIOUS) {
+                Ticket ticket = attachment.getTicket();
+                Set<Long> w = new LinkedHashSet<>(liveNotifier.admins());
+                w.addAll(liveNotifier.staffFor(ticket));
+                liveNotifier.send(w, null, ticket.getId(), ticket.getTitle(), "MALICIOUS_FILE",
+                        "File \"" + attachment.getFileName().replaceFirst("^[0-9a-fA-F-]{36}_", "")
+                                + "\" on ticket #" + ticket.getId() + " was flagged as malicious");
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             attachmentRepository.updateScan(attachmentId, ScanStatus.ERROR, "Scan was interrupted", LocalDateTime.now());

@@ -4,6 +4,7 @@ import com.ga.bankdesk.enums.SourceOfTicket;
 import com.ga.bankdesk.enums.TicketStatus;
 import com.ga.bankdesk.enums.TransactionType;
 import com.ga.bankdesk.model.*;
+import com.ga.bankdesk.notifications.LiveNotifier;
 import com.ga.bankdesk.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * onTransactionRecorded(): connection between TransactionService and FraudDetectionService (listens for the published transaction)
@@ -39,11 +42,12 @@ public class FraudDetectionService {
     private final SlaService slaService;
     //execute code inside a transaction programmatically (either all successful or fails)
     private final TransactionTemplate tx;
+    private final LiveNotifier liveNotifier;
 
     public FraudDetectionService(FraudRuleRepository ruleRepository, FraudAlertRepository alertRepository,
                                  BankTransactionRepository transactionRepository, TicketRepository ticketRepository,
                                  CategoryRepository categoryRepository, SlaService slaService,
-                                 PlatformTransactionManager transactionManager) {
+                                 PlatformTransactionManager transactionManager, LiveNotifier liveNotifier) {
         this.ruleRepository = ruleRepository;
         this.alertRepository = alertRepository;
         this.transactionRepository = transactionRepository;
@@ -52,6 +56,7 @@ public class FraudDetectionService {
         this.slaService = slaService;
         this.tx = new TransactionTemplate(transactionManager);
         this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.liveNotifier = liveNotifier;
     }
 
     //runs after a bank transaction has been committed and starts fraud detection
@@ -163,6 +168,11 @@ public class FraudDetectionService {
 
         Ticket saved = ticketRepository.save(auto);
         alertRepository.attachTicket(key, saved.getId());
+
+        Set<Long> w = new LinkedHashSet<>(liveNotifier.admins());
+        w.addAll(liveNotifier.staffFor(saved));
+        liveNotifier.send(w, null, saved.getId(), saved.getTitle(), "FRAUD_ALERT",
+                "Alert: " + rule.getName() + " (" + rule.getAlertCategory().replace('_', ' ') + ")");
         log.warn("Fraud rule {} fired for customer {}: opened {} ticket #{}",
                 rule.getCode(), customer.getId(), rule.getAlertCategory(), saved.getId());
     }

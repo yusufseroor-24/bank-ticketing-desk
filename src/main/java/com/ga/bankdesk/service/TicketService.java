@@ -8,6 +8,7 @@ import com.ga.bankdesk.exception.ResourceNotFoundException;
 import com.ga.bankdesk.mapper.CommentMapper;
 import com.ga.bankdesk.mapper.TicketMapper;
 import com.ga.bankdesk.model.*;
+import com.ga.bankdesk.notifications.LiveNotifier;
 import com.ga.bankdesk.notifications.SseEmitterRegistry;
 import com.ga.bankdesk.repository.*;
 import com.ga.bankdesk.specification.TicketSpecifications;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,6 +50,7 @@ public class TicketService {
     private final CategoryRules categoryRules;
     private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
+    private final LiveNotifier liveNotifier;
 
 
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
@@ -69,6 +72,8 @@ public class TicketService {
         recordHistory(save, customer, "CREATED", null, save.getStatus().toString());
         log.info("Ticket created: id={}, category={}, customer={}", save.getId(), category.getName(), customer.getEmail());
         emailService.sendTicketCreatedEmail(customer.getEmail(), save.getId(), save.getTitle(), category.getName());
+        liveNotifier.send(liveNotifier.staffFor(save), null, save.getId(), save.getTitle(),
+                "NEW_TICKET", "New " + category.getName().replace('_', ' ') + " ticket: " + save.getTitle());
         return ticketMapper.toResponse(save);
     }
 
@@ -266,6 +271,14 @@ public class TicketService {
         Ticket save = ticketRepository.save(ticket);
 
         recordHistory(save, currentUser, "ESCALATED", null, note);
+        Set<Long> w = new LinkedHashSet<>(liveNotifier.admins());
+        w.addAll(liveNotifier.staffFor(save));
+        liveNotifier.send(w, currentUser.getId(), save.getId(), save.getTitle(),
+                "ESCALATED", "Ticket #" + save.getId() + " was escalated: " + note);
+        if (save.getCustomer() != null) {
+            liveNotifier.send(Set.of(save.getCustomer().getId()), null, save.getId(), save.getTitle(),
+                    "ESCALATED", "Your ticket has been escalated for further review");
+        }
         return ticketMapper.toResponse(save);
     }
 
