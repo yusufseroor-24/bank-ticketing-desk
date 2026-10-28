@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * send VirusTotal the file attachment hash
+ * lookup the file attachment hash in virusTotal engines using API key in the x-apikey header
  */
 
 @Slf4j

@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * claimIfUnassigned: one atomic UPDATE that assigns the ticket only if nobody has it yet.
+ */
+
 //JpaSpecificationExecutor - build queries dynamically
 public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
     List<Ticket> findByCustomerId(Long customerId);

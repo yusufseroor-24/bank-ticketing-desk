@@ -21,6 +21,13 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Scans uploaded files in the background
+ * After an upload commits, the scan job goes onto a single-worker queue
+ * The worker waits at least 16 seconds between calls (free tier: 4 per minute) and sends only the file's hash to VirusTotal
+ * 3 or more malicious engines = MALICIOUS
+ */
+
 @Slf4j
 @Service
 public class AttachmentScanService {

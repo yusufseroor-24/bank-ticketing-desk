@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
+ * Records bank transactions and publishes a TransactionRecordedEvent
+ * Demo scenarios
  * record() method: transaction details receive request -> validate customer -> build & save transaction -> publish an event
  * simulate() method: (create sample transactions and go through record method) instead of manually submitting transactions, a scenario is selected and the method generates transactions
  * listAlerts() method: retrieves all fraud alerts and return them as response DTO

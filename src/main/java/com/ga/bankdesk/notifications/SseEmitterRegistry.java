@@ -8,6 +8,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Keeps one open live-notification connection (SseEmitter) per logged-in user.
+ */
+
 @Component
 //track all connected users, check if it's currently listening to push notifications
 public class SseEmitterRegistry {

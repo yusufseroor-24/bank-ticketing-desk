@@ -18,9 +18,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- *
+ * Background SLA scheduler (Every 60s)
  * levelFor: 0 = fine, 1 = 75% , 2 = 90% , 3 = deadline passed
  * time used = time elapsed / total available time
+ * A new level is saved with an atomic UPDATE
  */
 
 @Slf4j

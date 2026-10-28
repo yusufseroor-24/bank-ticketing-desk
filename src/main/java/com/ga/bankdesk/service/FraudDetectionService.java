@@ -20,6 +20,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
+ * Checks every recorded bank transaction against the enabled fraud rules
+ * Each alert has a dedup key that is claimed atomically, so one pattern creates one alert
  * onTransactionRecorded(): connection between TransactionService and FraudDetectionService (listens for the published transaction)
  * evaluate(): checks transaction against enabled rules then attempts to create and alert
  * check(): chooses the appropriate rule and prints an appropriate response

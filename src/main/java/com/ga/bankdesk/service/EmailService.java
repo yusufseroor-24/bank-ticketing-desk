@@ -10,6 +10,11 @@ import org.springframework.web.util.HtmlUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Builds HTML emails
+ * Publishes an EmailMessage event for EmailDispatcher
+ */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service

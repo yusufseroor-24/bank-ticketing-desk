@@ -10,6 +10,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * Ticket model that holds ticket info
+ * Carries ticket SLA deadlines and its SLA notification level (0 none, 1 = 75%, 2 = 90%, 3 = breached).
+ * Uses @Version (optimistic locking): if two users save the same ticket from stale data,
+ */
+
 @Data
 @Entity
 @Table(name = "tickets")

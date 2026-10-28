@@ -18,6 +18,8 @@ import java.util.Set;
 
 /**
  * one place to push SSE live events to multiple users
+ * Decides who receives a live event
+ * Sends notification over SSE after transaction commits
  */
 
 @RequiredArgsConstructor

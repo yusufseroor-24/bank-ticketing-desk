@@ -12,6 +12,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+/**
+ * Send emails in the background
+ * Listens for EmailMessage events after the database transaction has committed
+ * runs notificationExecutor pool si requests never wait for mail server
+ */
+
 @Slf4j
 @RequiredArgsConstructor
 @Component

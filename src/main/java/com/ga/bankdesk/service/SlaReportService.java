@@ -30,6 +30,11 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Generates the monthly SLA report as a CSV (per category and total)
+ * Runs automatically at 02:00 on the 1st of each month (Asia/Bahrain), or on demand by an admin
+ */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service

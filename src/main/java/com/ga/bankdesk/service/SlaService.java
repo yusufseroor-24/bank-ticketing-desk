@@ -20,6 +20,7 @@ import java.util.Set;
 
 /**
  * use SLA policies to calculate a ticket deadline, priority, and updated SLA rules
+ * Looks up the policy for the ticket's category and priority and sets the first-response and resolution
  */
 
 @Slf4j

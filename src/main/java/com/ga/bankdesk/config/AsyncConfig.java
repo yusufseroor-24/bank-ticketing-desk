@@ -7,6 +7,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ * Defines 2 background thread pools.
+ * notificationExecutor: 3 workers, queue of 100, CallerRunsPolicy (the sender runs the job itself when the queue is full, so no email is lost)
+ * virusTotalExecutor: 1 worker, queue of 50, AbortPolicy (rejects when full). One worker keeps VirusTotal calls under the free-tier limit.
+ */
+
 @Configuration
 @EnableAsync
 public class AsyncConfig {
