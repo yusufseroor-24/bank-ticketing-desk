@@ -65,7 +65,6 @@ public class EmailService {
         return HtmlUtils.htmlEscape(s);
     }
 
-    /** One HTML shell for every email. Pass null button/link for an email with no button. */
     String layout(String heading, String intro, String buttonText, String link, String footnote) {
         String action = (link == null) ? "" : """
                 <a href="%LINK%" style="background:#0f3d6e;color:#ffffff;text-decoration:none;
@@ -102,5 +101,15 @@ public class EmailService {
                 "Ticket #" + ticketId + " (" + esc(title) + ") has a resolution deadline of <b>" + dueAt.format(FORMATTER) + "<b>.",
                 null, null,
                 "Open BankDesk to act on the ticket");
+    }
+
+    public void sendSlaReportEmail(String toEmail, String period, Integer totalTickets, Double compliance) {
+        String percent = (compliance == null) ? "n/a" : String.format(java.util.Locale.ROOT, "%.1f%%", compliance);
+        publish(toEmail, "Monthly SLA report " + period,
+                "Monthly SLA report is ready",
+                "The report for <b>" + esc(period) + "</b> covers " + totalTickets
+                        + " tickets. Resolution SLA compliance: <b>" + percent + "</b>.",
+                null, null,
+                "Download the full CSV from the admin area.");
     }
 }
