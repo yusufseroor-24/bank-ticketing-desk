@@ -16,10 +16,10 @@ import java.util.List;
 //JpaSpecificationExecutor - build queries dynamically
 public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
     List<Ticket> findByCustomerId(Long customerId);
+    List<Ticket> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
 
 
     //atomic claim, assigns, changes status, increments version, and updates timestamp of a ticket if conditions are met
-
     //flushAutomatically writes pending changes first and clearAutomatically drops the copies
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     //JPQL Query that allows change and increases the version
