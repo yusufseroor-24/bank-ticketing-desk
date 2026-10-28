@@ -11,6 +11,7 @@ import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.model.Ticket;
 import com.ga.bankdesk.model.User;
 import com.ga.bankdesk.repository.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,6 +51,22 @@ class TicketClaimRaceTest {
 
     @Autowired
     private AgentCategoryRepository agentCategoryRepository;
+
+    private Long ticketId;
+
+    private final List<User> createdAgents = new ArrayList<>();
+
+    @AfterEach
+    void cleanUp() {
+        if (ticketId != null) {
+            ticketHistoryRepository.deleteAll(ticketHistoryRepository.findByTicketIdOrderByCreatedAtDesc(ticketId));
+            ticketRepository.deleteById(ticketId);
+        }
+        List<Long> ids = createdAgents.stream().map(User::getId).toList();
+        agentCategoryRepository.deleteAll(agentCategoryRepository.findAll().stream()
+                .filter(l -> ids.contains(l.getAgent().getId())).toList());
+        userRepository.deleteAll(createdAgents);
+    }
 
     @Test
     void onlyOneAgentCanClaimWhenManyClaimTheSameTicketAtTheSameTime() throws Exception{

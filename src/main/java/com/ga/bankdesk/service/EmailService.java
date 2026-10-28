@@ -98,7 +98,7 @@ public class EmailService {
     public void sendSlaAlertEmail(String toEmail, Long ticketId, String title, String headline, LocalDateTime dueAt){
         publish(toEmail, "SLA Alert: ticket #" + ticketId,
                 headline,
-                "Ticket #" + ticketId + " (" + esc(title) + ") has a resolution deadline of <b>" + dueAt.format(FORMATTER) + "<b>.",
+                "Ticket #" + ticketId + " (" + esc(title) + ") has a resolution deadline of <b>" + dueAt.format(FORMATTER) + "</b>.",
                 null, null,
                 "Open BankDesk to act on the ticket");
     }

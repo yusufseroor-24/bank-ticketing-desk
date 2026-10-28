@@ -42,6 +42,7 @@ public class SlaPolicySeeder implements CommandLineRunner {
                 policy.setPriority(priority);
                 policy.setFirstResponseMinutes(firstResponseMinutes(priority, urgent));
                 policy.setResolutionMinutes(resolutionMinutes(priority, urgent));
+                slaPolicyRepository.save(policy);
             }
         }
     }

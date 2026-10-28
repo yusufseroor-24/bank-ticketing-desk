@@ -35,7 +35,7 @@ public class EmailDispatcher {
             mailSender.send(mime);
             log.info("Email '{}' sent to {}", msg.subject(), msg.to());
         } catch (Exception e){
-            log.error("Failed to send email '{}' to {}: {]", msg.subject(), msg.to(), e.getMessage());
+            log.error("Failed to send email '{}' to {}: {}", msg.subject(), msg.to(), e.getMessage());
         }
     }
 }

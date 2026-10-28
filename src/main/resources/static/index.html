@@ -118,10 +118,7 @@
     display:flex;flex-direction:column;
   }
   nav .brand{font-family:"Source Serif 4",serif;font-size:20px;font-weight:700;margin-bottom:18px;}
-    nav .conn{font-size:11px;color:#7E8FA8;margin-bottom:22px;display:flex;align-items:center;gap:6px;}
-  nav .conn .dot{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;}
-  nav .conn.live .dot{background:#4CAF6D;}
-  nav button.nav-link{
+    nav button.nav-link{
     display:block;width:100%;text-align:left;
     background:none;border:none;color:#CDD6E4;
     padding:.6em .3em;margin-bottom:2px;border-radius:var(--radius);
@@ -196,13 +193,13 @@
   .pill.scan-ERROR{background:#F6E4E1;color:var(--danger);}
   .pill.sla-ok{background:#E6EFE9;color:var(--ok);}
   .pill.sla-warn{background:#FBF0DD;color:var(--brass);}
-  .pill.sla-urgent{background:#F6D9A8;color:#7A4A07;}
+  .pill.sla-urgent{background:#F6E4E1;color:var(--danger);border:1px solid #E3B9B1;}
   .pill.sla-breach{background:#A3372B;color:#fff;}
   .pill.sla-none{background:#E6EBF3;color:var(--ink-soft);}
   .sla-bar{height:6px;background:#EEE9DB;border-radius:3px;overflow:hidden;margin-top:4px;min-width:90px;}
   .sla-bar > i{display:block;height:100%;background:var(--ok);}
   .sla-bar > i.warn{background:var(--brass-dim);}
-  .sla-bar > i.urgent{background:#D98A1F;}
+  .sla-bar > i.urgent{background:var(--danger);}
   .sla-bar > i.breach{background:var(--danger);}
   .notif{padding:10px 12px;border-bottom:1px solid var(--line);background:var(--paper-raised);display:flex;gap:12px;justify-content:space-between;align-items:flex-start;}
   .notif.unread{border-left:4px solid var(--brass);}
@@ -289,7 +286,6 @@
       </div>
     </div>
     <div class="me-email" id="nav-email"></div>
-    <div class="conn" id="conn-status"><span class="dot"></span><span id="conn-label">Connecting…</span></div>
 
     <div id="nav-links"></div>
 
@@ -312,7 +308,7 @@ let categories = [];
 let currentView = null;
 let sseAbortController = null;
 let currentParam = null;          // id of the ticket currently open (used by live updates)
-let notifications = [];           // live notifications received this session (newest first)
+let notifications = [];           // newest first, kept in this browser per user
 let unreadCount = 0;
 let avatarUrl = null;            // blob: URL of the profile picture served by GET /api/users/me/profile-pic
 let sessionNotice = '';           // one-off message shown on the login screen (e.g. after a password reset)
@@ -498,6 +494,7 @@ async function bootApp() {
   setNavIdentity();
   await loadAvatar();
   refreshNavAvatar();
+  loadNotifications();
 
   try { categories = await api('/api/categories'); } catch (e) { categories = []; }
 
@@ -595,6 +592,18 @@ function buildNav() {
     `<button class="nav-link" data-view="${key}" onclick="renderView('${key}')">${label}${key === 'notifications' ? '<span id="notif-badge" class="badge hidden">0</span>' : ''}</button>`
   ).join('');
   updateNotifBadge();
+}
+
+const notifKey = () => 'bd_notifs_' + (currentUser ? currentUser.id : '');
+function loadNotifications() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(notifKey()) || '{}');
+    notifications = Array.isArray(saved.items) ? saved.items : [];
+    unreadCount = saved.unread || 0;
+  } catch (e) { notifications = []; unreadCount = 0; }
+}
+function saveNotifications() {
+  try { localStorage.setItem(notifKey(), JSON.stringify({ items: notifications, unread: unreadCount })); } catch (e) { /* storage blocked */ }
 }
 
 function updateNotifBadge() {
@@ -1407,13 +1416,13 @@ async function renderAdminAudit() {
    ============================================================ */
 function renderNotifications() {
   const main = document.getElementById('main-content');
-  unreadCount = 0; updateNotifBadge();
+  unreadCount = 0; updateNotifBadge(); saveNotifications();
   main.innerHTML = `
     <div class="section-head"><div><h2>Notifications</h2>
       <p>Live updates received since you logged in. ${currentUser.role === 'CUSTOMER'
         ? 'You are told when your ticket is assigned, escalated or its status changes.'
         : 'You are told about new tickets, escalations, fraud alerts, SLA warnings, flagged files' + (currentUser.role === 'ADMIN' ? ' and new SLA reports.' : '.')}</p></div>
-      ${notifications.length ? '<button class="secondary" onclick="notifications=[];renderNotifications()">Clear</button>' : ''}</div>
+      ${notifications.length ? '<button class="secondary" onclick="notifications=[];saveNotifications();renderNotifications()">Clear</button>' : ''}</div>
     ${notifications.length ? notifications.map(n => `
       <div class="notif ${esc(n.eventType)}">
         <div>
@@ -1523,14 +1532,6 @@ async function doChangePassword() {
    NOTIFICATIONS (SSE via fetch — native EventSource can't send
    our Authorization header, so we read the stream manually)
    ============================================================ */
-function setConnLabel(connected) {
-  const wrap = document.getElementById('conn-status');
-  const label = document.getElementById('conn-label');
-  if (!wrap) return;
-  wrap.classList.toggle('live', connected);
-  label.textContent = connected ? 'Live updates on' : 'Reconnecting…';
-}
-
 let sseReconnectDelay = 2000;
 let sseReconnectTimer = null;
 
@@ -1545,8 +1546,7 @@ async function connectNotifications() {
       headers: { Authorization: 'Bearer ' + token },
       signal: myController.signal,
     });
-    if (!res.ok || !res.body) { setConnLabel(false); scheduleReconnect(); return; }
-    setConnLabel(true);
+    if (!res.ok || !res.body) { scheduleReconnect(); return; }
     sseReconnectDelay = 2000;
 
     const reader = res.body.getReader();
@@ -1572,7 +1572,6 @@ async function connectNotifications() {
     if (err.name === 'AbortError') return;
   }
   if (myController === sseAbortController) {
-    setConnLabel(false);
     scheduleReconnect();
   }
 }
@@ -1581,6 +1580,7 @@ function handleLiveEvent(n) {
   notifications.unshift(n);
   notifications = notifications.slice(0, 50);
   if (currentView !== 'notifications') { unreadCount++; updateNotifBadge(); }
+  saveNotifications();
   const bad = n.eventType === 'SLA_BREACHED' || n.eventType === 'SLA_WARNING';
   const bad2 = bad || n.eventType === 'MALICIOUS_FILE' || n.eventType === 'FRAUD_ALERT';
   toast(n.ticketId ? `#${n.ticketId} ${n.title}: ${n.message}` : `${n.title}: ${n.message}`, bad2);
