@@ -158,11 +158,11 @@ Resources
 | Resource | URL | Used for |
 | -------- | --- | -------- |
 | Bucket4j | https://www.baeldung.com/spring-bucket4j | Rate limiting implementation |
-| Mailtrap | https://mailtrap.io | Development email sandbox for verification/reset emails |
+| Mailtrap | https://mailtrap.io | Development email sandbox |
 | dbdiagram.io | https://dbdiagram.io | ERD creation |
 | SSE (Server-Sent Events) | https://www.baeldung.com/spring-server-sent-events | Notification implementation |
-| FATF Public Statements | https://fiaumalta.org/news/fatf-public-statements-19th-june-2026/ | High-risk and grey-list country lists for the fraud/AML rules |
+| FATF Public Statements | https://fiaumalta.org/news/fatf-public-statements-19th-june-2026/ | High-risk & grey-list country lists for the fraud/AML rules |
 | MessageDigest (Java 17 API) | https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/security/MessageDigest.html | Computing file hashes |
 | SHA-256 Hashing in Java | https://www.baeldung.com/sha-256-hashing-java | SHA-256 hash of uploaded attachments |
-| VirusTotal API Overview | https://docs.virustotal.com/docs/api-overview | Looking up file hashes to scan attachments |
+| VirusTotal API Overview | https://docs.virustotal.com/docs/api-overview | scan attachments using file hashes |
 | EICAR Anti-Malware Test File | https://www.eicar.org/download-anti-malware-testfile/ | Safe test file for the malicious-attachment |
