@@ -1,5 +1,6 @@
 package com.ga.bankdesk.service;
 
+import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.enums.SourceOfTicket;
 import com.ga.bankdesk.enums.TicketStatus;
 import com.ga.bankdesk.enums.TransactionType;
@@ -153,13 +154,19 @@ public class FraudDetectionService {
         Category category = categoryRepository.findByName(rule.getAlertCategory())
                 .orElseThrow(() -> new IllegalStateException("Category not found: " + rule.getAlertCategory()));
 
+        KycStatus kyc = customer.getKycStatus() == null ? KycStatus.NOT_STARTED : customer.getKycStatus();
+        String kycNote = kyc == KycStatus.APPROVED ? "KYC: verified" : "KYC: NOT VERIFIED (" + kyc + ") - higher risk";
+
         Ticket auto = new Ticket();
         auto.setTitle(rule.getName() + " - " + customer.getFullName());
         auto.setDescription("Rule: " + rule.getName() + " (" + rule.getCode() + ")\n"
                 + "Customer: " + customer.getFullName() + " (id " + customer.getId() + ")\n"
                 + "Reason: " + detail + "\n"
                 + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
-                + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")");
+                + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")"
+                + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
+                + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")\n"
+                + kycNote);
         auto.setCategory(category);
         auto.setCustomer(null);
         auto.setCreatedBy(null); //created by the system
