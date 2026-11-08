@@ -19,4 +19,3 @@ public interface KycVerificationRepository extends JpaRepository<KycVerification
     Optional<KycVerification> findBySessionIdForUpdate(@Param("sessionId") String sessionId);
 }
 
-}

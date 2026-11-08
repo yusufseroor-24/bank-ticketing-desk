@@ -1,6 +1,7 @@
 package com.ga.bankdesk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.enums.UserStatus;
 import jakarta.persistence.*;
@@ -10,6 +11,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -55,4 +57,10 @@ public class User {
     @Column
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kyc_status")
+    private KycStatus kycStatus = KycStatus.NOT_STARTED;
+
+    private Instant kycVerifiedAt;
 }
