@@ -56,6 +56,14 @@ public class TicketService {
     public TicketCreationResponse createTicket(User customer, CreateTicketRequest request){
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category with ID " + request.categoryId() + " is not found"));
+        //customer must be verified (KYC APPROVED) before opening tickets
+        boolean needsKyc = customer.getRole() == Role.CUSTOMER && customer.getKycStatus() != KycStatus.APPROVED
+                && !category.getName().equals("KYC_REVIEW");
+        if (needsKyc) {
+            throw new BusinessRuleException("Please verify your identity (KYC) before opening a ticket. "
+                    + "You can still open a KYC Review ticket if you need help.");
+        }
+
         Ticket ticket = new Ticket();
         ticket.setTitle(request.title());
         ticket.setDescription(request.description());
