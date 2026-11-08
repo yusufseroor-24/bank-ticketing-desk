@@ -12,6 +12,7 @@ import com.ga.bankdesk.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
  * No business logic just manipulation of data and utilizing SQL to show different SLA stages
  */
 
+@Profile("dev")
 @Component
 @Order(5)
 @RequiredArgsConstructor
