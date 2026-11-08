@@ -10,6 +10,10 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.HexFormat;
 
+/**
+ * checks whether a webhook received from Didit is authentic
+ */
+
 @Component
 public class DiditWebhookVerifier{
 
@@ -28,6 +32,7 @@ public class DiditWebhookVerifier{
             if (ts > 100_000_000_000L) ts = ts / 1000;
             if (Math.abs(Instant.now().getEpochSecond() - ts) > MAX_AGE_SECONDS) return false;
 
+            //creating the HMAC signature to check authenticity of data
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             String expected = HexFormat.of().formatHex(mac.doFinal(rawBody));

@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.Map;
 
 /**
- * Communicates with Didit for KYC
+ * Communicates with Didit for KYC and creates verification sessions for users
  */
 
 @Component
@@ -19,6 +19,7 @@ public class DiditClient {
 
     public record DiditSession(String sessionId, String url){}
 
+    //send HTTP request to Didit
     private final RestClient restClient;
     private final String apiKey;
     private final String workflowId;
@@ -37,6 +38,7 @@ public class DiditClient {
         this.callbackUrl = callbackUrl;
     }
 
+    //checks wether Didit is configured
     public boolean isConfigured(){
         return !apiKey.isBlank() && !workflowId.isBlank();
     }
