@@ -36,7 +36,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/", "/index.html", "/simulation.html").permitAll()
+                        .requestMatchers("/", "/index.html", "/simulation.html").permitAll()
+                        //Didit calls this without a JWT, the request is protected by HMAC signature
+                        .requestMatchers("/api/kyc/webhook").permitAll()
                         .anyRequest().authenticated()); //everything else needs Jwt
+
 
         //filers added and checked before reaching controllers
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
