@@ -1,5 +1,6 @@
 package com.ga.bankdesk.config;
 
+import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.enums.UserStatus;
 import com.ga.bankdesk.model.AgentCategory;
@@ -14,6 +15,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -54,6 +56,10 @@ public class UserSeeder implements CommandLineRunner {
         user.setRole(role);
         user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerified(true); //seeded users skip the email-verification step
+        if (role == Role.CUSTOMER) { //demo customers start verified
+            user.setKycStatus(KycStatus.APPROVED);
+            user.setKycVerifiedAt(Instant.now());
+        }
         return userRepository.save(user);
     }
 
