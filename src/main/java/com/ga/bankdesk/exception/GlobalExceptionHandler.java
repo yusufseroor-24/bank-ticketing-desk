@@ -22,6 +22,12 @@ import java.util.Map;
 //interrupts any exception thrown anywhere to convert to clean JSON
 public class GlobalExceptionHandler {
 
+    //third-party service unavailable (502 / 503)
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ErrorResponse> handleExternalService(ExternalServiceException exception, HttpServletRequest request){
+        return buildResponse(exception.getStatus(), "EXTERNAL_SERVICE_ERROR", exception.getMessage(), request);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException exception, HttpServletRequest request){
         return buildResponse(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", exception.getMessage(), request);
