@@ -1,6 +1,7 @@
 package com.ga.bankdesk.mapper;
 
 import com.ga.bankdesk.dto.UserResponse;
+import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.model.User;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,9 @@ public class UserMapper {
                 user.getRole(),
                 user.getStatus(),
                 user.isEmailVerified(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getKycStatus() == null ? KycStatus.NOT_STARTED : user.getKycStatus(),
+                user.getKycVerifiedAt()
         );
     }
 }

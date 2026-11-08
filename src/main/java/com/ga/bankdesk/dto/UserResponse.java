@@ -1,8 +1,10 @@
 package com.ga.bankdesk.dto;
 
+import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.enums.UserStatus;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 //what gets sent back to the user, no password and safe public data only
@@ -14,6 +16,8 @@ public record UserResponse(
         Role role,
         UserStatus status,
         boolean emailVerified,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        KycStatus kycStatus,
+        Instant kycVerifiedAt
 ) {
 }
