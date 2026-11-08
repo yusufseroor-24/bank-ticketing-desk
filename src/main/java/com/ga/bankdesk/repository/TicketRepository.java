@@ -22,6 +22,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
     List<Ticket> findByCustomerId(Long customerId);
     List<Ticket> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
 
+    //used by the KYC listener to avoid opening 2 tickets for the same KYC session
+    boolean existsByDescriptionContaining(String text);
+
 
     //atomic claim, assigns, changes status, increments version, and updates timestamp of a ticket if conditions are met
     //flushAutomatically writes pending changes first and clearAutomatically drops the copies

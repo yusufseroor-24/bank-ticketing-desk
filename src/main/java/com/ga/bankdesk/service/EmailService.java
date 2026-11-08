@@ -1,5 +1,6 @@
 package com.ga.bankdesk.service;
 
+import com.ga.bankdesk.enums.KycStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +58,22 @@ public class EmailService {
         publish(toEmail, "Ticket #" + ticketId + " is now " + newStatus,
                 "Your ticket was updated",
                 "Ticket #" + ticketId + " (" + esc(title) + ") is now <b>" + esc(newStatus) + "</b>.",
+                null, null,
+                "Log in to BankDesk to see the details.");
+    }
+
+    public void sendKycResultEmail(String toEmail, KycStatus status) {
+        String intro = switch (status) {
+            case APPROVED -> "Your identity has been verified. You can now open tickets and use all BankDesk services.";
+            case DECLINED -> "We couldn't verify your identity. You can open a KYC Review ticket and our team will help, or try verifying again.";
+            case IN_REVIEW -> "Your verification needs a manual check by our team. We'll update you as soon as it's done.";
+            default -> null;
+        };
+        if (intro == null) {
+            return;
+        }
+        publish(toEmail, "Your identity verification: " + status.name().replace('_', ' '),
+                "Identity verification update", intro,
                 null, null,
                 "Log in to BankDesk to see the details.");
     }
