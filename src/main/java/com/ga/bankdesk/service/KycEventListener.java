@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 
 /**
  * Reacts to saved KYC result, audit log and email for customer
- * KYC_REVIEW Ticket for staff when result is DECLINED or IN_REVIEW
+ * KYC_REVIEW Ticket for staff when result is  IN_REVIEW (need human decision)
  */
 
 @Slf4j
@@ -57,7 +57,7 @@ public class KycEventListener {
             auditLogService.log(user, "KYC_" + status, "User", user.getId());
             emailService.sendKycResultEmail(user.getEmail(), status);
 
-            if (status != KycStatus.APPROVED) {
+            if (status != KycStatus.IN_REVIEW) {
                 openReviewTicket(user, event);
             }
         } catch (Exception e) {
@@ -87,7 +87,7 @@ public class KycEventListener {
         ticket.setCreatedBy(null);
         ticket.setSource(SourceOfTicket.SYSTEM);
         ticket.setStatus(TicketStatus.OPEN);
-        ticket.setPriority(event.status() == KycStatus.IN_REVIEW ? TicketPriority.MEDIUM : TicketPriority.LOW);
+        ticket.setPriority(TicketPriority.MEDIUM);
         slaService.applyDeadlines(ticket, LocalDateTime.now());
 
         Ticket saved = ticketRepository.save(ticket);
