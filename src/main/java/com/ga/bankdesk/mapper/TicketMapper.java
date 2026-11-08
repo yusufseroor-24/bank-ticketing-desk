@@ -23,7 +23,8 @@ public class TicketMapper {
                 ticket.getCreatedAt(),
                 ticket.getFirstResponseDueAt(),
                 ticket.getFirstRespondedAt(),
-                ticket.getResolvedAt()
+                ticket.getResolvedAt(),
+                ticket.getCustomer() != null ? ticket.getCustomer().getKycStatus() : null
         );
 
     }

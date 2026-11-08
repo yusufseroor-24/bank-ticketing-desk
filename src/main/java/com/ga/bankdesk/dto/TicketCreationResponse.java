@@ -1,5 +1,6 @@
 package com.ga.bankdesk.dto;
 
+import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.enums.SourceOfTicket;
 import com.ga.bankdesk.enums.TicketPriority;
 import com.ga.bankdesk.enums.TicketStatus;
@@ -21,6 +22,7 @@ public record TicketCreationResponse(
         LocalDateTime createdAt,
         LocalDateTime firstResponseDueAt,
         LocalDateTime firstRespondedAt,
-        LocalDateTime resolvedAt
+        LocalDateTime resolvedAt,
+        KycStatus customerKycStatus
 ) {
 }
