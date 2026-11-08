@@ -46,10 +46,10 @@ public class DiditClient {
     //Creates a hosted verification session
     //vendor_data matches the webhook back to the user
     public DiditSession createSession(Long userId) {
-        Map<String, Object> body = Map.of(
-                "workflow_id", workflowId,
-                "vendor_data", String.valueOf(userId),
-                "callback", callbackUrl);
+        //built as a plain string so the request has a fixed length and an exact JSON body
+        String body = "{\"workflow_id\":\"" + esc(workflowId) + "\","
+                + "\"vendor_data\":\"" + esc(String.valueOf(userId)) + "\","
+                + "\"callback\":\"" + esc(callbackUrl) + "\"}";
 
         Map<String, Object> response = restClient.post()
                 .uri("/v3/session/")
@@ -67,5 +67,9 @@ public class DiditClient {
             throw new IllegalStateException("Didit response had no verification link, keys: " + response.keySet());
         }
         return new DiditSession(response.get("session_id").toString(), link.toString());
+    }
+
+    private static String esc(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
