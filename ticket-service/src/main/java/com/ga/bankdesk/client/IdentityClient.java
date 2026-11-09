@@ -54,7 +54,7 @@ public class IdentityClient {
     public Optional<UserSummary> findByEmail(String email) {
         try {
             return Optional.ofNullable(restClient.get()
-                    .uri(u -> u.path("/internal/users/by-email").queryParam("email", email).build())
+                    .uri(u -> u.path("/internal/users/by-email").queryParam("email", "{email}").build(email))
                     .retrieve().body(UserSummary.class));
         } catch (HttpClientErrorException.NotFound e) {
             return Optional.empty();

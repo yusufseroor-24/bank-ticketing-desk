@@ -17,7 +17,7 @@ public interface BankTransactionRepository extends JpaRepository<BankTransaction
     long countByCustomerIdAndOccurredAtAfter(Long customerId, LocalDateTime from);
 
     //count transactions within an amount range and satisfies all 5 conditions
-    @Query("SELECT COUNT(b) FROM BankTransaction b WHERE b.customer.id = :customerId AND b.type = :type " +
+    @Query("SELECT COUNT(b) FROM BankTransaction b WHERE b.customerId = :customerId AND b.type = :type " +
             "AND b.amount >= :minAmount AND b.amount < :maxAmount AND b.occurredAt > :from")
     long countInAmountRange(@Param("customerId") Long customerId,
                             @Param("type") TransactionType type,
