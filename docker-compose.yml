@@ -1,0 +1,134 @@
+services:
+  identity-service:
+    build: ./identity-service
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:postgresql://postgres_db:5432/bankdesk
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME in your .env file}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your .env file}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      DIDIT_API_KEY: ${DIDIT_API_KEY:-}
+      DIDIT_WORKFLOW_ID: ${DIDIT_WORKFLOW_ID:-}
+      DIDIT_WEBHOOK_SECRET: ${DIDIT_WEBHOOK_SECRET:-}
+      KYC_CALLBACK_URL: ${KYC_CALLBACK_URL:-http://localhost:8081/index.html?kyc=done}
+    volumes:
+      - identity_uploads:/app/uploads
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    networks:
+      - postgres
+
+  notification-service:
+    build: ./notification-service
+    restart: always
+    ports:
+      - "8084:8084"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    networks:
+      - postgres
+
+  ticket-service:
+    build: ./ticket-service
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      DB_URL: jdbc:postgresql://postgres_db:5432/bankdesk
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME in your .env file}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your .env file}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file}
+      IDENTITY_SERVICE_URL: http://identity-service:8081
+      NOTIFICATION_SERVICE_URL: http://notification-service:8084
+      VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY:-}
+    volumes:
+      - ticket_uploads:/app/uploads
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - postgres
+
+  fraud-service:
+    build: ./fraud-service
+    restart: always
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:postgresql://postgres_db:5432/bankdesk
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME in your .env file}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your .env file}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file}
+      IDENTITY_SERVICE_URL: http://identity-service:8081
+      TICKET_SERVICE_URL: http://ticket-service:8082
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      ticket-service:
+        condition: service_started
+    networks:
+      - postgres
+
+  postgres_db:
+    image: postgres:18.6
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: bankdesk
+      POSTGRES_USER: ${DB_USERNAME:?Set DB_USERNAME in your .env file}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your .env file}
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d bankdesk"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - postgres
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:9.18
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in your .env file}
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:
+  identity_uploads:
+  ticket_uploads:
