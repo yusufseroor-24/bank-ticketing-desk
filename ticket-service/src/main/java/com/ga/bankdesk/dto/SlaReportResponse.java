@@ -13,6 +13,6 @@ public record SlaReportResponse(Long id, String period, ReportStatus status,
     public static SlaReportResponse from(SlaReport r) {
         return new SlaReportResponse(r.getId(), r.getReportPeriod(), r.getStatus(),
                 r.getTotalTickets(), r.getResolutionCompliancePercentage(), r.getGeneratedAt(),
-                r.getGeneratedBy() == null ? "Scheduler" : r.getGeneratedBy().getFullName());
+                r.getGeneratedById() == null ? "Scheduler" : "User #" + r.getGeneratedById());
     }
 }

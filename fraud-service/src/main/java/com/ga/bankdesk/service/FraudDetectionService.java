@@ -153,17 +153,13 @@ public class FraudDetectionService {
         //same ticket as before (system ticket, no customer), but it is now created by ticket-service
         SystemTicketRequest ticketRequest = new SystemTicketRequest(
                 rule.getName() + " - " + customer.fullName(),
-                "Rule: " + rule.getName() + " (" + rule.getCode() + ")
-"
-                        + "Customer: " + customer.fullName() + " (id " + customer.id() + ")
-"
-                        + "Reason: " + detail + "
-"
+                "Rule: " + rule.getName() + " (" + rule.getCode() + ")\n"
+                        + "Customer: " + customer.fullName() + " (id " + customer.id() + ")\n"
+                        + "Reason: " + detail + "\n"
                         + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
                         + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")"
                         + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
-                        + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")
-"
+                        + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")\n"
                         + kycNote,
                 rule.getAlertCategory(),
                 rule.getAlertPriority(),
