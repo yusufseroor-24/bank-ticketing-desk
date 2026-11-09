@@ -34,11 +34,3 @@ build/
 
 .env
 uploads/
-
-.DS_Store
-.env.*
-!.env.example
-*.pem
-*.key
-*.tfstate*
-.aws/

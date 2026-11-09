@@ -1,0 +1,191 @@
+package com.ga.bankdesk.service;
+
+import com.ga.bankdesk.enums.KycStatus;
+import com.ga.bankdesk.enums.TransactionType;
+import com.ga.bankdesk.model.*;
+import com.ga.bankdesk.client.IdentityClient;
+import com.ga.bankdesk.client.TicketClient;
+import com.ga.bankdesk.dto.SystemTicketRequest;
+import com.ga.bankdesk.dto.UserSummary;
+import com.ga.bankdesk.repository.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
+/**
+ * Checks every recorded bank transaction against the enabled fraud rules
+ * Each alert has a dedup key that is claimed atomically, so one pattern creates one alert
+ * onTransactionRecorded(): connection between TransactionService and FraudDetectionService (listens for the published transaction)
+ * evaluate(): checks transaction against enabled rules then attempts to create and alert
+ * check(): chooses the appropriate rule and prints an appropriate response
+ * checkStructuring(): checks pattern of repeated deposit within the amount range and time window
+ * checkVelocity(): checks for too many transactions happening too quickly
+ * isRiskyTransfer(): checks the country
+ * raiseAlert(): create the alert and investigation ticket, when a fraud rule matches, the method attempt to record the alert and open a ticket
+ * Per-transaction rules: one alert per transaction. Window rules: one per customer per window.
+ */
+
+@Slf4j
+@Service
+public class FraudDetectionService {
+
+    private final FraudRuleRepository ruleRepository;
+    private final FraudAlertRepository alertRepository;
+    private final BankTransactionRepository transactionRepository;
+    private final IdentityClient identityClient;
+    private final TicketClient ticketClient;
+    //execute code inside a transaction programmatically (either all successful or fails)
+    private final TransactionTemplate tx;
+
+    public FraudDetectionService(FraudRuleRepository ruleRepository, FraudAlertRepository alertRepository,
+                                 BankTransactionRepository transactionRepository, IdentityClient identityClient,
+                                 TicketClient ticketClient, PlatformTransactionManager transactionManager) {
+        this.ruleRepository = ruleRepository;
+        this.alertRepository = alertRepository;
+        this.transactionRepository = transactionRepository;
+        this.identityClient = identityClient;
+        this.ticketClient = ticketClient;
+        this.tx = new TransactionTemplate(transactionManager);
+        this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    //runs after a bank transaction has been committed and starts fraud detection
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onTransactionRecorded(TransactionRecordedEvent event){
+        try{
+            tx.executeWithoutResult(status -> evaluate(event.transactionId()));
+        }catch (Exception e){
+            log.error("Fraud rule check failed for transaction {}: {}", event.transactionId(), e.getMessage());
+        }
+    }
+
+    //check every enabled true against the transaction
+    private void evaluate(Long transactionId){
+        BankTransaction t = transactionRepository.findById(transactionId).orElse(null);
+        if(t == null){
+            return;
+        }
+        for(FraudRule rule : ruleRepository.findByEnabledTrue()){
+            String detail = check(rule, t);
+            if(detail != null){
+                raiseAlert(rule, t, detail);
+            }
+        }
+    }
+
+    //return human-readable reason if the rule matches
+    private String check(FraudRule rule, BankTransaction t){
+        return switch (rule.getRuleType()) {
+            //checks transaction amount is greater than or equal to the minimum amount rule
+            case LARGE_AMOUNT -> t.getAmount().compareTo(rule.getMinAmount()) >= 0
+                    ? "Amount " + t.getAmount() + " " + t.getCurrency() + " is at or above " + rule.getMinAmount()
+                    : null;
+            case STRUCTURING -> checkStructuring(rule, t);
+            case VELOCITY -> checkVelocity(rule, t);
+            case RISKY_COUNTRY -> isRiskyTransfer(rule, t)
+                    ? "Transfer to watch-listed country " + t.getCountry()
+                    : null;
+        };
+    }
+
+    private String checkStructuring(FraudRule rule, BankTransaction t) {
+        if (t.getType() != TransactionType.CASH_DEPOSIT) {
+            return null;
+        }
+        if (t.getAmount().compareTo(rule.getMinAmount()) < 0 || t.getAmount().compareTo(rule.getMaxAmount()) >= 0) {
+            return null;
+        }
+        LocalDateTime from = t.getOccurredAt().minusMinutes(rule.getWindowMinutes());
+        //count qualifying deposits from that customer
+        long count = transactionRepository.countInAmountRange(
+                t.getCustomerId(), TransactionType.CASH_DEPOSIT, rule.getMinAmount(), rule.getMaxAmount(), from);
+        //compare the count with the threshold
+        return count >= rule.getThreshold()
+                ? count + " cash deposits between " + rule.getMinAmount() + " and " + rule.getMaxAmount()
+                + " within " + rule.getWindowMinutes() + " minutes"
+                : null;
+    }
+
+    //how many transactions the customer made within the time window
+    private String checkVelocity(FraudRule rule, BankTransaction t) {
+        LocalDateTime from = t.getOccurredAt().minusMinutes(rule.getWindowMinutes());
+        long count = transactionRepository.countByCustomerIdAndOccurredAtAfter(t.getCustomerId(), from);
+        return count >= rule.getThreshold()
+                ? count + " transactions within " + rule.getWindowMinutes() + " minutes"
+                : null;
+    }
+
+    private boolean isRiskyTransfer(FraudRule rule, BankTransaction t) {
+        if (t.getType() != TransactionType.TRANSFER || rule.getCountries() == null) {
+            return false;
+        }
+        for (String code : rule.getCountries().split(",")) {
+            if (code.trim().equalsIgnoreCase(t.getCountry())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void raiseAlert(FraudRule rule, BankTransaction trigger, String detail) {
+        //the customer lives in identity-service
+        UserSummary customer = identityClient.findUser(trigger.getCustomerId())
+                .orElseThrow(() -> new IllegalStateException("Customer not found: " + trigger.getCustomerId()));
+        //create a deduplication key
+        String key = dedupKey(rule, trigger);
+
+        //prevents duplicate alerts and prevents being claimed twice
+        if (alertRepository.claim(rule.getId(), customer.id(), trigger.getId(), key) == 0) {
+            log.debug("Alert {} already raised, skipping", key);
+            return;
+        }
+
+        KycStatus kyc = customer.kycStatus() == null ? KycStatus.NOT_STARTED : customer.kycStatus();
+        String kycNote = kyc == KycStatus.APPROVED ? "KYC: verified" : "KYC: NOT VERIFIED (" + kyc + ") - higher risk";
+
+        //same ticket as before (system ticket, no customer), but it is now created by ticket-service
+        SystemTicketRequest ticketRequest = new SystemTicketRequest(
+                rule.getName() + " - " + customer.fullName(),
+                "Rule: " + rule.getName() + " (" + rule.getCode() + ")
+"
+                        + "Customer: " + customer.fullName() + " (id " + customer.id() + ")
+"
+                        + "Reason: " + detail + "
+"
+                        + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
+                        + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")"
+                        + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
+                        + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")
+"
+                        + kycNote,
+                rule.getAlertCategory(),
+                rule.getAlertPriority(),
+                "FRAUD_ALERT",
+                "Alert: " + rule.getName() + " (" + rule.getAlertCategory().replace('_', ' ') + ")");
+
+        Long ticketId = ticketClient.createSystemTicket(ticketRequest);
+        alertRepository.attachTicket(key, ticketId);
+
+        log.warn("Fraud rule {} fired for customer {}: opened {} ticket #{}",
+                rule.getCode(), customer.id(), rule.getAlertCategory(), ticketId);
+    }
+
+    private String dedupKey(FraudRule rule, BankTransaction t) {
+        return switch (rule.getRuleType()) {
+            case LARGE_AMOUNT, RISKY_COUNTRY -> rule.getCode() + ":tx:" + t.getId();
+            case STRUCTURING, VELOCITY -> {
+                long windowSeconds = rule.getWindowMinutes() * 60L;
+                long bucket = t.getOccurredAt().toEpochSecond(ZoneOffset.UTC) / windowSeconds;
+                yield rule.getCode() + ":user:" + t.getCustomerId() + ":" + bucket;
+            }
+        };
+    }
+
+}
