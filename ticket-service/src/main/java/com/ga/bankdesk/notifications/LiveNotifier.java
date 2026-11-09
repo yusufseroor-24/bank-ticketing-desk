@@ -1,7 +1,7 @@
 package com.ga.bankdesk.notifications;
 
 import com.ga.bankdesk.client.IdentityClient;
-import com.ga.bankdesk.client.NotificationClient;
+import com.ga.bankdesk.kafka.NotificationProducer;
 import com.ga.bankdesk.dto.LiveNotificationRequest;
 import com.ga.bankdesk.dto.UserSummary;
 import com.ga.bankdesk.enums.Role;
@@ -26,7 +26,7 @@ import java.util.Set;
 public class LiveNotifier {
 
     private final IdentityClient identityClient;
-    private final NotificationClient notificationClient;
+    private final NotificationProducer notificationProducer;
     private final AgentCategoryRepository agentCategoryRepository;
 
     //the assigned agent or everyone assigned to category
@@ -53,7 +53,7 @@ public class LiveNotifier {
     //Sends to every id except exceptUserId
     public void send(Set<Long> userIds, Long exceptUserId, Long ticketId, String title, String eventType, String message) {
         LiveNotificationRequest request = new LiveNotificationRequest(userIds, exceptUserId, ticketId, title, eventType, message);
-        afterCommit(() -> notificationClient.live(request));
+        afterCommit(() -> notificationProducer.live(request));
     }
 
     //If a database transaction is running, wait until it is committed
