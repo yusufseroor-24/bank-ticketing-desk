@@ -1,4 +1,4 @@
-package com.ga.bankdesk.ai_service;
+package com.ga.bankdesk;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

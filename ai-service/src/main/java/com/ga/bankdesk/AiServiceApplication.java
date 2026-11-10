@@ -1,4 +1,4 @@
-package com.ga.bankdesk.ai_service;
+package com.ga.bankdesk;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
