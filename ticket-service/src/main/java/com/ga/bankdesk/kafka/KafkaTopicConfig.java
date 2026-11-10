@@ -17,4 +17,9 @@ public class KafkaTopicConfig {
     public NewTopic liveEventsTopic() {
         return TopicBuilder.name(NotificationProducer.LIVE_TOPIC).partitions(3).replicas(1).build();
     }
+
+    @Bean
+    public NewTopic ticketEventsTopic() {
+        return TopicBuilder.name(TicketEventProducer.TOPIC).partitions(3).replicas(1).build();
+    }
 }

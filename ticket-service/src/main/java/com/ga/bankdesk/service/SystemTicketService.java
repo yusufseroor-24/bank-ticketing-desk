@@ -21,6 +21,7 @@ import java.util.Set;
  * Opens a ticket on behalf of the system
  * ticket-creation part of FraudDetectionService.raiseAlert
  */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -40,7 +41,7 @@ public class SystemTicketService {
         auto.setTitle(request.title());
         auto.setDescription(request.description());
         auto.setCategory(category);
-        auto.setCustomerId(null);
+        auto.setCustomerId(request.customerId());
         auto.setCreatedById(null); //created by the system
         auto.setSource(SourceOfTicket.SYSTEM);
         auto.setStatus(TicketStatus.OPEN);

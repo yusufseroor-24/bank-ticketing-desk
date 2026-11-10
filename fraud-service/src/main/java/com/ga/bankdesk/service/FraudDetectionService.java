@@ -4,8 +4,8 @@ import com.ga.bankdesk.enums.KycStatus;
 import com.ga.bankdesk.enums.TransactionType;
 import com.ga.bankdesk.model.*;
 import com.ga.bankdesk.client.IdentityClient;
-import com.ga.bankdesk.client.TicketClient;
-import com.ga.bankdesk.dto.SystemTicketRequest;
+import com.ga.bankdesk.kafka.FraudEventProducer;
+import com.ga.bankdesk.event.FraudAlertEvent;
 import com.ga.bankdesk.dto.UserSummary;
 import com.ga.bankdesk.repository.*;
 import lombok.extern.slf4j.Slf4j;
@@ -40,18 +40,18 @@ public class FraudDetectionService {
     private final FraudAlertRepository alertRepository;
     private final BankTransactionRepository transactionRepository;
     private final IdentityClient identityClient;
-    private final TicketClient ticketClient;
+    private final FraudEventProducer fraudEventProducer;
     //execute code inside a transaction programmatically (either all successful or fails)
     private final TransactionTemplate tx;
 
     public FraudDetectionService(FraudRuleRepository ruleRepository, FraudAlertRepository alertRepository,
                                  BankTransactionRepository transactionRepository, IdentityClient identityClient,
-                                 TicketClient ticketClient, PlatformTransactionManager transactionManager) {
+                                 FraudEventProducer fraudEventProducer, PlatformTransactionManager transactionManager) {
         this.ruleRepository = ruleRepository;
         this.alertRepository = alertRepository;
         this.transactionRepository = transactionRepository;
         this.identityClient = identityClient;
-        this.ticketClient = ticketClient;
+        this.fraudEventProducer = fraudEventProducer;
         this.tx = new TransactionTemplate(transactionManager);
         this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -150,27 +150,26 @@ public class FraudDetectionService {
         KycStatus kyc = customer.kycStatus() == null ? KycStatus.NOT_STARTED : customer.kycStatus();
         String kycNote = kyc == KycStatus.APPROVED ? "KYC: verified" : "KYC: NOT VERIFIED (" + kyc + ") - higher risk";
 
-        //same ticket as before (system ticket, no customer), but it is now created by ticket-service
-        SystemTicketRequest ticketRequest = new SystemTicketRequest(
+        String description = "Rule: " + rule.getName() + " (" + rule.getCode() + ")\n"
+                + "Customer: " + customer.fullName() + " (id " + customer.id() + ")\n"
+                + "Reason: " + detail + "\n"
+                + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
+                + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")\n"
+                + kycNote;
+
+        //ticket-service reacts to this event and opens the investigation ticket
+        fraudEventProducer.publish(new FraudAlertEvent(
+                key,
+                customer.id(),
+                rule.getCode(),
                 rule.getName() + " - " + customer.fullName(),
-                "Rule: " + rule.getName() + " (" + rule.getCode() + ")\n"
-                        + "Customer: " + customer.fullName() + " (id " + customer.id() + ")\n"
-                        + "Reason: " + detail + "\n"
-                        + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
-                        + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")"
-                        + "Triggered by transaction #" + trigger.getId() + ": " + trigger.getType() + " "
-                        + trigger.getAmount() + " " + trigger.getCurrency() + " (" + trigger.getCountry() + ")\n"
-                        + kycNote,
+                description,
                 rule.getAlertCategory(),
                 rule.getAlertPriority(),
-                "FRAUD_ALERT",
-                "Alert: " + rule.getName() + " (" + rule.getAlertCategory().replace('_', ' ') + ")");
+                "Alert: " + rule.getName() + " (" + rule.getAlertCategory().replace('_', ' ') + ")"));
 
-        Long ticketId = ticketClient.createSystemTicket(ticketRequest);
-        alertRepository.attachTicket(key, ticketId);
-
-        log.warn("Fraud rule {} fired for customer {}: opened {} ticket #{}",
-                rule.getCode(), customer.id(), rule.getAlertCategory(), ticketId);
+        log.warn("Fraud rule {} fired for customer {}: alert published for {} ticket",
+                rule.getCode(), customer.id(), rule.getAlertCategory());
     }
 
     private String dedupKey(FraudRule rule, BankTransaction t) {
