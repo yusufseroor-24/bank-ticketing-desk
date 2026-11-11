@@ -13,5 +13,6 @@
 		<module>fraud-service</module>
 		<module>notification-service</module>
 		<module>ai-service</module>
+		<module>api-gateway</module>
 	</modules>
 </project>
