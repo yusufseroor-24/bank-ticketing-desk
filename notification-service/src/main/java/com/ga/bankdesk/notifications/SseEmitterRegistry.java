@@ -1,11 +1,10 @@
 package com.ga.bankdesk.notifications;
 
-
-
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -19,14 +18,19 @@ public class SseEmitterRegistry {
     //maps a user's ID to their currently open connection (if any)
     //ConcurrentHashMap - a safer way to handle multiple requests at the same time
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    //connected users that are admins (they also receive the Kafka system events)
+    private final Set<Long> adminIds = ConcurrentHashMap.newKeySet();
 
-    public SseEmitter register(Long userId){
+    public SseEmitter register(Long userId, boolean admin){
         SseEmitter emitter = new SseEmitter(0L); //stays open all the time
         emitters.put(userId, emitter);
+        if (admin) {
+            adminIds.add(userId);
+        }
 
-        emitter.onCompletion(() -> emitters.remove(userId, emitter));
-        emitter.onTimeout(() -> emitters.remove(userId, emitter));
-        emitter.onError(e -> emitters.remove(userId, emitter));
+        emitter.onCompletion(() -> remove(userId, emitter));
+        emitter.onTimeout(() -> remove(userId, emitter));
+        emitter.onError(e -> remove(userId, emitter));
 
         return emitter;
     }
@@ -40,7 +44,20 @@ public class SseEmitterRegistry {
         try{
             emitter.send(SseEmitter.event().name(eventName).data(data));
         } catch (Exception e){
-            emitters.remove(userId, emitter);
+            remove(userId, emitter);
+        }
+    }
+
+    public void sendToAdmins(String eventName, Object data){
+        for (Long adminId : adminIds) {
+            sendToUser(adminId, eventName, data);
+        }
+    }
+
+    //only removes the user if this is still their current connection
+    private void remove(Long userId, SseEmitter emitter){
+        if (emitters.remove(userId, emitter)) {
+            adminIds.remove(userId);
         }
     }
 }

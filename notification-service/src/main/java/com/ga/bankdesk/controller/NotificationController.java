@@ -1,5 +1,6 @@
 package com.ga.bankdesk.controller;
 
+import com.ga.bankdesk.enums.Role;
 import com.ga.bankdesk.notifications.SseEmitterRegistry;
 import com.ga.bankdesk.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,6 @@ public class NotificationController {
 
     @GetMapping(value = "/subscribe", produces = "text/event-stream") //SSE content type
     public SseEmitter subscribe(@AuthenticationPrincipal CurrentUser currentUser){
-        return emitterRegistry.register(currentUser.getId());
+        return emitterRegistry.register(currentUser.getId(), currentUser.getRole() == Role.ADMIN);
     }
 }
