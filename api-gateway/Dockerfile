@@ -1,7 +1,9 @@
 FROM eclipse-temurin:17-jdk-jammy
 
 VOLUME /tmp
+
 EXPOSE 8080
+
 RUN mkdir -p /app/
 
 # copy the jar built by: mvn clean package -Dmaven.test.skip=true
