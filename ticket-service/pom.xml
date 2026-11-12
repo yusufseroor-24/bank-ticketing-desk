@@ -101,12 +101,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-kafka</artifactId>
 		</dependency>
-		<!-- health endpoint -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-
 		<!-- ===== Cucumber + API testing (test scope only) ===== -->
 		<dependency>
 			<groupId>io.cucumber</groupId>
