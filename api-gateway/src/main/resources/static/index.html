@@ -532,7 +532,7 @@ async function bootApp() {
   // coming back from the identity verification page (?kyc=done)
   if (new URLSearchParams(window.location.search).get('kyc') && currentUser.role === 'CUSTOMER') {
     window.history.replaceState({}, '', window.location.pathname);
-    defaultView = 'kyc';
+    defaultView = 'profile';
     toast('Thanks! We are checking your verification.');
   }
   renderView(defaultView);
@@ -605,7 +605,6 @@ function buildNav() {
   if (currentUser.role === 'CUSTOMER') {
     links.push(['my-tickets', 'My tickets']);
     links.push(['new-ticket', 'New ticket']);
-    links.push(['kyc', 'Identity verification']);
   }
   if (isStaffRole(currentUser.role)) {
     links.push(['queue', 'Ticket queue']);
@@ -674,7 +673,6 @@ function renderView(view, param) {
     'admin-fraud': renderAdminFraud,
     'admin-audit': renderAdminAudit,
     'admin-events': renderAdminEvents,
-    'kyc': renderKyc,
     'notifications': renderNotifications,
     'profile': renderProfile,
   };
@@ -762,7 +760,7 @@ async function renderMyTickets() {
 function kycBanner() {
   if (!currentUser || currentUser.role !== 'CUSTOMER' || currentUser.kycStatus === 'APPROVED') return '';
   return `<div class="banner">Your identity is not verified yet. Until it is, you can only open <b>KYC review</b> tickets.
-    <button class="link-btn" onclick="renderView('kyc')">Verify now</button></div>`;
+    <button class="link-btn" onclick="renderView('profile')">Verify now</button></div>`;
 }
 
 function renderNewTicket() {
@@ -1210,26 +1208,28 @@ const KYC_TEXT = {
   ABANDONED: ['Not finished', 'You did not finish the verification. You can start again.'],
   EXPIRED: ['Expired', 'Your verification session expired. Please start again.'],
 };
-async function renderKyc() {
-  const main = document.getElementById('main-content');
+async function loadKycCard() {
+  const box = document.getElementById('kyc-card');
+  if (!box) return;
   try {
-    const s = await api('/api/kyc/status');
-    currentUser.kycStatus = s.status;
-    const [label, text] = KYC_TEXT[s.status] || [s.status, ''];
-    const canStart = s.status !== 'APPROVED' && s.status !== 'IN_REVIEW';
-    main.innerHTML = `
-      <div class="section-head"><div><h2>Identity verification</h2>
-        <p>Banking rules require us to verify who you are before we open tickets for you.</p></div></div>
-      <div class="card" style="max-width:520px">
-        <div id="kyc-msg"></div>
-        <h3>Status: <span class="pill ${s.status === 'APPROVED' ? 'sla-ok' : (s.status === 'DECLINED' || s.status === 'EXPIRED' ? 'sla-breach' : 'sla-warn')}">${esc(label)}</span></h3>
-        <p>${esc(text)}</p>
-        ${s.verifiedAt ? `<p class="hint">Verified on ${fmtDate(s.verifiedAt)}</p>` : ''}
-        ${canStart ? `<div class="btn-row"><button id="kyc-btn" onclick="doStartKyc()">${s.status === 'NOT_STARTED' ? 'Start verification' : 'Start again'}</button></div>
-          <p class="drop-note">You will be taken to our verification partner and brought back here when you finish.</p>` : ''}
-        <div class="btn-row" style="margin-top:12px"><button class="secondary" onclick="renderKyc()">Refresh status</button></div>
-      </div>`;
-  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
+    const st = await api('/api/kyc/status');
+    currentUser.kycStatus = st.status;
+    const [label, text] = KYC_TEXT[st.status] || [st.status, ''];
+    const canStart = st.status !== 'APPROVED' && st.status !== 'IN_REVIEW';
+    const box2 = document.getElementById('kyc-card');
+    if (!box2) return;                       // the user left the profile page meanwhile
+    box2.innerHTML = `
+      <h3>Identity verification</h3>
+      <div id="kyc-msg"></div>
+      <p>Status: <span class="pill ${st.status === 'APPROVED' ? 'sla-ok' : (st.status === 'DECLINED' || st.status === 'EXPIRED' ? 'sla-breach' : 'sla-warn')}">${esc(label)}</span></p>
+      <p>${esc(text)}</p>
+      ${st.verifiedAt ? `<p class="hint">Verified on ${fmtDate(st.verifiedAt)}</p>` : ''}
+      <div class="btn-row">
+        ${canStart ? `<button id="kyc-btn" onclick="doStartKyc()">${st.status === 'NOT_STARTED' ? 'Verify now' : 'Verify again'}</button>` : ''}
+        <button class="secondary" onclick="loadKycCard()">Refresh status</button>
+      </div>
+      ${canStart ? '<p class="drop-note">You will be taken to our verification partner and brought back here when you finish.</p>' : ''}`;
+  } catch (err) { box.innerHTML = `<h3>Identity verification</h3><p class="msg error">${esc(err.message)}</p>`; }
 }
 async function doStartKyc() {
   const btn = document.getElementById('kyc-btn');
@@ -1238,7 +1238,7 @@ async function doStartKyc() {
     const r = await api('/api/kyc/start', { method: 'POST' });
     window.location.href = r.verificationUrl;
   } catch (err) {
-    btn.disabled = false; btn.textContent = 'Start verification';
+    btn.disabled = false; btn.textContent = 'Verify now';
     document.getElementById('kyc-msg').innerHTML = `<div class="msg error">${esc(err.message)}</div>`;
   }
 }
@@ -1708,7 +1708,9 @@ function renderProfile() {
         <div class="field"><label>New password (min 8 characters)</label><input type="password" id="new-password" minlength="8"></div>
         <button onclick="doChangePassword()">Change password</button>
       </div>
-    </div>`;
+    </div>
+    ${currentUser.role === 'CUSTOMER' ? '<div class="card" id="kyc-card" style="margin-top:16px;max-width:520px"><h3>Identity verification</h3><p class="empty">Loading…</p></div>' : ''}`;
+  if (currentUser.role === 'CUSTOMER') loadKycCard();
 }
 async function previewProfilePic(input) {
   const f = input.files[0];
