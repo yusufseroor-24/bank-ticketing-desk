@@ -6,6 +6,7 @@ import com.ga.bankdesk.repository.CategoryRepository;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -62,6 +63,7 @@ public class ClaimSteps {
     @When("all agents try to claim it at the same moment")
     public void agentsRace() throws Exception {
         List<String> agents = state.getAgentTokens();
+        Long ticketId = state.getTicketId();
         ExecutorService pool = Executors.newFixedThreadPool(agents.size());
         CountDownLatch ready = new CountDownLatch(agents.size());
         CountDownLatch go = new CountDownLatch(1);
@@ -70,7 +72,7 @@ public class ClaimSteps {
             results.add(pool.submit(() -> {
                 ready.countDown();
                 go.await();
-                return claim(agentToken).statusCode();
+                return claim(agentToken, ticketId).statusCode();
             }));
         }
         ready.await();
@@ -84,7 +86,7 @@ public class ClaimSteps {
 
     @When("the agent tries to claim the ticket")
     public void agentClaims() {
-        state.setResponse(claim(state.getAgentTokens().get(0)));
+        state.setResponse(claim(state.getAgentTokens().get(0), state.getTicketId()));
     }
 
     @Then("exactly {int} agent wins the ticket")
@@ -100,8 +102,9 @@ public class ClaimSteps {
         assertTrue(losers.stream().allMatch(s -> s == expected), "Statuses: " + state.getClaimStatuses());
     }
 
-    private Response claim(String agentToken) {
-        return state.requestWith(agentToken).when().put("/api/tickets/" + state.getTicketId() + "/claim");
+    private Response claim(String agentToken, Long ticketId) {
+        return RestAssured.given().header("Authorization", "Bearer " + agentToken)
+                .when().put("/api/tickets/" + ticketId + "/claim");
     }
 
     private void allowAgent(long agentId, String category) {

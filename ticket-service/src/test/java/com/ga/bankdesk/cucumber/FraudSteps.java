@@ -50,9 +50,11 @@ public class FraudSteps {
 
     @Then("the system opens exactly one {string} ticket with priority {string} for it")
     public void oneSystemTicket(String category, String priority) {
-        await().atMost(Duration.ofSeconds(20)).until(() -> ticketsTitled(state.getTitle()) >= 1);
+        String title = state.getTitle();
+        await().atMost(Duration.ofSeconds(20)).until(() -> ticketsTitled(title) >= 1);
         List<Ticket> found = ticketRepository.findAll().stream()
-                .filter(t -> state.getTitle().equals(t.getTitle())).toList();
+                .filter(t -> title.equals(t.getTitle()))
+                .toList();
         assertEquals(1, found.size(), "Tickets found: " + found.size());
         assertEquals(category, found.get(0).getCategory().getName());
         assertEquals(priority, found.get(0).getPriority().name());
@@ -61,9 +63,10 @@ public class FraudSteps {
 
     @Then("fraud-service is told which ticket was opened")
     public void fraudToldTicket() {
+        String dedupKey = state.getDedupKey();
         await().atMost(Duration.ofSeconds(20))
                 .until(() -> probe.ticketEvents.stream()
-                        .anyMatch(m -> m.contains(state.getDedupKey())));
+                        .anyMatch(m -> m.contains(dedupKey)));
     }
 
     private void publishAlert(String key, String title, long customerId) {

@@ -27,7 +27,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         //service-to-service calls (protected by the X-Internal-Key header)
                         .requestMatchers("/internal/**").hasRole("INTERNAL")
                         .anyRequest().authenticated()); //everything else needs Jwt
