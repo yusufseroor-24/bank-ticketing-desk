@@ -14,13 +14,16 @@ import java.util.List;
 @Getter
 @Setter
 public class ScenarioState {
-    private String token;                 // JWT of the user in this scenario
-    private Response response;            // the last response we got back
-    private Long ticketId;                // the ticket used in this scenario
-    private String title;                 // title of the ticket / alert used in this scenario
-    private String dedupKey;              // id of the fraud alert sent in this scenario
-    private List<String> agentTokens = new ArrayList<>();   // agents taking part in a claim
-    private List<Integer> claimStatuses = new ArrayList<>(); // result of each agent's claim
+    private String token;
+    private Response response;
+    private Long ticketId;
+    private String title;
+    //id of the fraud alert sent in this scenario
+    private String dedupKey;
+    //agents taking part in a claim
+    private List<String> agentTokens = new ArrayList<>();
+    //result of each agent's claim
+    private List<Integer> claimStatuses = new ArrayList<>();
 
     public RequestSpecification request() {
         return requestWith(token);

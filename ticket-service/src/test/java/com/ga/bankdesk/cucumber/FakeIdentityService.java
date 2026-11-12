@@ -64,7 +64,7 @@ public final class FakeIdentityService {
                             .collect(Collectors.joining(","));
                     reply(ex, 200, "[" + list + "]");
                 } else {
-                    reply(ex, 200, "[]"); //role=ADMIN -> there are no admins in the test world
+                    reply(ex, 200, "[]");
                 }
             } else if (path.equals("/internal/users/by-email")) {
                 String email = query.get("email");
