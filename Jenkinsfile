@@ -11,9 +11,9 @@ pipeline {
     }
 
     environment {
-        AWS_REGION     = 'us-east-1'
-        AWS_ACCOUNT_ID = '123456789012'
-        EC2_HOST       = 'ec2-user@YOUR_EC2_PUBLIC_IP'
+        AWS_REGION     = 'eu-north-1'
+        AWS_ACCOUNT_ID = '113420227617'
+        EC2_HOST       = 'ec2-user@13.61.217.119'
 
         REGISTRY  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         IMAGE_TAG = "${BUILD_NUMBER}"
