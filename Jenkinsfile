@@ -85,9 +85,10 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                     sh '''
-                        ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no $EC2_HOST \
+                        scp -o StrictHostKeyChecking=no -i "$SSH_KEY" docker-compose.prod.yml $EC2_HOST:~/bankdesk/docker-compose.prod.yml
+                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" $EC2_HOST \
                           "cd ~/bankdesk && \
-                           export REGISTRY=$REGISTRY IMAGE_TAG=$IMAGE_TAG && \
+                           export IMAGE_TAG=$IMAGE_TAG && \
                            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REGISTRY && \
                            docker compose -f docker-compose.prod.yml pull && \
                            docker compose -f docker-compose.prod.yml up -d && \
