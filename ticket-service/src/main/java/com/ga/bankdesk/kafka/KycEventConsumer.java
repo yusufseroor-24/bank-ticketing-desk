@@ -27,7 +27,7 @@ public class KycEventConsumer {
             properties = "spring.json.value.default.type=com.ga.bankdesk.event.KycResultEvent")
     public void onKycResult(KycResultEvent e) {
         log.info("CONSUMER received KYC result {} for user {} (session {})", e.status(), e.userId(), e.sessionId());
-        if (e.status() == KycStatus.IN_REVIEW) {
+        if (e.status() != KycStatus.IN_REVIEW) {
             return;
         }
         //one ticket per KYC session
