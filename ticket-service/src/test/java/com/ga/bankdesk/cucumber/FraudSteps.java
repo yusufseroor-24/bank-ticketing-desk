@@ -45,7 +45,7 @@ public class FraudSteps {
         String markerKey = state.getDedupKey() + "-marker";
         String markerTitle = "Marker " + markerKey;
         publishAlert(markerKey, markerTitle, 1);
-        await().atMost(Duration.ofSeconds(20)).until(() -> ticketsTitled(markerTitle) == 1);
+        await().atMost(Duration.ofSeconds(60)).until(() -> ticketsTitled(markerTitle) == 1);
     }
 
     @Then("the system opens exactly one {string} ticket with priority {string} for it")

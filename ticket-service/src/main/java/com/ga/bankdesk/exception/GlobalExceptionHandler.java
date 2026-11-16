@@ -3,6 +3,7 @@ package com.ga.bankdesk.exception;
 import com.ga.bankdesk.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +73,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException exception, HttpServletRequest request){
         return buildResponse(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "You don't have permission to perform this action", request);
+    }
+
+    //two users changed the same record at the same time (409)
+    @ExceptionHandler(ConcurrencyFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(ConcurrencyFailureException exception, HttpServletRequest request){
+        log.warn("Concurrency conflict on {}: {}", request.getRequestURI(), exception.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, "CONCURRENT_MODIFICATION",
+                "This record was changed by someone else. Please refresh and try again", request);
     }
 
 
