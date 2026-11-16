@@ -1,5 +1,3 @@
-<img width="2296" height="1771" alt="BankDesk" src="https://github.com/user-attachments/assets/f2ddb790-437c-42d1-b78a-90266838c8e9" />
-<img width="2296" height="1771" alt="BankDesk" src="https://github.com/user-attachments/assets/76efcdb1-d624-472a-a650-4c88fd9d6dec" />
 **BankDesk Project**
 -
 **Project Title:**
