@@ -57,4 +57,18 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
     @Modifying
     @Query("UPDATE Ticket t SET t.slaNotifyLevel = :level WHERE t.id = :id AND t.slaNotifyLevel < :level")
     int raiseSlaNotifyLevel(@Param("id") Long id, @Param("level") int level);
+
+    //(admin only) all soft-deleted tickets, newest deletion first
+    @Query(value = "SELECT * FROM tickets WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC", nativeQuery = true)
+    List<Ticket> findAllDeleted();
+
+    //hide a ticket (returns 1 if hidden, 0 if it doesn't exist or is already hidden)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE tickets SET deleted_at = :now, version = version + 1 WHERE id = :ticketId AND deleted_at IS NULL", nativeQuery = true)
+    int softDelete(@Param("ticketId") Long ticketId, @Param("now") LocalDateTime now);
+
+    //bring a ticket back (returns 1 if restored, 0 if it doesn't exist or isn't deleted)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE tickets SET deleted_at = NULL, version = version + 1 WHERE id = :ticketId AND deleted_at IS NOT NULL", nativeQuery = true)
+    int restore(@Param("ticketId") Long ticketId);
 }

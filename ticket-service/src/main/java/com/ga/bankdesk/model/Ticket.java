@@ -6,6 +6,7 @@ import com.ga.bankdesk.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "tickets")
+@SQLRestriction("deleted_at IS NULL")
 public class Ticket {
 
     @Id
@@ -83,6 +85,10 @@ public class Ticket {
     @Column
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    //null = active ticket, a time = soft deleted by an admin
+    @Column
+    private LocalDateTime deletedAt;
 
     @Version //track version of the entity
     @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0") //default 0 for existing rows

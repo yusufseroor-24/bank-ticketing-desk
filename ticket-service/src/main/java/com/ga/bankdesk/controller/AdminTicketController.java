@@ -1,11 +1,6 @@
 package com.ga.bankdesk.controller;
 
-import com.ga.bankdesk.dto.AssignCategoriesRequest;
-import com.ga.bankdesk.dto.CategoryRequest;
-import com.ga.bankdesk.dto.ReassignTicketRequest;
-import com.ga.bankdesk.dto.ReopenTicketRequest;
-import com.ga.bankdesk.dto.TicketCreationResponse;
-import com.ga.bankdesk.dto.UpdateSlaPolicyRequest;
+import com.ga.bankdesk.dto.*;
 import com.ga.bankdesk.model.Category;
 import com.ga.bankdesk.model.SlaPolicy;
 import com.ga.bankdesk.security.CurrentUser;
@@ -70,5 +65,22 @@ public class AdminTicketController {
     @PutMapping("/sla-policies/{policyId}")
     public SlaPolicy updateSlaPolicy(@PathVariable Long policyId, @Valid @RequestBody UpdateSlaPolicyRequest request){
         return slaService.updatePolicy(policyId, request.firstResponseMinutes(), request.resolutionMinutes());
+    }
+
+    @GetMapping("/tickets/deleted")
+    public List<DeletedTicketResponse> listDeletedTickets(){
+        return adminService.listDeletedTickets();
+    }
+
+    @PutMapping("/tickets/{ticketId}/soft-delete")
+    public ResponseEntity<Void> softDeleteTicket(@AuthenticationPrincipal CurrentUser currentUser, @PathVariable Long ticketId){
+        adminService.softDeleteTicket(currentUser, ticketId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/tickets/{ticketId}/restore")
+    public ResponseEntity<Void> restoreTicket(@AuthenticationPrincipal CurrentUser currentUser, @PathVariable Long ticketId){
+        adminService.restoreTicket(currentUser, ticketId);
+        return ResponseEntity.noContent().build();
     }
 }
