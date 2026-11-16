@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10243E">
+<meta name="color-scheme" content="light">
 <title>BankDesk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -217,6 +219,62 @@
   .seed-buttons{display:flex;flex-direction:column;gap:6px;}
   .seed-buttons button{width:100%;text-align:left;padding:.45em .7em;font-size:13px;}
   .seed-buttons button span{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:400;}
+
+  /* ---------- Delete / restore tickets page ---------- */
+  .soft-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start;}
+  .soft-grid .card{margin-bottom:0;}
+  .pill.deleted{background:#F6E4E1;color:var(--danger);margin-left:6px;vertical-align:middle;}
+  select{text-overflow:ellipsis;}
+
+  /* ---------- Responsive and cross-browser ---------- */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  img,video{max-width:100%;}
+  button,.nav-link{touch-action:manipulation;}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+  main{min-width:0;}
+  .topbar,.nav-overlay{display:none;}
+  @supports (height:100dvh){#auth-screen,#app-screen{min-height:100dvh;}}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important;}}
+
+  /* tablets and below: the sidebar becomes a slide-in menu opened from a top bar */
+  @media (max-width:900px){
+    #app-screen{display:block;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;
+      background:var(--ink);color:#fff;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));}
+    .topbar .brand{font-family:"Source Serif 4",Georgia,serif;font-size:19px;font-weight:700;}
+    .topbar button{background:none;border:1px solid #2C4568;color:#fff;padding:.45em .9em;min-height:40px;}
+    .topbar button:hover{background:#1C3657;}
+    nav{position:fixed;top:0;left:0;bottom:0;width:280px;max-width:85vw;z-index:60;
+      transform:translateX(-105%);transition:transform .2s ease;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      padding-top:calc(26px + env(safe-area-inset-top));padding-bottom:calc(26px + env(safe-area-inset-bottom));}
+    body.nav-open nav{transform:translateX(0);}
+    .nav-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(16,36,62,.55);z-index:55;}
+    body.nav-open .nav-overlay{display:block;}
+    body.nav-open{overflow:hidden;}
+    nav button.nav-link{padding:.8em .5em;}
+    main{padding:24px 20px;max-width:none;}
+    .two-col{grid-template-columns:1fr;}
+    main{overflow-x:auto;}   /* a wide table scrolls sideways instead of breaking the layout */
+  }
+
+  /* phones */
+  @media (max-width:640px){
+    input,select,textarea{font-size:16px;}   /* stops iOS Safari zooming the page when a field is focused */
+    button{min-height:40px;}
+    main{padding:18px 14px;}
+    h2{font-size:22px;}
+    #auth-screen{padding:16px;align-items:flex-start;}
+    .ledger-card{padding:26px 20px;}
+    .card{padding:16px;}
+    .card[style*="max-width"]{max-width:none !important;}
+    table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+    th,td{padding:9px 10px;}
+    .toast{left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));max-width:none;}
+    .attachment-row{flex-wrap:wrap;gap:6px;}
+    .btn-row button{flex:1 1 auto;}
+    .notif{flex-direction:column;gap:6px;}
+    .soft-grid{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
@@ -288,6 +346,11 @@
 
 <!-- ============ MAIN APP ============ -->
 <div id="app-screen" class="hidden">
+  <header class="topbar">
+    <span class="brand">BankDesk</span>
+    <button type="button" id="nav-toggle" aria-label="Open menu" aria-expanded="false" onclick="toggleNav()">&#9776; Menu</button>
+  </header>
+  <div class="nav-overlay" onclick="closeNav()"></div>
   <nav>
     <div class="brand">BankDesk</div>
     <div class="me">
@@ -600,6 +663,23 @@ function imageToSmallDataUrl(file) {
   });
 }
 
+/* ============================================================
+   MOBILE MENU (the sidebar slides in under 900px)
+   ============================================================ */
+function toggleNav() {
+  const open = !document.body.classList.contains('nav-open');
+  document.body.classList.toggle('nav-open', open);
+  const b = document.getElementById('nav-toggle');
+  if (b) b.setAttribute('aria-expanded', String(open));
+}
+function closeNav() {
+  document.body.classList.remove('nav-open');
+  const b = document.getElementById('nav-toggle');
+  if (b) b.setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+window.addEventListener('resize', () => { if (window.innerWidth > 900) closeNav(); });
+
 function buildNav() {
   const links = [];
   if (currentUser.role === 'CUSTOMER') {
@@ -612,6 +692,7 @@ function buildNav() {
   }
   if (currentUser.role === 'ADMIN') {
     links.push(['admin-users', 'Users']);
+    links.push(['admin-tickets', 'Delete / restore tickets']);
     links.push(['admin-categories', 'Categories']);
     links.push(['admin-sla', 'SLA policies']);
     links.push(['admin-reports', 'SLA reports']);
@@ -654,6 +735,7 @@ function markActiveNav(view) {
 }
 
 function renderView(view, param) {
+  closeNav();
   currentView = view;
   currentParam = param ?? null;
   markActiveNav(view.split(':')[0]);
@@ -667,6 +749,7 @@ function renderView(view, param) {
     'queue': renderQueue,
     'ticket-detail': () => renderTicketDetail(param),
     'admin-users': renderAdminUsers,
+    'admin-tickets': renderAdminTickets,
     'admin-categories': renderAdminCategories,
     'admin-sla': renderAdminSla,
     'admin-reports': renderAdminReports,
@@ -1401,6 +1484,68 @@ async function doAssignCategories() {
   try {
     await api(`/api/admin/users/${agentId}/categories`, { method: 'POST', body: JSON.stringify({ categoryIds }) });
     toast('Categories assigned.');
+  } catch (err) { toast(err.message, true); }
+}
+
+/* ============================================================
+   ADMIN: DELETE / RESTORE TICKETS (soft delete)
+   active tickets  GET /api/tickets
+   deleted tickets GET /api/admin/tickets/deleted
+   soft delete     PUT /api/admin/tickets/{id}/soft-delete
+   restore         PUT /api/admin/tickets/{id}/restore
+   ============================================================ */
+async function renderAdminTickets() {
+  const main = document.getElementById('main-content');
+  try {
+    const [activePage, deleted] = await Promise.all([
+      api('/api/tickets?' + new URLSearchParams({ page: 0, size: 100 }).toString()),
+      api('/api/admin/tickets/deleted')
+    ]);
+    const active = extractPage(activePage);
+    const activeOption = t => `<option value="${t.id}">#${t.id} · ${esc(t.title)} (${esc(String(t.status).replaceAll('_', ' '))})</option>`;
+    const deletedOption = t => `<option value="${t.id}">#${t.id} · ${esc(t.title)} (deleted ${esc(fmtDate(t.deletedAt))})</option>`;
+    main.innerHTML = `
+      <div class="section-head"><div><h2>Delete / restore tickets</h2>
+        <p>A deleted ticket is hidden from customers and agents but stays in the database, so it can be restored.</p></div></div>
+      <div class="soft-grid">
+        <div class="card">
+          <h3>Soft delete a ticket</h3>
+          <div class="field"><label>Pick a ticket</label>
+            <select id="sd-pick"><option value="">Select a ticket…</option>${active.map(activeOption).join('')}</select></div>
+          <div class="field"><label>…or type a ticket ID</label>
+            <input id="sd-id" type="number" min="1" inputmode="numeric" placeholder="e.g. 8"></div>
+          <button class="danger" onclick="doSoftDelete()">Soft delete</button>
+          ${active.length >= 100 ? '<p class="drop-note">Showing the first 100 tickets. Type an ID for any other ticket.</p>' : ''}
+        </div>
+        <div class="card">
+          <h3>Restore a ticket <span class="pill deleted">${deleted.length} deleted</span></h3>
+          ${deleted.length ? `
+            <div class="field"><label>Deleted tickets</label>
+              <select id="rs-pick"><option value="">Select a ticket…</option>${deleted.map(deletedOption).join('')}</select></div>
+            <button class="ok" onclick="doRestore()">Restore</button>`
+          : '<p class="empty">No deleted tickets.</p>'}
+        </div>
+      </div>`;
+  } catch (err) { main.innerHTML = `<p class="msg error">${esc(err.message)}</p>`; }
+}
+async function doSoftDelete() {
+  const typed = document.getElementById('sd-id').value.trim();
+  const id = Number(typed || document.getElementById('sd-pick').value);
+  if (!Number.isInteger(id) || id < 1) { toast('Pick a ticket or type a ticket ID.', true); return; }
+  if (!confirm('Soft delete ticket #' + id + '? It will be hidden from everyone until you restore it.')) return;
+  try {
+    await api(`/api/admin/tickets/${id}/soft-delete`, { method: 'PUT' });
+    toast('Ticket #' + id + ' deleted.');
+    renderAdminTickets();
+  } catch (err) { toast(err.message, true); }
+}
+async function doRestore() {
+  const id = Number(document.getElementById('rs-pick').value);
+  if (!Number.isInteger(id) || id < 1) { toast('Pick a ticket to restore.', true); return; }
+  try {
+    await api(`/api/admin/tickets/${id}/restore`, { method: 'PUT' });
+    toast('Ticket #' + id + ' restored.');
+    renderAdminTickets();
   } catch (err) { toast(err.message, true); }
 }
 
