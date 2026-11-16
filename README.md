@@ -8,7 +8,7 @@ BankDesk is a Spring Boot microservices platform that allows different users in 
 Beyond ticketing, BankDesk adds SLA monitoring with automatic alerts and monthly reports, automatic fraud/AML ticket creation from simulated bank transactions, virus scanning of uploaded files, live notifications over SSE, KYC identity verification, and AI assistance for drafting and triaging tickets.
 
 **Project Purpose:**
-To demonstrate the importance of visibility of ticketing systems using SLA enforcement to provide effective ticket resolution by providing a layered backend that models an operational workflow with business logic, CRUD endpoints, safe handling of simultaneous users, and background processing, while staying extensible to new features. In Unit 4 the application was split into microservices, tested with Cucumber, and deployed to AWS through a Jenkins pipeline.
+To demonstrate the importance of visibility of ticketing systems using SLA enforcement to provide effective ticket resolution by providing a layered backend that models an operational workflow with business logic, CRUD endpoints, safe handling of simultaneous users, and background processing, while staying extensible to new features. The application was split into microservices, tested with Cucumber, and deployed to AWS through a Jenkins pipeline.
 
 **Main Project Features:**
 - JWT authentication with email verification and password management
@@ -19,9 +19,9 @@ To demonstrate the importance of visibility of ticketing systems using SLA enfor
 - Escalation with automatic priority SLA recalculation
 - Comments, file attachments, and ticket history per ticket
 - Notifications via Server Sent Events (SSE) and email
-- Admin functionality: user management (soft delete of users), soft delete and restore of tickets (hidden from everyone, kept in the database), category management, audit log
+- Admin functionality: user management (soft delete of users), soft delete and restore of tickets, category management, audit log
 - Automatic fraud/AML ticket creation
-- KYC identity verification with Didit (staff review ticket only when the result is "in review")
+- KYC identity verification with Didit
 - AI-assisted ticket drafting, triage and summaries
 - CI/CD pipeline and AWS deployment
 
@@ -81,7 +81,7 @@ BankDesk was split from one Spring Boot application into six services that share
 - The database is on RDS PostgreSQL and is private; only the EC2 security group can connect to it.
 - The EC2 server uses an IAM instance role to pull images from ECR and write logs to CloudWatch.
 - **CloudWatch:** every container's logs are sent to AWS CloudWatch (log group `bankdesk`) with Docker's `awslogs` driver, so logs can be read in the AWS console even after a restart.
-- No AWS keys are stored in GitHub. Pipeline credentials live in Jenkins, and application secrets live in a `.env` file on the server.
+- Pipeline credentials live in Jenkins, and application secrets live in a `.env` file on the server.
 
 **HTTPS webhook:** the Didit KYC webhook needs a public HTTPS address, so an ngrok container with a static domain runs next to the gateway.
 
@@ -93,7 +93,7 @@ BankDesk was split from one Spring Boot application into six services that share
 | `http://ec2-13-61-217-119.eu-north-1.compute.amazonaws.com` | The AWS public DNS name of the same server, plain HTTP |
 | `https://olive-replica-nutcase.ngrok-free.dev` | HTTPS through ngrok. Needed for the Didit KYC webhook. On the first visit ngrok shows a warning page; click **Visit Site** |
 
-Open `/simulation.html` on any of them for the Concurrency Lab. The environment is stopped when it is not being demonstrated, to save cost.
+Open `/simulation.html` on any of them for the Concurrency simulation.
 
 Testing (Cucumber)
 -
@@ -106,7 +106,7 @@ General Approach
 BankDesk started as a narrower AML/fraud-detection idea, but was deliberately broadened after feedback that a single-purpose system doesn't demonstrate extensibility well. The final design treats multiple categories for the ticketing system, including AML and fraud, alongside KYC review, card disputes, and other banking operations. The project data structure was visualized using an ERD, which determined the initial point of the project. Generalized tasks and sub tasks were created and tracked using Trello.
 BankDesk was built incrementally, creating branches on git and merging into develop once each feature was tested. Authentication and authorization were built first, since later features need to know who is calling and whether they are allowed to. Then the exceptions were created and edited throughout to allow easier debugging. The ticketing core concepts came next, including the entity models, category status and transitions, ticket assignment, and SLA. Later came additional features like comments, attachments, SSE, search and pagination, audit logging and ticket history, and rate limiting.
 A second phase added operational features: SLA policies and notifications, safe handling of simultaneous requests, asynchronous email, automatic fraud/AML ticket creation, the monthly SLA report, and VirusTotal attachment scanning. Each was again built on its own branch and merged into develop once tested.
-In Unit 4 the application was split into services, covered by Cucumber tests, containerized, and deployed to AWS. The final code was merged into main.
+Lastly, the application was split into services, covered by Cucumber tests, containerized, and deployed to AWS. The final code was merged into main.
 
 Race Condition: Double Claim
 -
@@ -130,24 +130,20 @@ PostgreSQL locks the row while updating. The first request changes 1 row. The se
 - **Fraud alerts:** each alert has a unique `dedup_key` with `ON CONFLICT DO NOTHING`, so many detection threads create one alert and one ticket.
 - **Monthly SLA report:** claimed with `INSERT ... ON CONFLICT`, so two admins cannot generate the same month twice.
 
-**Proof.** The Cucumber scenario where two agents claim the same ticket fires both claims at once and checks that exactly one succeeds and the other gets a 409. You can also watch it live in the Concurrency Lab below.
+**Proof:** The Cucumber scenario where two agents claim the same ticket fires both claims at once and checks that exactly one succeeds and the other gets a 409. You can also watch it live in the Concurrency simulation.
 
 Concurrency Lab (simulation)
 -
 `simulation.html` is an interactive page that showcases how BankDesk handles concurrency. It fires real parallel requests at the running backend and draws each request on a timeline, with a pass/fail verdict. It is simple to use: open `/simulation.html` on the gateway (for example `https://olive-replica-nutcase.ngrok-free.dev/simulation.html` or `http://localhost:8080/simulation.html`), press **Connect demo accounts**, then pick a demo and press its button. It has nine demos: ticket claim race, optimistic locking, one-time reset token, monthly report claim, fraud alert dedup, email thread pool, VirusTotal queue, SLA scheduler and the SSE registry.
 
-**How to run it**
-1. Start the system (`docker compose up --build` locally, or use the deployed URL). Demo accounts are seeded automatically in the `dev` profile.
+**How to run the simulation**
+1. Start the system (`docker compose up --build` locally, or use the deployed URL). Demo accounts are seeded automatically.
 2. Open `http://localhost:8080/simulation.html` (or `https://<your-ngrok-domain>/simulation.html`). Open it through the gateway, not as a local file, because it calls the API on the same address.
 3. Click **Connect demo accounts**. The fields are pre-filled with the seeded admin, agent and customer accounts.
 4. Pick a demo from the left menu and press its button. Each demo explains the problem and the code that solves it, then shows a pass/fail verdict.
 5. For the live stream on the right, tick only the roles you need. Don't use the normal app logged in as the same user at the same time (only one live connection per user is kept).
 
 Notes: the VirusTotal demo needs `VIRUSTOTAL_API_KEY` and takes a few minutes because scans are spaced 16 seconds apart. The email demo sends real emails to the customer's inbox.
-
-Soft Delete (tickets)
--
-An admin can hide a ticket without destroying it. Each ticket has a nullable `deleted_at` column: empty means the ticket is active, a time means it was soft deleted. Deleted tickets disappear from every normal view (customer lists, agent search, SLA alerts) but stay in the database, and an admin can restore them at any time. In the app this is the **Delete / restore tickets** page in the admin menu, which has a dropdown (or ticket ID box) to delete and a list of deleted tickets to restore.
 
 User Stories
 -
@@ -156,7 +152,7 @@ The user stories of the project are provided in the Trello board linked below.
 
 Project ERD
 -
-<img width="2399" height="2304" alt="Project 3" src="https://github.com/user-attachments/assets/fbb21413-8def-4a4e-a286-f19d44f1f9b8" />
+
 
 Project Planning (Trello)
 -
@@ -167,9 +163,9 @@ API Documentation
 -
 All requests go through the gateway: `http://13.61.217.119` (or the HTTPS ngrok address) when deployed, and `http://localhost:8080` when run locally.
 
-**Swagger (interactive API docs).** Each service has its own Swagger UI. The service ports are only opened when running locally with Docker Compose, which is why these addresses use `localhost`. On the deployed server only the gateway is public and the services stay private on purpose, so Swagger is not exposed there.
+**Swagger** Each service has its own Swagger UI. The service ports are only opened when running locally with Docker Compose. On the deployed server only the gateway is public and the services stay private on purpose, so Swagger is not exposed there.
 
-| Service | Swagger (local run only) |
+| Service | Swagger |
 | ------- | ------- |
 | identity-service | http://localhost:8081/swagger-ui/index.html |
 | ticket-service | http://localhost:8082/swagger-ui/index.html |
@@ -241,7 +237,7 @@ The ai-service endpoints (`/internal/ai/draft-ticket`, `/triage`, `/summarize`) 
 Project Installation
 -
 **Run locally**
-1. Clone the repository and switch to `main`.
+1. Clone the repository.
 2. Create a `.env` file in the project root with the values used by `docker-compose.yml` (JWT secret, internal API key, Gmail app password, VirusTotal key, Didit keys, OpenAI key).
 3. Start everything: `docker compose up --build` (PostgreSQL, pgAdmin, Kafka and all six services).
 4. Open `http://localhost:8080`. Seeder classes create demo users and data automatically, so no manual steps are required.
@@ -255,7 +251,6 @@ Project Installation
 
 Unsolved Problems
 -
-- **Password reset link:** the reset email points to the email-verification endpoint, and there is no reset-password form to complete the flow (the current system takes the token and uses it in the request body as a parameter).
 - **Pipeline runs on a laptop:** Jenkins runs in Docker on a developer machine rather than on a hosted server.
 - **ngrok free tier:** the HTTPS address belongs to one ngrok account and only one tunnel per domain can run at a time.
 
@@ -267,7 +262,7 @@ Major Challenges
 - **External services:** the VirusTotal free trial has a rate limit. To avoid triggering it, a thread pool runs on one worker that waits 16 seconds between calls.
 - **Splitting the monolith:** services now call each other, so cross-service concerns (JWT checking, the internal API key, Kafka events) had to be introduced, and the tests needed a fake identity service.
 - **KYC tickets:** the KYC result event first created a staff ticket for every result. It now only opens a review ticket when the result is "in review".
-- **AWS and HTTPS:** a new AWS account needed verification before some services could be used, and the KYC webhook required an HTTPS address, which was solved with an ngrok container on the server.
+- **AWS and HTTPS:** KYC webhook required an HTTPS address, which was solved with an ngrok container on the server.
 
 Future Improvements
 -
