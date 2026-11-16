@@ -5,9 +5,13 @@ pipeline {
         skipDefaultCheckout(true)
     }
 
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
     parameters {
-        booleanParam(name: 'PUSH_TO_ECR', defaultValue: false, description: 'Push the images to AWS ECR')
-        booleanParam(name: 'DEPLOY_TO_EC2', defaultValue: false, description: 'Deploy the pushed images on the EC2 server (needs PUSH_TO_ECR)')
+        booleanParam(name: 'PUSH_TO_ECR', defaultValue: true, description: 'Push images to ECR')
+        booleanParam(name: 'DEPLOY_TO_EC2', defaultValue: true, description: 'Deploy to EC2')
     }
 
     environment {
