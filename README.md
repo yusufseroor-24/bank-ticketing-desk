@@ -19,7 +19,7 @@ To demonstrate the importance of visibility of ticketing systems using SLA enfor
 - Escalation with automatic priority SLA recalculation
 - Comments, file attachments, and ticket history per ticket
 - Notifications via Server Sent Events (SSE) and email
-- Admin functionality: user management, soft delete, category management, audit log
+- Admin functionality: user management (soft delete of users), soft delete and restore of tickets (hidden from everyone, kept in the database), category management, audit log
 - Automatic fraud/AML ticket creation
 - KYC identity verification with Didit (staff review ticket only when the result is "in review")
 - AI-assisted ticket drafting, triage and summaries
@@ -75,14 +75,25 @@ BankDesk was split from one Spring Boot application into six services that share
 
 **Request flow:** browser -> ngrok HTTPS -> api-gateway -> service -> PostgreSQL (RDS). Services publish events (KYC results, notifications, fraud events) through Kafka.
 
-**CI/CD (Jenkins):** the `Jenkinsfile` runs the Cucumber tests, builds the JARs and Docker images, pushes them to AWS ECR, then deploys to EC2 over SSH using `docker-compose.prod.yml`.
+**CI/CD (Jenkins):** the `Jenkinsfile` runs the Cucumber tests, builds the JARs and Docker images, pushes them to AWS ECR, then deploys to EC2 over SSH using `docker-compose.prod.yml`. Jenkins checks the `main` branch for new pushes **every 5 minutes**, so every push is tested, built and deployed automatically with no manual step. A build can also be started by hand with **Build with Parameters**.
 
 **AWS:**
 - The database is on RDS PostgreSQL and is private; only the EC2 security group can connect to it.
 - The EC2 server uses an IAM instance role to pull images from ECR and write logs to CloudWatch.
+- **CloudWatch:** every container's logs are sent to AWS CloudWatch (log group `bankdesk`) with Docker's `awslogs` driver, so logs can be read in the AWS console even after a restart.
 - No AWS keys are stored in GitHub. Pipeline credentials live in Jenkins, and application secrets live in a `.env` file on the server.
 
 **HTTPS webhook:** the Didit KYC webhook needs a public HTTPS address, so an ngrok container with a static domain runs next to the gateway.
+
+**Live addresses** (all reach the same application):
+
+| Address | What it is |
+| ------- | ---------- |
+| `http://13.61.217.119` | The server's fixed (Elastic) IP, plain HTTP |
+| `http://ec2-13-61-217-119.eu-north-1.compute.amazonaws.com` | The AWS public DNS name of the same server, plain HTTP |
+| `https://olive-replica-nutcase.ngrok-free.dev` | HTTPS through ngrok. Needed for the Didit KYC webhook. On the first visit ngrok shows a warning page; click **Visit Site** |
+
+Open `/simulation.html` on any of them for the Concurrency Lab. The environment is stopped when it is not being demonstrated, to save cost.
 
 Testing (Cucumber)
 -
@@ -123,7 +134,7 @@ PostgreSQL locks the row while updating. The first request changes 1 row. The se
 
 Concurrency Lab (simulation)
 -
-`simulation.html` is an interactive page that fires real parallel requests at the running backend and shows each request on a timeline. It has nine demos: ticket claim race, optimistic locking, one-time reset token, monthly report claim, fraud alert dedup, email thread pool, VirusTotal queue, SLA scheduler and the SSE registry.
+`simulation.html` is an interactive page that showcases how BankDesk handles concurrency. It fires real parallel requests at the running backend and draws each request on a timeline, with a pass/fail verdict. It is simple to use: open `/simulation.html` on the gateway (for example `https://olive-replica-nutcase.ngrok-free.dev/simulation.html` or `http://localhost:8080/simulation.html`), press **Connect demo accounts**, then pick a demo and press its button. It has nine demos: ticket claim race, optimistic locking, one-time reset token, monthly report claim, fraud alert dedup, email thread pool, VirusTotal queue, SLA scheduler and the SSE registry.
 
 **How to run it**
 1. Start the system (`docker compose up --build` locally, or use the deployed URL). Demo accounts are seeded automatically in the `dev` profile.
@@ -133,6 +144,10 @@ Concurrency Lab (simulation)
 5. For the live stream on the right, tick only the roles you need. Don't use the normal app logged in as the same user at the same time (only one live connection per user is kept).
 
 Notes: the VirusTotal demo needs `VIRUSTOTAL_API_KEY` and takes a few minutes because scans are spaced 16 seconds apart. The email demo sends real emails to the customer's inbox.
+
+Soft Delete (tickets)
+-
+An admin can hide a ticket without destroying it. Each ticket has a nullable `deleted_at` column: empty means the ticket is active, a time means it was soft deleted. Deleted tickets disappear from every normal view (customer lists, agent search, SLA alerts) but stay in the database, and an admin can restore them at any time. In the app this is the **Delete / restore tickets** page in the admin menu, which has a dropdown (or ticket ID box) to delete and a list of deleted tickets to restore.
 
 User Stories
 -
@@ -150,9 +165,11 @@ The project is planned using a Trello Board.
 
 API Documentation
 -
-All requests go through the gateway at `http://localhost:8080` (or the deployed URL). Each service also has its own Swagger UI while running:
+All requests go through the gateway: `http://13.61.217.119` (or the HTTPS ngrok address) when deployed, and `http://localhost:8080` when run locally.
 
-| Service | Swagger |
+**Swagger (interactive API docs).** Each service has its own Swagger UI. The service ports are only opened when running locally with Docker Compose, which is why these addresses use `localhost`. On the deployed server only the gateway is public and the services stay private on purpose, so Swagger is not exposed there.
+
+| Service | Swagger (local run only) |
 | ------- | ------- |
 | identity-service | http://localhost:8081/swagger-ui/index.html |
 | ticket-service | http://localhost:8082/swagger-ui/index.html |
@@ -206,6 +223,9 @@ All requests go through the gateway at `http://localhost:8080` (or the deployed 
 | POST | `/api/admin/users/{agentId}/categories` | Assign categories to an agent | Admin |
 | PUT | `/api/admin/tickets/{id}/reopen` | Reopen a closed ticket | Admin |
 | PUT | `/api/admin/tickets/{id}/reassign` | Reassign a ticket to another agent | Admin |
+| PUT | `/api/admin/tickets/{id}/soft-delete` | Soft delete a ticket (hidden from everyone, kept in the database) | Admin |
+| PUT | `/api/admin/tickets/{id}/restore` | Restore a soft-deleted ticket | Admin |
+| GET | `/api/admin/tickets/deleted` | List soft-deleted tickets | Admin |
 | GET | `/api/admin/audit-logs` | View the audit log | Admin |
 | GET | `/api/admin/sla-policies` | List SLA policies | Admin |
 | PUT | `/api/admin/sla-policies/{policyId}` | Update an SLA policy | Admin |
@@ -230,7 +250,7 @@ Project Installation
 1. Create an RDS PostgreSQL database (private), ECR repositories `bankdesk/<service>`, and an EC2 instance with Docker and an IAM role that can read ECR and write CloudWatch logs.
 2. On the server, create `~/bankdesk/.env` with the RDS endpoint, secrets and the ngrok token and domain.
 3. In Jenkins, add the credentials `aws-access-key-id`, `aws-secret-access-key` and `ec2-ssh-key`, and create a pipeline job from this repository (branch `main`).
-4. Run **Build with Parameters** with PUSH_TO_ECR and DEPLOY_TO_EC2 ticked.
+4. Run **Build with Parameters** with PUSH_TO_ECR and DEPLOY_TO_EC2 ticked. After that, Jenkins checks `main` every 5 minutes and deploys new pushes by itself.
 5. Open the public ngrok HTTPS address (or the server's IP over HTTP).
 
 Unsolved Problems
