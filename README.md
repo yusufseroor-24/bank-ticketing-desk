@@ -1,3 +1,5 @@
+<img width="2296" height="1771" alt="BankDesk" src="https://github.com/user-attachments/assets/f2ddb790-437c-42d1-b78a-90266838c8e9" />
+<img width="2296" height="1771" alt="BankDesk" src="https://github.com/user-attachments/assets/76efcdb1-d624-472a-a650-4c88fd9d6dec" />
 **BankDesk Project**
 -
 **Project Title:**
@@ -152,6 +154,7 @@ The user stories of the project are provided in the Trello board linked below.
 
 Project ERD
 -
+<img width="2296" height="1771" alt="BankDesk" src="https://github.com/user-attachments/assets/ad27a2d6-72e7-402d-a513-f49c7d3fa33e" />
 
 
 Project Planning (Trello)
