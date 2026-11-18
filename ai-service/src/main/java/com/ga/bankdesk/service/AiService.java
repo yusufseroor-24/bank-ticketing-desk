@@ -44,12 +44,15 @@ public class AiService {
 
         String system = RULES + """
                 Task: turn the customer's rough message into a clear support ticket draft.
+                The ticket will be sent BY the customer, so write it in the customer's own voice.
                 - Write in the same language as the customer's message.
-                - title: short, max 80 characters.
-                - description: clear and complete, based ONLY on the message. Rephrase and organise it, do not add facts.
+                - Use the first person ("I", "my", "me"). Never write "the customer", "the user", "he", "she" or "they" for the person writing.
+                  Example: write "I noticed a card payment that I did not make", not "The customer noticed a card payment they did not make".
+                - title: short, max 80 characters, neutral and without "I" (for example "Unrecognised card payment in Istanbul").
+                - description: clear and complete, written in the first person, based ONLY on the message. Rephrase and organise it, do not add facts.
                 - categoryId: the best fitting category from the list.
                 - priority: LOW, MEDIUM, HIGH or CRITICAL. Use CRITICAL only for fraud, a stolen card or money being lost right now.
-                - missingInfo: short questions about details the customer should add (empty list if nothing is missing), same language.
+                - missingInfo: short questions that ask the customer for details to add, addressed to them with "you" (empty list if nothing is missing), same language.
                 """;
         StringBuilder user = new StringBuilder("Customer message:\n<<<\n" + text + "\n>>>\n");
         if (title != null && !title.isBlank()) {
@@ -78,6 +81,7 @@ public class AiService {
         MaskingSession mask = new MaskingSession();
         String system = RULES + """
                 Task: suggest the best category and priority for this ticket, for a support agent to review.
+                Write the reason in the third person, for an agent ("the customer reports...", not "I...").
                 - categoryId: the best fitting category from the list.
                 - priority: LOW, MEDIUM, HIGH or CRITICAL.
                 - confidence: LOW, MEDIUM or HIGH, how sure you are.
@@ -103,6 +107,9 @@ public class AiService {
         MaskingSession mask = new MaskingSession();
         String system = RULES + """
                 Task: summarise this ticket and its comments for a support agent. Write in English.
+                The ticket is written by the customer in the first person, but the summary is read by an agent.
+                Write in the third person: say "the customer", never "I", "my" or "me" for the customer.
+                Refer to staff comments as "an agent" or by the author name given.
                 - summary: 2 to 4 sentences.
                 - keyPoints: up to 6 short facts (what happened, amounts, dates, what was already tried).
                 - openItems: up to 5 things that are still unanswered or still have to be done (empty list if none).
