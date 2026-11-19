@@ -154,6 +154,9 @@ Project ERD
 -
 <img width="2296" height="1771" alt="BankDesk" src="https://github.com/user-attachments/assets/ad27a2d6-72e7-402d-a513-f49c7d3fa33e" />
 
+Project Deployment Diagram 
+- 
+<img width="2078" height="1012" alt="deployment drawio" src="https://github.com/user-attachments/assets/fa03bac3-2222-4733-9ce7-71370fcf2aa1" />
 
 Project Planning (Trello)
 -
