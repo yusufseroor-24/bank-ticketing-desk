@@ -7,7 +7,8 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,15 +21,15 @@ public class JwtUtils {
     @Value("${jwt-secret}")
     private String jwtSecret;
 
-    private Key signingKey(){
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    private SecretKey signingKey(){
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     //validates the token and returns the user inside it (null if invalid)
     public CurrentUser parse(String token){
         try{
-            Claims claims = Jwts.parserBuilder().setSigningKey(signingKey()).build()
-                    .parseClaimsJws(token).getBody();
+            Claims claims = Jwts.parser().verifyWith(signingKey()).build()
+                    .parseSignedClaims(token).getPayload();
             Object uid = claims.get("uid");
             Object role = claims.get("role");
             if (uid == null || role == null) {
