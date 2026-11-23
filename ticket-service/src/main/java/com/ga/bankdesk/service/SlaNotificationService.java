@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -74,14 +76,20 @@ public class SlaNotificationService {
         if (!now.isBefore(dueAt)) {
             return 3;
         }
+        //attach the server time zone so durations are correct across daylight-saving changes
+        ZoneId zone = ZoneId.systemDefault();
+        ZonedDateTime created = createdAt.atZone(zone);
+        ZonedDateTime due = dueAt.atZone(zone);
+        ZonedDateTime current = now.atZone(zone);
+
         //calculates the total available time
-        long total = Duration.between(createdAt, dueAt).toSeconds();
+        long total = Duration.between(created, due).toSeconds();
 
         if (total <= 0) {
             return 0;
         }
         //calculates the percentage time used
-        double used = (double) Duration.between(createdAt, now).toSeconds() / total;
+        double used = (double) Duration.between(created, current).toSeconds() / total;
 
         if (used >= 0.90) return 2;
         if (used >= 0.75) return 1;
