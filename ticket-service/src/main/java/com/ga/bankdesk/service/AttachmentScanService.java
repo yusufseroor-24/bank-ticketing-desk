@@ -129,12 +129,17 @@ public class AttachmentScanService {
         return ScanStatus.CLEAN;
     }
 
-    private synchronized void waitForSlot() throws InterruptedException {
-        long waitMs = lastCallAt + minIntervalMs - System.currentTimeMillis();
+    private void waitForSlot() throws InterruptedException {
+        long waitMs;
+        synchronized (this) {
+            long now = System.currentTimeMillis();
+            long slot = Math.max(now, lastCallAt + minIntervalMs);
+            lastCallAt = slot;
+            waitMs = slot - now;
+        }
         if (waitMs > 0) {
             Thread.sleep(waitMs);
         }
-        lastCallAt = System.currentTimeMillis();
     }
 
     private static String trim(String message) {
