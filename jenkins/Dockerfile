@@ -1,5 +1,6 @@
 FROM jenkins/jenkins:lts-jdk17
 
+# nosemgrep: dockerfile.security.last-user-is-root.last-user-is-root
 USER root
 
 # docker CLI and AWS CLI (to log in to ECR)
