@@ -784,9 +784,14 @@ ex.setQueueCapacity(<span class="k">50</span>);
 ex.setRejectedExecutionHandler(<span class="k">new</span> AbortPolicy());
 
 <span class="c">// AttachmentScanService</span>
-<span class="k">private synchronized void</span> waitForSlot() {
-  <span class="k">long</span> wait = lastCallAt + minIntervalMs - now();
-  <span class="k">if</span> (wait > 0) Thread.sleep(wait);   <span class="c">// 16 000 ms</span>
+<span class="k">private void</span> waitForSlot() {
+  <span class="k">long</span> wait;
+  <span class="k">synchronized</span> (<span class="k">this</span>) {   <span class="c">// book the slot under the lock</span>
+    <span class="k">long</span> slot = Math.max(now(), lastCallAt + minIntervalMs);
+    lastCallAt = slot;
+    wait = slot - now();
+  }
+  <span class="k">if</span> (wait > 0) Thread.sleep(wait);   <span class="c">// sleep outside the lock, 16 000 ms</span>
 }`)}
   <div class="card">
     <div class="row">
